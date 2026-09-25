@@ -120,7 +120,7 @@ function GameScreen({ state, socket, isHost }: { state: ClientState; socket: Soc
   return (
     <PageShell>
       <div className="game-header">
-        <div className="game-title"><p className="round-mark">{state.phase === 'finished' ? 'KẾT QUẢ' : `VÒNG ${String(state.round).padStart(2, '0')}`}<span>{state.phase === 'finished' ? '' : ` / ${String(state.totalRounds).padStart(2, '0')}`}</span></p><h1>{state.phase === 'finished' ? 'Những nét đáng nhớ.' : isDrawer ? 'Bạn là họa sĩ.' : 'Bạn nhìn thấy gì?'}</h1></div>
+        <div className="game-title"><p className="round-mark">{state.phase === 'finished' ? 'KẾT QUẢ' : `VÒNG ${String(state.round).padStart(2, '0')}`}<span>{state.phase === 'finished' ? '' : ` / ${String(state.totalRounds).padStart(2, '0')}`}</span></p><h1 className={isDrawer ? 'drawer-word-title' : undefined}>{state.phase === 'finished' ? 'Những nét đáng nhớ.' : isDrawer ? state.privateWord ?? 'Chọn một từ.' : 'Bạn nhìn thấy gì?'}</h1></div>
         <div className="timer" aria-label={`${state.secondsLeft} giây`}><span className={state.secondsLeft <= 5 ? 'timer-number urgent' : 'timer-number'}>{state.secondsLeft}</span><span>GIÂY</span></div>
       </div>
       {state.phase === 'finished' ? <FinalRanking state={state} /> : <div className="game-grid">
