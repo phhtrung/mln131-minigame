@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: mln131-family-sketch
+    name: giadinhvietnam
     runtime: node
     plan: free
     buildCommand: npm ci && npm run build
