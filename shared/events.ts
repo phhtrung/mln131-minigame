@@ -1,0 +1,13 @@
+export const EVENTS = {
+  roomState: 'room_state',
+  joinRoom: 'join_room',
+  startGame: 'start_game',
+  chooseWord: 'choose_word',
+  stroke: 'stroke',
+  clearCanvas: 'clear_canvas',
+  submitGuess: 'submit_guess',
+  submitQuiz: 'submit_quiz',
+  reaction: 'reaction',
+  nextRound: 'next_round',
+  toast: 'toast',
+} as const;
