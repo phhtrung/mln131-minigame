@@ -144,8 +144,9 @@ input::placeholder { color: #696662; opacity: 1; }
 .choice-button span { font-family: var(--display); font-size: 18px; }
 .ghost-button { min-height: 44px; border: 1px solid var(--line); border-radius: 10px; color: var(--ink); background: transparent; padding: 9px 13px; font-weight: 700; }
 .ghost-button:hover { background: var(--ink); color: var(--paper); }
-.guess-form { margin-top: 3px; }
-.guess-form .primary-button { padding-inline: 20px; }
+.guess-form { margin-top: 3px; gap: 10px; }
+.guess-form input { border-radius: 11px; background: var(--white); }
+.guess-form .primary-button { padding-inline: 20px; border-radius: 11px; }
 .quiz-card { background: rgba(23,105,232,.08); border-top-color: var(--blue); }
 .score-risk, .result-line { margin: -4px 0 16px; font-weight: 700; color: var(--blue-deep); }
 .quiz-options { display: grid; margin: 18px 0; border-top: 1px solid var(--hairline); }
