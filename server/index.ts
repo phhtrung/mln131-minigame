@@ -60,6 +60,7 @@ type Room = {
   quiz?: Quiz;
   quizAnswer?: number;
   quizDrawSeconds?: number;
+  quizStartedAt?: number;
   reveal?: Reveal;
   summary: SummaryItem[];
   hintLevel: number;
@@ -192,14 +193,21 @@ function eraseStrokes(list: Stroke[], payload: ErasePayload): Stroke[] | null {
   return changed ? next : null;
 }
 
+// Diacritics are part of the answer: never strip them. Case and spacing are not.
 function normalized(value: string) {
   return value
+    .normalize('NFC')
     .toLocaleLowerCase('vi-VN')
+    .replace(/[^\p{L}\p{N}]+/gu, ' ')
+    .trim();
+}
+
+// Loose comparison used only to tell players their answer was right but unaccented.
+function folded(value: string) {
+  return normalized(value)
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
-    .replace(/đ/g, 'd')
-    .replace(/[^a-z0-9]+/g, ' ')
-    .trim();
+    .replace(/đ/g, 'd');
 }
 
 function scoreForGuess(secondsLeft: number, position: number) {
@@ -207,6 +215,14 @@ function scoreForGuess(secondsLeft: number, position: number) {
   const timePoints = Math.round((safeSeconds / DRAW_SECONDS) * 350);
   const orderBonus = position === 0 ? 100 : position === 1 ? 50 : position === 2 ? 25 : 0;
   return 50 + timePoints + orderBonus;
+}
+
+// The drawing clock freezes when the first correct guess starts the quiz, so late guessers
+// are charged for the real seconds they have spent waiting instead of keeping the full bonus.
+function effectiveSecondsLeft() {
+  if (room.phase === 'drawing') return room.secondsLeft;
+  const elapsed = room.quizStartedAt ? Math.floor((Date.now() - room.quizStartedAt) / 1000) : 0;
+  return Math.max(0, (room.quizDrawSeconds ?? 0) - elapsed);
 }
 
 function shuffle<T>(items: T[]): T[] {
@@ -416,6 +432,7 @@ function resetRoundState() {
   room.quiz = undefined;
   room.quizAnswer = undefined;
   room.quizDrawSeconds = undefined;
+  room.quizStartedAt = undefined;
   room.reveal = undefined;
   room.hintLevel = 0;
   room.hintIndices = [];
@@ -523,6 +540,7 @@ function startQuiz(firstGuesserId: string) {
   room.firstGuesserId = firstGuesserId;
   room.quiz = buildShuffledQuiz(content);
   room.quizDrawSeconds = room.secondsLeft;
+  room.quizStartedAt = Date.now();
   room.secondsLeft = 0;
   room.quizAnswer = undefined;
   broadcastState();
@@ -707,11 +725,15 @@ io.on('connection', (socket: ClientSocket) => {
     const parsed = guessSchema.safeParse(payload?.guess);
     if (!parsed.success || !room.currentContent) return;
     const guess = normalized(parsed.data);
-    const correct = [room.currentContent.word, ...room.currentContent.aliases].some((answer) => normalized(answer) === guess);
-    if (!correct) return toast('Chưa đúng — thử một ý khác nhé.', socket);
+    const answers = [room.currentContent.word, ...room.currentContent.aliases];
+    const correct = answers.some((answer) => normalized(answer) === guess);
+    if (!correct) {
+      const missingDiacritics = answers.some((answer) => folded(answer) === folded(parsed.data));
+      return toast(missingDiacritics ? 'Đúng nội dung rồi, nhưng thiếu dấu — hãy gõ kèm dấu nhé.' : 'Chưa đúng — thử một ý khác nhé.', socket);
+    }
     const position = room.guessedPlayerIds.length;
     room.guessedPlayerIds.push(playerId);
-    const secondsLeft = room.phase === 'drawing' ? room.secondsLeft : (room.quizDrawSeconds ?? 0);
+    const secondsLeft = effectiveSecondsLeft();
     const points = scoreForGuess(secondsLeft, position);
     const player = room.players.get(playerId);
     if (player) {

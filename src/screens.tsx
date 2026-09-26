@@ -256,8 +256,12 @@ function ActionPanel({ state, socket, isDrawer, hasGuessed, canGuess, isHost }: 
             value={guess}
             onChange={(event) => setGuess(event.target.value)}
             disabled={hasGuessed}
-            placeholder={hasGuessed ? 'Đã ghi nhận' : 'Nhập đáp án (không cần dấu)'}
+            placeholder={hasGuessed ? 'Đã ghi nhận' : 'Gõ đáp án có dấu'}
             aria-label="Đáp án của bạn"
+            autoComplete="off"
+            autoCorrect="off"
+            autoCapitalize="off"
+            spellCheck={false}
           />
           <button className="primary-button" disabled={hasGuessed}>Gửi <span aria-hidden="true">→</span></button>
         </form>

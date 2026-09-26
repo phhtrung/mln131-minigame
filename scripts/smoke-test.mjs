@@ -5,9 +5,15 @@ import { ROUND_CONTENT } from '../dist-server/shared/content.js';
 
 const PORT = Number(process.env.TEST_PORT ?? 4123);
 const URL = `http://localhost:${PORT}`;
-const SCALE = Number(process.env.TIMER_SCALE ?? 0.2);
+const SCALE = Number(process.env.TIMER_SCALE ?? 0.4);
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+// Game seconds -> real milliseconds, so timeouts follow the game clock instead of a magic number.
+const gameMs = (seconds) => Math.round(seconds * 1000 * SCALE);
+const DRAW_SECONDS = 45;
+const HINT_FIRST_AFTER = DRAW_SECONDS - 30;
+const HINT_SECOND_AFTER = DRAW_SECONDS - 15;
 
 let checks = 0;
 let failures = 0;
@@ -169,6 +175,16 @@ async function main() {
   check('host without name has no you info', host.state.you === undefined);
   check('regular player does not see word choices', players[0].state.wordChoices === undefined);
 
+  console.log('\n== Answer normalisation rules ==');
+  const isAscii = (text) => /^[\x00-\x7F]*$/.test(text);
+  const stripDiacritics = (text) => text.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd');
+  check(
+    'no Vietnamese answer is missing its diacritics',
+    ROUND_CONTENT.every((item) =>
+      [item.word, ...item.aliases].every((answer) => isAscii(answer) || stripDiacritics(answer) !== answer.toLocaleLowerCase('vi-VN')),
+    ),
+  );
+
   console.log('\n== Reactions have no rate limit ==');
   const reactionsBefore = host.reactions.length;
   for (let i = 0; i < 6; i += 1) players[4].emit(EVENTS.reaction, '🎉');
@@ -282,6 +298,16 @@ async function main() {
   check('tick stream is lightweight', Boolean(drawingTick) && !('strokes' in drawingTick) && JSON.stringify(drawingTick).length < 300);
 
   console.log('\n== Round 1: guesses + quiz shuffle ==');
+  const accentProbe = guesserClients()[3];
+  const successesBeforeAccentProbe = viewer.successes.length;
+  accentProbe.emit(EVENTS.submitGuess, { guess: stripDiacritics(chosenWord1).toLocaleLowerCase('vi-VN') });
+  await sleep(300);
+  check(
+    'answer without diacritics is rejected',
+    viewer.successes.length === successesBeforeAccentProbe && !host.state.guessedPlayerIds.includes(accentProbe.id),
+  );
+  check('unaccented answer explains the diacritic rule', accentProbe.toasts.some((message) => message.includes('thiếu dấu')));
+
   const scoreBefore1 = playerIn(host.state, g1.id).score;
   g1.emit(EVENTS.submitGuess, { guess: aliasFor(chosenWord1) });
   await waitState(host, (state) => state.phase === 'quiz');
@@ -290,11 +316,21 @@ async function main() {
   check('first guesser gets fast-guess points (150-500)', Boolean(success1) && success1.position === 0 && success1.points >= 150 && success1.points <= 500);
   check('first guesser score matches broadcast points', Boolean(success1) && playerIn(host.state, g1.id).score === scoreBefore1 + success1.points);
 
+  // Wait long enough that the late guesser is charged at least one full second of waiting.
+  await sleep(1300);
   g2.emit(EVENTS.submitGuess, { guess: aliasFor(chosenWord1) });
   await sleep(350);
   check('second guesser accepted during quiz', host.state.guessedPlayerIds.includes(g2.id));
   const success2 = viewer.successes.find((payload) => payload.playerId === g2.id);
   check('second guesser scores less than first (time + order)', Boolean(success1) && Boolean(success2) && success2.position === 1 && success2.points >= 100 && success2.points <= 450 && success2.points < success1.points && playerIn(host.state, g2.id).score === success2.points);
+  check('late guesser loses time points, not just the order bonus', Boolean(success1) && Boolean(success2) && success2.points < success1.points - 50);
+
+  accentProbe.emit(EVENTS.submitGuess, { guess: chosenWord1.toLocaleUpperCase('vi-VN') });
+  await sleep(350);
+  check(
+    'answer is accepted regardless of letter case',
+    host.state.guessedPlayerIds.includes(accentProbe.id) && playerIn(host.state, accentProbe.id).score > 0,
+  );
 
   const content1 = ROUND_CONTENT.find((item) => item.word === chosenWord1);
   check('first guesser receives quiz', g1.state.quiz?.prompt === content1.quiz.prompt);
@@ -316,7 +352,7 @@ async function main() {
   check('quiz correct awarded +400', Boolean(success1) && playerIn(host.state, g1.id).score === scoreBefore1 + success1.points + 400);
   check('reveal carries the correct answer', host.state.reveal?.answer === content1.quiz.options[content1.quiz.correctIndex]);
   check('summary recorded for round 1', host.state.summary?.length === 1 && host.state.summary[0].word === chosenWord1);
-  check('drawer awarded 250 for 2 of 4 guessers', playerIn(host.state, drawer1.id).score === 250);
+  check('drawer awarded 375 for 3 of 4 guessers', host.state.guessedPlayerIds.length === 3 && playerIn(host.state, drawer1.id).score === 375);
   projector.emit(EVENTS.advanceRound);
 
   console.log('\n== Round 2: hints + wrong quiz ==');
@@ -338,12 +374,12 @@ async function main() {
   check('late join blocked mid-game', late.toasts.some((message) => message.includes('Ván chơi đang diễn ra')) && !host.state.players.some((player) => player.name === 'Người Muộn'));
   await late.disconnect();
 
-  const hintTick1 = await waitForTick(host, (tick) => tick.phase === 'drawing' && tick.subPhase === 'drawing' && revealedCount(tick.maskedWord) >= 1, 9000);
+  const hintTick1 = await waitForTick(host, (tick) => tick.phase === 'drawing' && tick.subPhase === 'drawing' && revealedCount(tick.maskedWord) >= 1, gameMs(HINT_FIRST_AFTER) + 5000);
   check('hint letters revealed at 30s mark', Boolean(hintTick1));
   const hintTick2 = await waitForTick(
     host,
     (tick) => tick.phase === 'drawing' && tick.subPhase === 'drawing' && revealedCount(tick.maskedWord) > revealedCount(hintTick1?.maskedWord ?? ''),
-    9000,
+    gameMs(HINT_SECOND_AFTER) + 5000,
   );
   check('more letters revealed at 15s mark', Boolean(hintTick2) && revealedCount(hintTick2?.maskedWord ?? '') > revealedCount(hintTick1?.maskedWord ?? ''));
   check('masked word never fully revealed', revealedCount(hintTick2?.maskedWord ?? '') < totalSlots(hintTick2?.maskedWord ?? ''));
@@ -358,10 +394,15 @@ async function main() {
 
   const r2Guesser = round2Guessers.find((client) => client !== wrongGuesser);
   const r2Before = playerIn(host.state, r2Guesser.id).score;
+  const round2Live = await waitState(host, (state) => state.phase === 'drawing' && state.subPhase === 'drawing', 2000);
+  check('round 2 still drawing when the correct guess is sent', Boolean(round2Live));
+  // successes accumulate for the whole session, so drop round 1 events before looking this one up.
+  r2Guesser.successes.length = 0;
   r2Guesser.emit(EVENTS.submitGuess, { guess: aliasFor(chosenWord2) });
   await waitState(host, (state) => state.phase === 'quiz');
   const r2Success = r2Guesser.successes.find((payload) => payload.playerId === r2Guesser.id);
-  check('round 2 first guess earns time-based points', Boolean(r2Success) && r2Success.position === 0 && r2Success.points >= 150 && r2Success.points <= 500);
+  check('round 2 first guess is recorded as position 0', Boolean(r2Success) && r2Success.position === 0);
+  check('round 2 first guess earns time-based points', Boolean(r2Success) && r2Success.points >= 150 && r2Success.points <= 500);
   const content2 = ROUND_CONTENT.find((item) => item.word === chosenWord2);
   check('round 2 quiz correct answer preserved', r2Guesser.state.quiz.options[r2Guesser.state.quiz.correctIndex] === content2.quiz.options[content2.quiz.correctIndex]);
   quizIndices.push(r2Guesser.state.quiz.correctIndex);
@@ -463,7 +504,7 @@ async function main() {
     if (roundNumber === 5) {
       const idleDrawerId = host.state.drawerId;
       const idleDrawerBefore = playerIn(host.state, idleDrawerId).score;
-      await waitState(host, (state) => state.phase === 'reveal', 15000);
+      await waitState(host, (state) => state.phase === 'reveal', gameMs(DRAW_SECONDS) + 8000);
       check('timeout reveal when nobody guesses', host.state.reveal?.quizResult === 'not_asked');
       check('drawer scores nothing when nobody guesses', playerIn(host.state, idleDrawerId).score === idleDrawerBefore);
       host.emit(EVENTS.advanceRound);

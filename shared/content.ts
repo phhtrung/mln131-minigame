@@ -13,7 +13,7 @@ export type RoundContent = {
 export const ROUND_CONTENT: RoundContent[] = [
   {
     word: 'Gia đình hạt nhân',
-    aliases: ['gia dinh hat nhan', 'hạt nhân', 'hat nhan'],
+    aliases: ['gia đình hạt nhân', 'hạt nhân'],
     explanation: 'Gia đình hạt nhân gồm vợ chồng và con cái, thường phù hợp hơn với nhịp sống đô thị và tính cơ động của lao động hiện đại.',
     takeaway: 'Cơ hội: riêng tư và tự chủ hơn. Thách thức: ít người chia sẻ việc chăm sóc, dễ cô lập khi gặp khủng hoảng.',
     quiz: {
@@ -24,7 +24,7 @@ export const ROUND_CONTENT: RoundContent[] = [
   },
   {
     word: 'Bình đẳng giới',
-    aliases: ['binh dang gioi', 'bình đẳng', 'binh dang'],
+    aliases: ['bình đẳng giới', 'bình đẳng', 'đẳng giới'],
     explanation: 'Bình đẳng giới trong gia đình là cùng chia sẻ quyền quyết định, thu nhập, việc nhà và chăm sóc; không đồng nghĩa với chia đôi máy móc mọi việc.',
     takeaway: 'Cơ hội: quan hệ tôn trọng và bền vững hơn. Thách thức: định kiến cũ vẫn làm việc nhà và gánh nặng cảm xúc phân bổ lệch.',
     quiz: {
@@ -35,7 +35,7 @@ export const ROUND_CONTENT: RoundContent[] = [
   },
   {
     word: 'Mạng xã hội',
-    aliases: ['mang xa hoi', 'social media', 'mạng'],
+    aliases: ['mạng xã hội', 'social media', 'mạng'],
     explanation: 'Mạng xã hội giúp các thành viên xa nhau giữ liên lạc, nhưng cũng có thể tạo so sánh, xao nhãng và xung đột nếu thiếu ranh giới số.',
     takeaway: 'Cơ hội: kết nối và hỗ trợ nhanh. Thách thức: cần quy ước sử dụng thiết bị, tôn trọng riêng tư và kiểm chứng thông tin.',
     quiz: {
@@ -46,7 +46,7 @@ export const ROUND_CONTENT: RoundContent[] = [
   },
   {
     word: 'Lối sống đô thị',
-    aliases: ['loi song do thi', 'đô thị', 'do thi'],
+    aliases: ['lối sống đô thị', 'đô thị', 'sống đô thị'],
     explanation: 'Lối sống đô thị có nhịp độ nhanh, không gian sống nhỏ và lịch làm việc dài; gia đình cần thiết kế thời gian chất lượng thay vì chỉ ở cạnh nhau.',
     takeaway: 'Cơ hội: tiếp cận dịch vụ, giáo dục và việc làm. Thách thức: áp lực thời gian, chi phí và khoảng cách thế hệ.',
     quiz: {
@@ -57,7 +57,7 @@ export const ROUND_CONTENT: RoundContent[] = [
   },
   {
     word: 'Gia đình nhiều thế hệ',
-    aliases: ['gia dinh nhieu the he', 'nhiều thế hệ', 'nhieu the he'],
+    aliases: ['gia đình nhiều thế hệ', 'nhiều thế hệ', 'đa thế hệ'],
     explanation: 'Gia đình nhiều thế hệ có ông bà, cha mẹ và con cháu cùng hoặc gần nhau; mạng lưới hỗ trợ rộng nhưng cần thương lượng không gian và quyền riêng tư.',
     takeaway: 'Cơ hội: chia sẻ chăm sóc và kinh nghiệm. Thách thức: khác biệt chuẩn mực, quyền quyết định và cách nuôi dạy.',
     quiz: {
@@ -68,7 +68,7 @@ export const ROUND_CONTENT: RoundContent[] = [
   },
   {
     word: 'Hôn nhân tiến bộ',
-    aliases: ['hon nhan tien bo', 'hôn nhân', 'hon nhan'],
+    aliases: ['hôn nhân tiến bộ', 'hôn nhân', 'tiến bộ'],
     explanation: 'Hôn nhân tiến bộ dựa trên tự nguyện, bình đẳng, tôn trọng và trách nhiệm; tình yêu cần đi cùng năng lực đối thoại và giải quyết xung đột.',
     takeaway: 'Cơ hội: mỗi người được phát triển. Thách thức: kỳ vọng thay đổi nhanh và kỹ năng giao tiếp chưa theo kịp.',
     quiz: {
@@ -79,7 +79,7 @@ export const ROUND_CONTENT: RoundContent[] = [
   },
   {
     word: 'Gia đình hạnh phúc',
-    aliases: ['gia dinh hanh phuc', 'hạnh phúc', 'hanh phuc'],
+    aliases: ['gia đình hạnh phúc', 'hạnh phúc'],
     explanation: 'Gia đình hạnh phúc không phải là không có mâu thuẫn; đó là khả năng chăm sóc, đối thoại, bảo vệ thành viên và cùng vượt qua biến đổi.',
     takeaway: 'Mục tiêu là ấm no, tiến bộ, hạnh phúc; cần cả điều kiện vật chất lẫn văn hóa ứng xử và chính sách xã hội hỗ trợ.',
     quiz: {
