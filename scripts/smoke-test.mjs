@@ -32,6 +32,7 @@ class Client {
     this.chunks = [];
     this.undos = [];
     this.clears = [];
+    this.erases = [];
     this.id = undefined;
     this.token = undefined;
     allClients.push(this);
@@ -48,6 +49,7 @@ class Client {
     this.socket.on(EVENTS.strokeChunk, (chunk) => this.chunks.push(chunk));
     this.socket.on(EVENTS.undo, (payload) => this.undos.push(payload));
     this.socket.on(EVENTS.clearCanvas, () => this.clears.push(Date.now()));
+    this.socket.on(EVENTS.erase, (payload) => this.erases.push(payload));
     this.open = new Promise((resolve) => this.socket.on('connect', resolve));
   }
   get state() {
@@ -76,6 +78,15 @@ async function waitState(client, predicate, timeoutMs = 10000) {
     await sleep(40);
   }
   return undefined;
+}
+
+async function waitFor(predicate, timeoutMs = 2000) {
+  const start = Date.now();
+  while (Date.now() - start < timeoutMs) {
+    if (predicate()) return true;
+    await sleep(8);
+  }
+  return predicate();
 }
 
 async function waitForTick(client, predicate, timeoutMs = 12000) {
@@ -203,32 +214,61 @@ async function main() {
   const viewer = guesserClients()[2];
   const viewerChunksBefore = viewer.chunks.length;
   drawer1.emit(EVENTS.strokeChunk, { id: 'stroke-a', points: [{ x: 0.1, y: 0.1 }, { x: 0.2, y: 0.2 }, { x: 0.3, y: 0.3 }], color: '#242323', width: 5 });
-  await sleep(120);
+  await waitFor(() => viewer.chunks.length > viewerChunksBefore);
   check('live chunk broadcast to viewers', viewer.chunks.length === viewerChunksBefore + 1 && viewer.chunks[viewer.chunks.length - 1].id === 'stroke-a');
   check('chunk not echoed back to drawer', !drawer1.chunks.some((chunk) => chunk.id === 'stroke-a'));
-  await sleep(80);
+  await sleep(30);
   drawer1.emit(EVENTS.strokeChunk, { id: 'stroke-a', points: [{ x: 0.4, y: 0.4 }], color: '#242323', width: 5 });
-  await sleep(120);
+  await waitFor(() => viewer.chunks[viewer.chunks.length - 1]?.points.length === 1);
   check('chunk extension delivered', viewer.chunks[viewer.chunks.length - 1].id === 'stroke-a' && viewer.chunks[viewer.chunks.length - 1].points.length === 1);
 
-  await sleep(80);
+  await sleep(30);
   drawer1.emit(EVENTS.strokeChunk, { id: 'stroke-bad-size', points: Array.from({ length: 100 }, (_, index) => ({ x: index / 300, y: 0.5 })), color: '#242323', width: 5 });
-  await sleep(80);
+  await sleep(30);
   drawer1.emit(EVENTS.strokeChunk, { id: 'stroke-bad-color', points: [{ x: 0.5, y: 0.5 }], color: 'red', width: 5 });
-  await sleep(150);
+  await sleep(80);
   check('oversized chunk dropped', !viewer.chunks.some((chunk) => chunk.id === 'stroke-bad-size'));
   check('invalid color dropped', !viewer.chunks.some((chunk) => chunk.id === 'stroke-bad-color'));
 
-  await sleep(80);
+  await sleep(30);
   drawer1.emit(EVENTS.undo);
-  await sleep(150);
+  await waitFor(() => viewer.undos.length > 0);
   check('undo broadcast with stroke id', viewer.undos.length > 0 && viewer.undos[viewer.undos.length - 1].id === 'stroke-a');
-  await sleep(80);
+  await sleep(30);
   drawer1.emit(EVENTS.strokeChunk, { id: 'stroke-c', points: [{ x: 0.6, y: 0.6 }], color: '#d90429', width: 8 });
-  await sleep(120);
+  await sleep(30);
   drawer1.emit(EVENTS.clearCanvas);
-  await sleep(150);
+  await waitFor(() => viewer.clears.length > 0);
   check('clear broadcast', viewer.clears.length > 0);
+
+  console.log('\n== Eraser splits strokes ==');
+  const eraseLine = Array.from({ length: 17 }, (_, index) => ({ x: 0.1 + index * 0.05, y: 0.5 }));
+  drawer1.emit(EVENTS.strokeChunk, { id: 'stroke-erase', points: eraseLine.slice(0, 9), color: '#242323', width: 5 });
+  await sleep(30);
+  drawer1.emit(EVENTS.strokeChunk, { id: 'stroke-erase', points: eraseLine.slice(9), color: '#242323', width: 5 });
+  await sleep(30);
+
+  const erasesBefore = viewer.erases.length;
+  drawer1.emit(EVENTS.erase, { x: 0.5, y: 0.5, radius: 0.06, aspect: 0.5 });
+  await waitFor(() => viewer.erases.length > erasesBefore);
+  const erasePayload = viewer.erases[viewer.erases.length - 1];
+  const erasePieces = erasePayload?.strokes?.filter((stroke) => stroke.points.length > 0) ?? [];
+  check('erase broadcast to viewers', viewer.erases.length === erasesBefore + 1 && Array.isArray(erasePayload?.strokes));
+  check('eraser cuts the stroke into two pieces', erasePieces.length === 2);
+  check('erased points are removed', erasePieces.every((stroke) => stroke.points.every((point) => Math.abs(point.x - 0.5) > 0.03 || Math.abs(point.y - 0.5) > 0.03)));
+  check('erase echoed to the drawer too', drawer1.erases.length > 0);
+
+  await sleep(50);
+  const erasesBeforeNoop = viewer.erases.length;
+  drawer1.emit(EVENTS.erase, { x: 0.5, y: 0.5, radius: 0.06, aspect: 0.5 });
+  await sleep(50);
+  drawer1.emit(EVENTS.erase, { x: 0.5, y: 0.5, radius: 99, aspect: 0.5 });
+  await sleep(50);
+  guesserClients()[0]?.emit(EVENTS.erase, { x: 0.2, y: 0.5, radius: 0.06, aspect: 0.5 });
+  await sleep(120);
+  check('re-erasing the gap is a no-op', viewer.erases.length === erasesBeforeNoop);
+  check('out-of-range erase radius dropped', viewer.erases.length === erasesBeforeNoop);
+  check('non-drawer cannot erase', viewer.erases.length === erasesBeforeNoop);
 
   const drawingTick = host.ticks.find((tick) => tick.phase === 'drawing' && tick.subPhase === 'drawing');
   check('tick stream is lightweight', Boolean(drawingTick) && !('strokes' in drawingTick) && JSON.stringify(drawingTick).length < 300);

@@ -1,9 +1,8 @@
 import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent, type ReactNode } from 'react';
-import type { Point, Stroke, StrokeChunk } from '../shared/types';
+import type { ErasePayload, Point, Stroke, StrokeChunk } from '../shared/types';
 
 export const PALETTE: Array<{ value: string; label: string }> = [
   { value: '#242323', label: 'Mực đen' },
-  { value: '#ffffff', label: 'Tẩy' },
   { value: '#d90429', label: 'Đỏ' },
   { value: '#f08c00', label: 'Cam' },
   { value: '#f9d423', label: 'Vàng' },
@@ -16,6 +15,12 @@ export const PALETTE: Array<{ value: string; label: string }> = [
   { value: '#9aa0a6', label: 'Xám' },
 ];
 
+const ERASE_EMIT_INTERVAL_MS = 40;
+const BRUSH_MIN = 2;
+const BRUSH_MAX = 16;
+const ERASER_MIN = 10;
+const ERASER_MAX = 64;
+
 function uuid() {
   if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') return crypto.randomUUID();
   return `s-${Math.random().toString(36).slice(2)}${Date.now().toString(36)}`;
@@ -26,51 +31,61 @@ type DrawingBoardProps = {
   interactive: boolean;
   showTools?: boolean;
   onChunk?: (chunk: StrokeChunk) => void;
+  onErase?: (payload: ErasePayload) => void;
   onUndo?: () => void;
   onClear?: () => void;
   overlay?: ReactNode;
 };
 
-export function DrawingBoard({ strokes, interactive, showTools = false, onChunk, onUndo, onClear, overlay }: DrawingBoardProps) {
+export function DrawingBoard({ strokes, interactive, showTools = false, onChunk, onErase, onUndo, onClear, overlay }: DrawingBoardProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const prevStrokesRef = useRef<Stroke[]>([]);
   const activeStroke = useRef<{ id: string; points: Point[]; color: string; width: number } | null>(null);
   const sentCountRef = useRef(0);
   const lastEmitRef = useRef(0);
+  const lastEraseRef = useRef(0);
+  const [tool, setTool] = useState<'brush' | 'eraser'>('brush');
   const [color, setColor] = useState(PALETTE[0].value);
-  const [width, setWidth] = useState(5);
+  const [brushSize, setBrushSize] = useState(5);
+  const [eraserSize, setEraserSize] = useState(28);
+  const erasing = tool === 'eraser';
 
   const context2d = () => {
     const canvas = canvasRef.current;
     return canvas ? canvas.getContext('2d') : null;
   };
 
-  const drawSegment = (context: CanvasRenderingContext2D, stroke: { points: Point[]; color: string; width: number }, fromIndex: number) => {
-    if (!stroke.points.length) return;
+  const applyScale = (context: CanvasRenderingContext2D) => {
     const rect = context.canvas.getBoundingClientRect();
+    const ratio = window.devicePixelRatio || 1;
+    context.setTransform(ratio, 0, 0, ratio, 0, 0);
+    return rect;
+  };
+
+  const drawSegment = (context: CanvasRenderingContext2D, stroke: { points: Point[]; color: string; width: number }, fromIndex: number) => {
+    const points = stroke.points;
+    if (!points.length) return;
+    const rect = applyScale(context);
     context.lineCap = 'round';
     context.lineJoin = 'round';
     context.strokeStyle = stroke.color;
     context.fillStyle = stroke.color;
     context.lineWidth = stroke.width;
-    if (stroke.points.length === 1 || fromIndex >= stroke.points.length - 1) {
-      const point = stroke.points[stroke.points.length - 1];
+    if (points.length === 1) {
       context.beginPath();
-      context.arc(point.x * rect.width, point.y * rect.height, stroke.width / 2, 0, Math.PI * 2);
+      context.arc(points[0].x * rect.width, points[0].y * rect.height, stroke.width / 2, 0, Math.PI * 2);
       context.fill();
       return;
     }
-    const start = Math.max(0, Math.min(fromIndex, stroke.points.length - 2));
+    const start = Math.max(0, Math.min(fromIndex, points.length - 2));
     context.beginPath();
-    context.moveTo(stroke.points[start].x * rect.width, stroke.points[start].y * rect.height);
-    for (const point of stroke.points.slice(start + 1)) context.lineTo(point.x * rect.width, point.y * rect.height);
+    context.moveTo(points[start].x * rect.width, points[start].y * rect.height);
+    for (const point of points.slice(start + 1)) context.lineTo(point.x * rect.width, point.y * rect.height);
     context.stroke();
   };
 
   const redrawAll = (context: CanvasRenderingContext2D, list: Stroke[]) => {
-    const rect = context.canvas.getBoundingClientRect();
-    const ratio = window.devicePixelRatio || 1;
-    context.setTransform(ratio, 0, 0, ratio, 0, 0);
+    const rect = applyScale(context);
     context.clearRect(0, 0, rect.width, rect.height);
     context.fillStyle = '#ffffff';
     context.fillRect(0, 0, rect.width, rect.height);
@@ -105,14 +120,22 @@ export function DrawingBoard({ strokes, interactive, showTools = false, onChunk,
     const resize = () => {
       const rect = canvas.getBoundingClientRect();
       const ratio = window.devicePixelRatio || 1;
-      canvas.width = Math.max(1, Math.round(rect.width * ratio));
-      canvas.height = Math.max(1, Math.round(rect.height * ratio));
+      const nextWidth = Math.max(1, Math.round(rect.width * ratio));
+      const nextHeight = Math.max(1, Math.round(rect.height * ratio));
+      if (canvas.width === nextWidth && canvas.height === nextHeight) return;
+      canvas.width = nextWidth;
+      canvas.height = nextHeight;
       const context = canvas.getContext('2d');
       if (context) redrawAll(context, prevStrokesRef.current);
     };
     resize();
     window.addEventListener('resize', resize);
-    return () => window.removeEventListener('resize', resize);
+    const observer = typeof ResizeObserver === 'function' ? new ResizeObserver(resize) : null;
+    observer?.observe(canvas);
+    return () => {
+      window.removeEventListener('resize', resize);
+      observer?.disconnect();
+    };
   }, []);
 
   const pointFromEvent = (event: ReactPointerEvent<HTMLCanvasElement>): Point => {
@@ -123,23 +146,43 @@ export function DrawingBoard({ strokes, interactive, showTools = false, onChunk,
     };
   };
 
+  const emitErase = (point: Point, immediate = false) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const rect = canvas.getBoundingClientRect();
+    if (!rect.width || !rect.height) return;
+    const now = Date.now();
+    if (!immediate && now - lastEraseRef.current < ERASE_EMIT_INTERVAL_MS) return;
+    lastEraseRef.current = now;
+    onErase?.({ x: point.x, y: point.y, radius: eraserSize / rect.width, aspect: rect.height / rect.width });
+  };
+
   const pointerDown = (event: ReactPointerEvent<HTMLCanvasElement>) => {
     if (!interactive) return;
     event.currentTarget.setPointerCapture(event.pointerId);
     const point = pointFromEvent(event);
-    const stroke = { id: uuid(), points: [point], color, width };
+    if (erasing) {
+      emitErase(point, true);
+      return;
+    }
+    const stroke = { id: uuid(), points: [point], color, width: brushSize };
     activeStroke.current = stroke;
     sentCountRef.current = 0;
     lastEmitRef.current = Date.now();
-    onChunk?.({ id: stroke.id, points: [point], color, width });
+    onChunk?.({ id: stroke.id, points: [point], color, width: brushSize });
     sentCountRef.current = 1;
     const context = context2d();
     if (context) drawSegment(context, stroke, 0);
   };
 
   const pointerMove = (event: ReactPointerEvent<HTMLCanvasElement>) => {
-    if (!interactive || !activeStroke.current) return;
+    if (!interactive) return;
+    if (erasing) {
+      if (event.currentTarget.hasPointerCapture(event.pointerId)) emitErase(pointFromEvent(event));
+      return;
+    }
     const stroke = activeStroke.current;
+    if (!stroke) return;
     const prevLength = stroke.points.length;
     stroke.points.push(pointFromEvent(event));
     const context = context2d();
@@ -170,7 +213,7 @@ export function DrawingBoard({ strokes, interactive, showTools = false, onChunk,
     <div className="board-wrap">
       <canvas
         ref={canvasRef}
-        className={interactive ? 'drawing-canvas interactive' : 'drawing-canvas'}
+        className={interactive ? `drawing-canvas interactive${erasing ? ' erasing' : ''}` : 'drawing-canvas'}
         onPointerDown={pointerDown}
         onPointerMove={pointerMove}
         onPointerUp={pointerUp}
@@ -180,22 +223,52 @@ export function DrawingBoard({ strokes, interactive, showTools = false, onChunk,
       {overlay}
       {showTools && (
         <div className="board-tools">
-          <div className="swatches">
+          <div className={`swatches${erasing ? ' muted' : ''}`}>
             {PALETTE.map((item) => (
               <button
                 key={item.value}
                 type="button"
-                className={`${color === item.value ? 'swatch active' : 'swatch'}${item.value === '#ffffff' ? ' eraser' : ''}`}
+                className={!erasing && color === item.value ? 'swatch active' : 'swatch'}
                 style={{ background: item.value }}
                 aria-label={item.label}
                 title={item.label}
+                disabled={erasing}
                 onClick={() => setColor(item.value)}
               />
             ))}
           </div>
+          <div className="tool-group">
+            <button
+              type="button"
+              className={erasing ? 'tool-button' : 'tool-button active'}
+              aria-pressed={!erasing}
+              aria-label="Bút vẽ"
+              title="Bút vẽ"
+              onClick={() => setTool('brush')}
+            >
+              ✎
+            </button>
+            <button
+              type="button"
+              className={erasing ? 'tool-button active' : 'tool-button'}
+              aria-pressed={erasing}
+              aria-label="Tẩy xóa"
+              title="Tẩy xóa"
+              onClick={() => setTool('eraser')}
+            >
+              ⌫
+            </button>
+          </div>
           <label className="brush-label">
-            Nét
-            <input type="range" min="2" max="16" value={width} onChange={(event) => setWidth(Number(event.target.value))} aria-label="Độ dày nét vẽ" />
+            {erasing ? 'Tẩy' : 'Nét'}
+            <input
+              type="range"
+              min={erasing ? ERASER_MIN : BRUSH_MIN}
+              max={erasing ? ERASER_MAX : BRUSH_MAX}
+              value={erasing ? eraserSize : brushSize}
+              onChange={(event) => (erasing ? setEraserSize(Number(event.target.value)) : setBrushSize(Number(event.target.value)))}
+              aria-label={erasing ? 'Độ rộng tẩy xóa' : 'Độ dày nét vẽ'}
+            />
           </label>
           <div className="tool-group">
             <button type="button" className="tool-button" onClick={() => onUndo?.()} aria-label="Hoàn tác nét vẽ cuối" title="Hoàn tác">↶</button>

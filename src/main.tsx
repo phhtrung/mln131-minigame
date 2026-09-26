@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import { createRoot } from 'react-dom/client';
 import { io, type Socket } from 'socket.io-client';
 import { EVENTS } from '../shared/events';
-import type { ClientState, GuessSuccessPayload, StrokeChunk, TickPayload } from '../shared/types';
+import type { ClientState, GuessSuccessPayload, Stroke, StrokeChunk, TickPayload } from '../shared/types';
 import { isMuted, setMuted, sfx } from './audio';
 import { burstConfetti } from './effects';
 import { GameScreen, JoinScreen, LoadingScreen, LobbyScreen, ProjectorScreen, Toast } from './screens';
@@ -103,6 +103,13 @@ function App() {
           ...current,
           strokes: [...strokes, { id: chunk.id, points: [...chunk.points], color: chunk.color, width: chunk.width }],
         };
+      });
+    });
+
+    nextSocket.on(EVENTS.erase, (payload: { strokes?: Stroke[] }) => {
+      setState((current) => {
+        if (!current || !Array.isArray(payload?.strokes)) return current;
+        return { ...current, strokes: payload.strokes };
       });
     });
 

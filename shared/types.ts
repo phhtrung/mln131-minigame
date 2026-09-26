@@ -95,6 +95,13 @@ export type StrokeChunk = {
   width: number;
 };
 
+export type ErasePayload = {
+  x: number;
+  y: number;
+  radius: number;
+  aspect: number;
+};
+
 export type TickPayload = {
   phase: Phase;
   subPhase: SubPhase;

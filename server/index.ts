@@ -8,8 +8,10 @@ import { EVENTS } from '../shared/events.js';
 import { ROUND_CONTENT, type RoundContent } from '../shared/content.js';
 import type {
   ClientState,
+  ErasePayload,
   Phase,
   Player,
+  Point,
   Quiz,
   Reveal,
   RoomState,
@@ -31,6 +33,7 @@ const DRAWER_GRACE_MS = Math.round(3000 * TIMER_SCALE);
 const GUESS_COOLDOWN_MS = 400;
 const REACTION_COOLDOWN_MS = 3000;
 const CHUNK_COOLDOWN_MS = 20;
+const ERASE_COOLDOWN_MS = 40;
 const WARN_COOLDOWN_MS = 3000;
 const MAX_POINTS_PER_STROKE = 2000;
 const HINT_FIRST_AT = 30;
@@ -40,7 +43,7 @@ type ClientSocket = Socket;
 
 type PlayerEntry = Player & { socketId?: string };
 
-type RateState = { guess?: number; reaction?: number; chunk?: number; warn?: number };
+type RateState = { guess?: number; reaction?: number; chunk?: number; erase?: number; warn?: number };
 
 type Room = {
   phase: Phase;
@@ -126,6 +129,73 @@ const strokeChunkSchema = z.object({
   color: z.string().trim().regex(/^#[0-9a-fA-F]{6}$/),
   width: z.number().min(1).max(40),
 });
+const eraseSchema = z.object({
+  x: z.number().min(0).max(1),
+  y: z.number().min(0).max(1),
+  radius: z.number().min(0.005).max(0.5),
+  aspect: z.number().min(0.1).max(10),
+});
+
+function segmentHitsEraser(a: Point, b: Point, payload: ErasePayload) {
+  const ax = a.x;
+  const ay = a.y * payload.aspect;
+  const bx = b.x;
+  const by = b.y * payload.aspect;
+  const dx = bx - ax;
+  const dy = by - ay;
+  const lengthSquared = dx * dx + dy * dy;
+  const projection = lengthSquared === 0 ? 0 : ((payload.x - ax) * dx + (payload.y - ay) * dy) / lengthSquared;
+  const t = Math.max(0, Math.min(1, projection));
+  const nearestX = ax + dx * t;
+  const nearestY = ay + dy * t;
+  const offsetX = nearestX - payload.x;
+  const offsetY = nearestY - payload.y;
+  return offsetX * offsetX + offsetY * offsetY <= payload.radius * payload.radius;
+}
+
+function eraseStroke(stroke: Stroke, payload: ErasePayload): Stroke[] | null {
+  if (stroke.points.length === 0) return null;
+  const pieces: Point[][] = [];
+  let current: Point[] = [];
+  let touched = false;
+  for (const point of stroke.points) {
+    const offsetX = point.x - payload.x;
+    const offsetY = (point.y - payload.y) * payload.aspect;
+    const inside = offsetX * offsetX + offsetY * offsetY <= payload.radius * payload.radius;
+    const previous = current[current.length - 1];
+    if (inside) {
+      touched = true;
+      if (current.length) pieces.push(current);
+      current = [];
+      continue;
+    }
+    if (previous && segmentHitsEraser(previous, point, payload)) {
+      touched = true;
+      if (current.length) pieces.push(current);
+      current = [point];
+      continue;
+    }
+    current.push(point);
+  }
+  if (current.length) pieces.push(current);
+  if (!touched) return null;
+  return pieces.map((points, index) => ({ ...stroke, id: index === 0 ? stroke.id : randomUUID(), points }));
+}
+
+function eraseStrokes(list: Stroke[], payload: ErasePayload): Stroke[] | null {
+  const next: Stroke[] = [];
+  let changed = false;
+  for (const stroke of list) {
+    const pieces = eraseStroke(stroke, payload);
+    if (!pieces) {
+      next.push(stroke);
+      continue;
+    }
+    changed = true;
+    next.push(...pieces);
+  }
+  return changed ? next : null;
+}
 
 function normalized(value: string) {
   return value
@@ -590,6 +660,20 @@ io.on('connection', (socket: ClientSocket) => {
     if (stroke.points.length + chunk.points.length > MAX_POINTS_PER_STROKE) return;
     stroke.points.push(...chunk.points);
     socket.broadcast.emit(EVENTS.strokeChunk, chunk);
+  });
+
+  socket.on(EVENTS.erase, (payload: unknown) => {
+    if (room.phase !== 'drawing' || room.subPhase !== 'drawing' || socket.data.playerId !== room.drawerId) return;
+    const rate = socket.data.rate as RateState;
+    const now = Date.now();
+    if (rate.erase && now - rate.erase < ERASE_COOLDOWN_MS) return;
+    rate.erase = now;
+    const parsed = eraseSchema.safeParse(payload);
+    if (!parsed.success) return;
+    const next = eraseStrokes(room.strokes, parsed.data);
+    if (!next) return;
+    room.strokes = next;
+    io.emit(EVENTS.erase, { strokes: next });
   });
 
   socket.on(EVENTS.undo, () => {

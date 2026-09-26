@@ -225,11 +225,13 @@ input::placeholder { color: #696662; opacity: 1; }
 .board-tools { flex-wrap: wrap; gap: 10px 14px; padding: 10px 12px; }
 .swatches { display: flex; gap: 6px; flex-wrap: wrap; max-width: 240px; }
 .swatch { border: 1px solid rgba(36,35,35,.38); }
-.swatch.eraser { border-style: dashed; }
+.swatches.muted { opacity: .4; }
 .tool-group { display: flex; gap: 8px; }
 .tool-button { min-height: 34px; min-width: 40px; border: 1px solid var(--line); border-radius: 9px; background: rgba(255,255,255,.92); color: var(--ink); font-weight: 800; font-size: 16px; padding: 4px 10px; transition: background .15s ease, color .15s ease; }
 .tool-button:hover { background: var(--ink); color: var(--white); }
+.tool-button.active { background: var(--ink); color: var(--white); border-color: var(--ink); }
 .tool-button.danger:hover { background: #b3261e; border-color: #b3261e; }
+.drawing-canvas.erasing { cursor: cell; }
 .drawer-note { margin: -6px 0 0; font-size: 13px; font-weight: 600; color: var(--muted); }
 
 .player-row.offline, .ranking-row.offline { opacity: .45; }

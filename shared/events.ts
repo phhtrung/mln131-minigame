@@ -4,6 +4,7 @@ export const EVENTS = {
   startGame: 'start_game',
   chooseWord: 'choose_word',
   strokeChunk: 'stroke_chunk',
+  erase: 'erase',
   undo: 'undo',
   clearCanvas: 'clear_canvas',
   submitGuess: 'submit_guess',
