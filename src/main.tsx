@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import { createRoot } from 'react-dom/client';
 import { io, type Socket } from 'socket.io-client';
-import { EVENTS } from '../shared/events';
+import { EVENTS, PROJECTOR_PASSWORD_QUERY, PROJECTOR_REJECTED_ERROR } from '../shared/events';
 import type { ClientState, GuessSuccessPayload, Reaction, Stroke, StrokeChunk, TickPayload } from '../shared/types';
 import { isMuted, setMuted, sfx } from './audio';
 import { burstConfetti } from './effects';
-import { GameScreen, JoinScreen, LoadingScreen, LobbyScreen, ProjectorScreen, ReactionStorm, Toast, type FlyingReaction } from './screens';
+import { GameScreen, JoinScreen, LoadingScreen, LobbyScreen, ProjectorGate, ProjectorScreen, ReactionStorm, Toast, type FlyingReaction } from './screens';
 import './styles.css';
 
 /*
@@ -18,6 +18,16 @@ FINISH — unreviewed and undocumented is unfinished; this build ends with the f
 */
 
 type StoredSession = { id: string; token: string };
+
+const PROJECTOR_PASSWORD_KEY = 'mln131-projector-password';
+
+function readProjectorPassword(): string | null {
+  try {
+    return localStorage.getItem(PROJECTOR_PASSWORD_KEY) || null;
+  } catch {
+    return null;
+  }
+}
 
 function readSession(): StoredSession | null {
   try {
@@ -46,10 +56,29 @@ function App() {
   const [name, setName] = useState(() => linkedName || localStorage.getItem('mln131-name') || '');
   const [joined, setJoined] = useState(() => Boolean(linkedName) || Boolean(readSession() && (linkedName || localStorage.getItem('mln131-name'))));
   const joinedRef = useRef(Boolean(linkedName) || Boolean(sessionRef.current));
+  const [projectorUnlocked, setProjectorUnlocked] = useState(() => !isProjector || Boolean(readProjectorPassword()));
+  const [projectorError, setProjectorError] = useState('');
 
   useEffect(() => {
-    const nextSocket = io(window.location.origin, { query: { projector: isProjector ? '1' : '0' } });
+    if (isProjector && !projectorUnlocked) return;
+    const projectorPassword = isProjector ? readProjectorPassword() : null;
+    const nextSocket = io(window.location.origin, {
+      query: isProjector
+        ? { projector: '1', [PROJECTOR_PASSWORD_QUERY]: projectorPassword ?? '' }
+        : { projector: '0' },
+    });
     setSocket(nextSocket);
+
+    nextSocket.on('connect_error', (error: Error) => {
+      if (!isProjector || error.message !== PROJECTOR_REJECTED_ERROR) return;
+      try {
+        localStorage.removeItem(PROJECTOR_PASSWORD_KEY);
+      } catch {
+        /* ignore */
+      }
+      setProjectorUnlocked(false);
+      setProjectorError('Sai mật khẩu máy chiếu. Thử lại.');
+    });
 
     nextSocket.on('connect', () => {
       const storedName = (linkedName || localStorage.getItem('mln131-name') || '').trim();
@@ -155,7 +184,19 @@ function App() {
     return () => {
       nextSocket.disconnect();
     };
-  }, [isProjector, linkedName]);
+  }, [isProjector, linkedName, projectorUnlocked]);
+
+  const unlockProjector = (password: string) => {
+    const entered = password.trim();
+    if (!entered) return;
+    try {
+      localStorage.setItem(PROJECTOR_PASSWORD_KEY, entered);
+    } catch {
+      /* ignore */
+    }
+    setProjectorError('');
+    setProjectorUnlocked(true);
+  };
 
   const join = (event: FormEvent) => {
     event.preventDefault();
@@ -195,6 +236,9 @@ function App() {
 
   const shellProps = { muted, onToggleMuted: toggleMuted };
 
+  if (isProjector && !projectorUnlocked) {
+    return <ProjectorGate error={projectorError} onSubmit={unlockProjector} {...shellProps} />;
+  }
   if (!state || !socket) return <><LoadingScreen {...shellProps} /><ReactionStorm flying={flying} /><Toast message={toastMessage} /></>;
   if (isProjector) return <><ProjectorScreen state={state} socket={socket} guessBanner={guessBanner} reactionToast={reactionToast} {...shellProps} /><ReactionStorm flying={flying} /><Toast message={toastMessage} /></>;
 

@@ -4,7 +4,8 @@ import path from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { Server, type Socket } from 'socket.io';
 import { z } from 'zod';
-import { EVENTS } from '../shared/events.js';
+import { EVENTS, PROJECTOR_PASSWORD_QUERY, PROJECTOR_REJECTED_ERROR } from '../shared/events.js';
+import { PROJECTOR_PASSWORD } from '../shared/projector.js';
 import { ROUND_CONTENT, type RoundContent } from '../shared/content.js';
 import type {
   ClientState,
@@ -84,6 +85,15 @@ const httpServer = http.createServer(app);
 const io = new Server(httpServer, {
   cors: { origin: true, credentials: true },
   transports: ['websocket', 'polling'],
+});
+
+io.use((socket, next) => {
+  const wantsProjector = socket.handshake.query.projector === '1';
+  const password = socket.handshake.query[PROJECTOR_PASSWORD_QUERY];
+  const given = Array.isArray(password) ? password[0] : password;
+  if (wantsProjector && given !== PROJECTOR_PASSWORD) return next(new Error(PROJECTOR_REJECTED_ERROR));
+  socket.data.isProjector = wantsProjector;
+  next();
 });
 
 app.get('/healthz', (_request, response) => {
@@ -211,8 +221,8 @@ function scoreForGuess(secondsLeft: number, position: number) {
   return 50 + timePoints + orderBonus;
 }
 
-// The drawing clock freezes when the first correct guess starts the quiz, so late guessers
-// are charged for the real seconds they have spent waiting instead of keeping the full bonus.
+// The drawing clock never freezes for the quiz: it runs its full course so the rest of the class
+// keeps guessing, and late guessers are charged for the real seconds they have spent waiting.
 function effectiveSecondsLeft() {
   if (room.phase === 'drawing') return room.secondsLeft;
   const elapsed = room.quizStartedAt ? Math.floor((Date.now() - room.quizStartedAt) / 1000) : 0;
@@ -316,6 +326,7 @@ function publicState(socket: ClientSocket): ClientState {
   }
   if ((isProjector || playerId === room.firstGuesserId) && room.quiz) state.quiz = room.quiz;
   if (room.phase === 'quiz' && room.quiz) state.quizAnswered = room.quizAnswer !== undefined;
+  if ((isProjector || playerId === room.firstGuesserId) && room.quiz && room.quizAnswer !== undefined) state.quizAnswer = room.quizAnswer;
   if (isProjector || room.phase === 'reveal' || room.phase === 'finished') state.reveal = room.reveal;
   if (isProjector || room.phase === 'finished') state.summary = room.summary;
 
@@ -440,7 +451,7 @@ function selectWord(index: number) {
   room.subPhase = 'countdown';
   startCountdown(PRE_DRAW_SECONDS, () => {
     room.subPhase = 'drawing';
-    startCountdown(DRAW_SECONDS, () => finishRound('not_asked'));
+    startCountdown(DRAW_SECONDS, onDrawingTimeUp);
   });
 }
 
@@ -508,6 +519,13 @@ function startQuiz(firstGuesserId: string) {
   room.secondsLeft = 0;
   room.quizAnswer = undefined;
   broadcastState();
+}
+
+// The class keeps drawing and guessing for the full round; the quiz only opens for the first
+// guesser once the drawing clock runs out.
+function onDrawingTimeUp() {
+  if (room.firstGuesserId) startQuiz(room.firstGuesserId);
+  else finishRound('not_asked');
 }
 
 function finishGame() {
@@ -593,7 +611,6 @@ function joinPlayer(socket: ClientSocket, payload: { name?: unknown; playerId?: 
 }
 
 io.on('connection', (socket: ClientSocket) => {
-  socket.data.isProjector = socket.handshake.query.projector === '1';
   socket.data.rate = {};
   socket.emit(EVENTS.roomState, publicState(socket));
 
@@ -701,8 +718,8 @@ io.on('connection', (socket: ClientSocket) => {
       if (position === 0) player.firstGuesses += 1;
     }
     io.emit(EVENTS.guessSuccess, { playerId, name: player?.name ?? 'Một bạn', points, position });
-    if (position === 0) startQuiz(playerId);
-    else broadcastState();
+    if (position === 0) room.firstGuesserId = playerId;
+    broadcastState();
   });
 
   socket.on(EVENTS.submitQuiz, (payload: { answer?: unknown }) => {

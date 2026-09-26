@@ -10,7 +10,7 @@ npm run dev
 ```
 
 - Người chơi: http://localhost:5173/
-- Màn hình máy chiếu: http://localhost:5173/?projector=1
+- Màn hình máy chiếu: http://localhost:5173/?projector=1 — màn hình này hỏi mật khẩu trước khi vào (mật khẩu hardcode trong `shared/projector.ts`); server cũng từ chối kết nối máy chiếu sai mật khẩu, nên máy chiếu chưa xác thực sẽ không thấy quiz/reveal và không bấm được "Bắt đầu"/"Mở đáp án".
 
 Nếu muốn chạy giống production:
 
@@ -56,7 +56,7 @@ npm run test:smoke
    - Start: `npm start`
    - Health check: `/healthz`
 4. Sau khi deploy, kiểm tra `https://<ten-service>.onrender.com/healthz` trả về `{"ok":true}`.
-5. Gửi link gốc cho người chơi và thêm `?projector=1` cho máy chiếu.
+5. Gửi link gốc cho người chơi và thêm `?projector=1` cho máy chiếu (nhớ mật khẩu máy chiếu để mở màn hình).
 
 > Free Render service phù hợp để thử nghiệm nhưng có thể sleep khi không có traffic. Trước giờ thuyết trình nên mở link, chạy thử một vòng và cân nhắc nâng lên instance nhỏ trả phí để tránh cold start.
 
