@@ -92,6 +92,12 @@ async function waitState(client, predicate, timeoutMs = 10000) {
   return undefined;
 }
 
+// The quiz only opens once the drawing clock runs out, so waiting for it can take a whole round.
+async function waitForQuiz(client) {
+  const state = await waitState(client, (next) => next.phase === 'quiz', gameMs(DRAW_SECONDS) + 12000);
+  return state;
+}
+
 async function waitFor(predicate, timeoutMs = 2000) {
   const start = Date.now();
   while (Date.now() - start < timeoutMs) {
@@ -339,8 +345,15 @@ async function main() {
 
   const scoreBefore1 = playerIn(projector.state, g1.id).score;
   g1.emit(EVENTS.submitGuess, { guess: aliasFor(chosenWord1) });
-  await waitState(projector, (state) => state.phase === 'quiz');
-  check('quiz phase after first correct guess', projector.state.phase === 'quiz');
+  await waitState(projector, (state) => state.firstGuesserId === g1.id);
+  check(
+    'clock keeps running after the first correct guess',
+    projector.state.phase === 'drawing' && projector.state.secondsLeft > 0 && projector.state.quiz === undefined,
+  );
+  check(
+    'projector shows the first guesser name while the class keeps guessing',
+    playerIn(projector.state, g1.id)?.name === g1.label && projector.state.firstGuesserId === g1.id,
+  );
   const success1 = viewer.successes.find((payload) => payload.playerId === g1.id);
   check('first guesser gets fast-guess points (150-500)', Boolean(success1) && success1.position === 0 && success1.points >= 150 && success1.points <= 500);
   check('first guesser score matches broadcast points', Boolean(success1) && playerIn(projector.state, g1.id).score === scoreBefore1 + success1.points);
@@ -349,7 +362,7 @@ async function main() {
   await sleep(1300);
   g2.emit(EVENTS.submitGuess, { guess: aliasFor(chosenWord1) });
   await sleep(350);
-  check('second guesser accepted during quiz', projector.state.guessedPlayerIds.includes(g2.id));
+  check('second guesser accepted while the clock keeps running', projector.state.guessedPlayerIds.includes(g2.id) && projector.state.phase === 'drawing');
   const success2 = viewer.successes.find((payload) => payload.playerId === g2.id);
   check('second guesser scores less than first (time + order)', Boolean(success1) && Boolean(success2) && success2.position === 1 && success2.points >= 100 && success2.points <= 450 && success2.points < success1.points && playerIn(projector.state, g2.id).score === success2.points);
   check('late guesser loses time points, not just the order bonus', Boolean(success1) && Boolean(success2) && success2.points < success1.points - 50);
@@ -360,6 +373,9 @@ async function main() {
     'answer is accepted regardless of letter case',
     projector.state.guessedPlayerIds.includes(accentProbe.id) && playerIn(projector.state, accentProbe.id).score > 0,
   );
+
+  await waitForQuiz(projector);
+  check('quiz opens only when the drawing clock runs out', projector.state.phase === 'quiz' && projector.state.secondsLeft === 0);
 
   const content1 = ROUND_CONTENT.find((item) => item.word === chosenWord1);
   check('first guesser receives quiz', g1.state.quiz?.prompt === content1.quiz.prompt);
@@ -424,7 +440,7 @@ async function main() {
   // successes accumulate for the whole session, so drop round 1 events before looking this one up.
   r2Guesser.successes.length = 0;
   r2Guesser.emit(EVENTS.submitGuess, { guess: aliasFor(chosenWord2) });
-  await waitState(projector, (state) => state.phase === 'quiz');
+  await waitForQuiz(projector);
   const r2Success = r2Guesser.successes.find((payload) => payload.playerId === r2Guesser.id);
   check('round 2 first guess is recorded as position 0', Boolean(r2Success) && r2Success.position === 0);
   check('round 2 first guess earns time-based points', Boolean(r2Success) && r2Success.points >= 150 && r2Success.points <= 500);
@@ -471,7 +487,7 @@ async function main() {
   const r3Guesser = guesserClients().find((client) => !client.state.you?.hasGuessed);
   const r3Before = playerIn(projector.state, r3Guesser.id).score;
   r3Guesser.emit(EVENTS.submitGuess, { guess: aliasFor(chosenWord3) });
-  await waitState(projector, (state) => state.phase === 'quiz');
+  await waitForQuiz(projector);
   const r3FirstGuesserId = projector.state.firstGuesserId;
   const r3Success = r3Guesser.successes.find((payload) => payload.playerId === r3Guesser.id);
   check('round 3 quiz underway', Boolean(r3Success) && playerIn(projector.state, r3FirstGuesserId).score === r3Before + r3Success.points);
@@ -505,7 +521,7 @@ async function main() {
 
   const r4Guesser = guesserClients().find((client) => !client.state.you?.hasGuessed);
   r4Guesser.emit(EVENTS.submitGuess, { guess: aliasFor(autoPickState.privateWord) });
-  await waitState(projector, (state) => state.phase === 'quiz');
+  await waitForQuiz(projector);
   const r4Answerer = players.find((client) => client.id === projector.state.firstGuesserId);
   quizIndices.push(r4Answerer.state.quiz.correctIndex);
   r4Answerer.emit(EVENTS.submitQuiz, { answer: r4Answerer.state.quiz.correctIndex });
@@ -537,7 +553,7 @@ async function main() {
     }
     const answerer = guesserClients().find((client) => !client.state.you?.hasGuessed);
     answerer.emit(EVENTS.submitGuess, { guess: aliasFor(chosenWord) });
-    await waitState(projector, (state) => state.phase === 'quiz');
+    await waitForQuiz(projector);
     quizIndices.push(answerer.state.quiz.correctIndex);
     answerer.emit(EVENTS.submitQuiz, { answer: answerer.state.quiz.correctIndex });
     await waitFor(() => projector.state.quizAnswered === true);

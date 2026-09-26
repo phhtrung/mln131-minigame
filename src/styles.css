@@ -229,6 +229,11 @@ input::placeholder { color: #696662; opacity: 1; }
 .projector-quiz-options .quiz-option.chosen { background: rgba(241,5,230,.1); border-bottom-color: var(--magenta); color: var(--ink); font-weight: 800; }
 .chosen-tag { font-style: normal; font-family: var(--body); font-size: 12px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: var(--magenta); animation: chosenIn .32s ease both; }
 @keyframes chosenIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: none; } }
+.first-guesser-flag { display: flex; align-items: baseline; flex-wrap: wrap; gap: 14px; margin: 0 0 16px; padding: 14px 18px; border-left: 5px solid var(--magenta); background: rgba(241,5,230,.08); border-radius: 0 12px 12px 0; animation: chosenIn .32s ease both; }
+.first-guesser-flag .eyebrow { margin: 0; color: var(--magenta); }
+.first-guesser-flag strong { font-family: var(--display); font-size: clamp(1.5rem, 3vw, 2.4rem); line-height: 1; }
+.first-guesser-flag > span:last-child { font-weight: 700; color: var(--muted); }
+.first-guesser-note { margin: 14px 0 0; font-size: 14px; font-weight: 700; color: var(--blue-deep); line-height: 1.5; }
 .toast { position: fixed; z-index: 20; left: 50%; bottom: 22px; transform: translateX(-50%); padding: 13px 18px; background: var(--ink); color: var(--white); border-top: 3px solid var(--magenta); font-size: 14px; font-weight: 700; box-shadow: 0 12px 30px rgba(50,46,41,.18); }
 
 .sound-toggle { border: 1px solid var(--line); background: transparent; border-radius: 999px; min-width: 42px; height: 34px; font-size: 15px; line-height: 1; padding: 0 8px; transition: background .16s ease; }
