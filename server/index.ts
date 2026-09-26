@@ -32,8 +32,6 @@ const CHUNK_COOLDOWN_MS = 20;
 const ERASE_COOLDOWN_MS = 40;
 const WARN_COOLDOWN_MS = 3000;
 const MAX_POINTS_PER_STROKE = 2000;
-const HINT_FIRST_AT = 30;
-const HINT_SECOND_AT = 15;
 
 type ClientSocket = Socket;
 
@@ -63,8 +61,6 @@ type Room = {
   quizStartedAt?: number;
   reveal?: Reveal;
   summary: SummaryItem[];
-  hintLevel: number;
-  hintIndices: number[];
   timer?: ReturnType<typeof setInterval>;
   drawerGraceTimer?: ReturnType<typeof setTimeout>;
 };
@@ -82,8 +78,6 @@ const room: Room = {
   strokes: [],
   guessedPlayerIds: [],
   summary: [],
-  hintLevel: 0,
-  hintIndices: [],
 };
 
 const app = express();
@@ -115,7 +109,7 @@ app.get(/.*/, (_request, response) => {
 const nameSchema = z.string().trim().min(1).max(24);
 const wordIndexSchema = z.number().int().min(0).max(2);
 const guessSchema = z.string().trim().min(1).max(80);
-const reactionSchema = z.string().trim().min(1).max(8);
+const reactionSchema = z.enum(['😭', '🥀', '❓', '💀', '😮‍💨', '🙏', '🥶', '😓']);
 const answerSchema = z.number().int().min(0).max(3);
 const pointSchema = z.object({ x: z.number().min(0).max(1), y: z.number().min(0).max(1) });
 const strokeIdSchema = z.string().trim().min(1).max(64);
@@ -124,6 +118,7 @@ const strokeChunkSchema = z.object({
   points: z.array(pointSchema).min(1).max(64),
   color: z.string().trim().regex(/^#[0-9a-fA-F]{6}$/),
   width: z.number().min(1).max(40),
+  tool: z.literal('fill').optional(),
 });
 const eraseSchema = z.object({
   x: z.number().min(0).max(1),
@@ -254,24 +249,11 @@ function buildShuffledQuiz(content: RoundContent): Quiz {
   };
 }
 
-function hintIndicesFor(word: string, fraction: number): number[] {
-  const nonSpace = [...word].map((character, index) => ({ character, index })).filter((item) => /\S/.test(item.character));
-  if (nonSpace.length <= 1) return [];
-  const count = Math.min(nonSpace.length - 1, Math.max(1, Math.round(nonSpace.length * fraction)));
-  const step = nonSpace.length / count;
-  const picked = new Set<number>();
-  for (let k = 0; k < count; k += 1) {
-    const item = nonSpace[Math.min(nonSpace.length - 1, Math.floor(k * step))];
-    picked.add(item.index);
-  }
-  return [...picked].sort((a, b) => a - b);
-}
-
-function maskedWordFor(word: string, hintIndices: number[]): string {
+function maskedWordFor(word: string): string {
   return [...word]
-    .map((character, index) => {
+    .map((character) => {
       if (/\s/.test(character)) return ' ';
-      return hintIndices.includes(index) ? character : '•';
+      return '•';
     })
     .join('');
 }
@@ -279,7 +261,7 @@ function maskedWordFor(word: string, hintIndices: number[]): string {
 function currentMaskedWord(): string | undefined {
   if (!room.currentContent || !room.wordSelected) return undefined;
   if (room.phase !== 'drawing' && room.phase !== 'quiz') return undefined;
-  return maskedWordFor(room.currentContent.word, room.hintIndices);
+  return maskedWordFor(room.currentContent.word);
 }
 
 function toPublicPlayer(player: PlayerEntry): Player {
@@ -315,7 +297,6 @@ function publicState(socket: ClientSocket): ClientState {
     strokes: room.strokes,
     guessedPlayerIds: room.guessedPlayerIds,
     firstGuesserId: room.firstGuesserId,
-    hintLevel: room.hintLevel,
     isHost,
   };
 
@@ -380,7 +361,6 @@ function startCountdown(seconds: number, onComplete: () => void) {
   broadcastState();
   room.timer = setInterval(() => {
     room.secondsLeft -= 1;
-    if (room.phase === 'drawing' && room.subPhase === 'drawing') updateHints();
     broadcastTick();
     if (room.secondsLeft <= 0) {
       if (room.timer) clearInterval(room.timer);
@@ -388,18 +368,6 @@ function startCountdown(seconds: number, onComplete: () => void) {
       onComplete();
     }
   }, Math.round(1000 * TIMER_SCALE));
-}
-
-function updateHints() {
-  const word = room.currentContent?.word;
-  if (!word) return;
-  if (room.secondsLeft <= HINT_SECOND_AT && room.hintLevel < 2) {
-    room.hintLevel = 2;
-    room.hintIndices = hintIndicesFor(word, 0.5);
-  } else if (room.secondsLeft <= HINT_FIRST_AT && room.hintLevel < 1) {
-    room.hintLevel = 1;
-    room.hintIndices = hintIndicesFor(word, 0.25);
-  }
 }
 
 function awardDrawer() {
@@ -434,8 +402,6 @@ function resetRoundState() {
   room.quizDrawSeconds = undefined;
   room.quizStartedAt = undefined;
   room.reveal = undefined;
-  room.hintLevel = 0;
-  room.hintIndices = [];
 }
 
 function resetForNewGame() {
@@ -671,7 +637,7 @@ io.on('connection', (socket: ClientSocket) => {
     const chunk = parsed.data;
     let stroke = [...room.strokes].reverse().find((item) => item.id === chunk.id);
     if (!stroke) {
-      stroke = { id: chunk.id, points: [], color: chunk.color, width: chunk.width };
+      stroke = { id: chunk.id, points: [], color: chunk.color, width: chunk.width, tool: chunk.tool };
       room.strokes.push(stroke);
     }
     if (stroke.points.length + chunk.points.length > MAX_POINTS_PER_STROKE) return;

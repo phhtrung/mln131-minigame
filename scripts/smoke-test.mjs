@@ -12,8 +12,6 @@ const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 // Game seconds -> real milliseconds, so timeouts follow the game clock instead of a magic number.
 const gameMs = (seconds) => Math.round(seconds * 1000 * SCALE);
 const DRAW_SECONDS = 45;
-const HINT_FIRST_AFTER = DRAW_SECONDS - 30;
-const HINT_SECOND_AFTER = DRAW_SECONDS - 15;
 
 let checks = 0;
 let failures = 0;
@@ -187,13 +185,16 @@ async function main() {
 
   console.log('\n== Reactions have no rate limit ==');
   const reactionsBefore = host.reactions.length;
-  for (let i = 0; i < 6; i += 1) players[4].emit(EVENTS.reaction, '🎉');
+  for (let i = 0; i < 6; i += 1) players[4].emit(EVENTS.reaction, '😭');
   await waitFor(() => host.reactions.length >= reactionsBefore + 6);
   check('reaction spam is not rate limited', host.reactions.length >= reactionsBefore + 6);
-  check('reaction payload carries the emoji', host.reactions.slice(-6).every((item) => item.reaction === '🎉' && typeof item.id === 'string'));
+  check('reaction payload carries the emoji', host.reactions.slice(-6).every((item) => item.reaction === '😭' && typeof item.id === 'string'));
   players[4].emit(EVENTS.reaction, '');
   await sleep(300);
   check('empty reaction is dropped', host.reactions.length === reactionsBefore + 6);
+  players[4].emit(EVENTS.reaction, '⛄');
+  await sleep(300);
+  check('unsupported reaction is dropped', host.reactions.length === reactionsBefore + 6);
 
   console.log('\n== Round 1: full happy path ==');
   host.emit(EVENTS.startGame);
@@ -233,6 +234,7 @@ async function main() {
 
   await waitState(host, (state) => state.subPhase === 'drawing');
   check('drawing subphase after countdown', host.state.subPhase === 'drawing');
+  check('drawing timer starts at 45 seconds', host.state.secondsLeft <= DRAW_SECONDS && host.state.secondsLeft >= DRAW_SECONDS - 1);
 
   console.log('\n== Stroke streaming, undo, clear ==');
   const viewer = guesserClients()[2];
@@ -260,6 +262,15 @@ async function main() {
   check('undo broadcast with stroke id', viewer.undos.length > 0 && viewer.undos[viewer.undos.length - 1].id === 'stroke-a');
   await sleep(30);
   drawer1.emit(EVENTS.strokeChunk, { id: 'stroke-c', points: [{ x: 0.6, y: 0.6 }], color: '#d90429', width: 8 });
+  await sleep(30);
+  const fillBefore = viewer.chunks.length;
+  drawer1.emit(EVENTS.strokeChunk, { id: 'fill-a', points: [{ x: 0.5, y: 0.5 }], color: '#1769e8', width: 1, tool: 'fill' });
+  await waitFor(() => viewer.chunks.length > fillBefore);
+  check('fill tool action is broadcast', viewer.chunks.length === fillBefore + 1 && viewer.chunks.at(-1)?.tool === 'fill');
+  await sleep(30);
+  drawer1.emit(EVENTS.undo);
+  await waitFor(() => viewer.undos.at(-1)?.id === 'fill-a');
+  check('undo removes the fill action', viewer.undos.at(-1)?.id === 'fill-a');
   await sleep(30);
   drawer1.emit(EVENTS.clearCanvas);
   await waitFor(() => viewer.clears.length > 0);
@@ -355,7 +366,7 @@ async function main() {
   check('drawer awarded 375 for 3 of 4 guessers', host.state.guessedPlayerIds.length === 3 && playerIn(host.state, drawer1.id).score === 375);
   projector.emit(EVENTS.advanceRound);
 
-  console.log('\n== Round 2: hints + wrong quiz ==');
+  console.log('\n== Round 2: word length + wrong quiz ==');
   await waitState(host, (state) => state.phase === 'drawing' && state.subPhase === 'choosing' && state.round === 2);
   check('round 2 started', host.state.round === 2);
   const drawer2 = drawerClient();
@@ -374,15 +385,9 @@ async function main() {
   check('late join blocked mid-game', late.toasts.some((message) => message.includes('Ván chơi đang diễn ra')) && !host.state.players.some((player) => player.name === 'Người Muộn'));
   await late.disconnect();
 
-  const hintTick1 = await waitForTick(host, (tick) => tick.phase === 'drawing' && tick.subPhase === 'drawing' && revealedCount(tick.maskedWord) >= 1, gameMs(HINT_FIRST_AFTER) + 5000);
-  check('hint letters revealed at 30s mark', Boolean(hintTick1));
-  const hintTick2 = await waitForTick(
-    host,
-    (tick) => tick.phase === 'drawing' && tick.subPhase === 'drawing' && revealedCount(tick.maskedWord) > revealedCount(hintTick1?.maskedWord ?? ''),
-    gameMs(HINT_SECOND_AFTER) + 5000,
-  );
-  check('more letters revealed at 15s mark', Boolean(hintTick2) && revealedCount(hintTick2?.maskedWord ?? '') > revealedCount(hintTick1?.maskedWord ?? ''));
-  check('masked word never fully revealed', revealedCount(hintTick2?.maskedWord ?? '') < totalSlots(hintTick2?.maskedWord ?? ''));
+  const initialMasked = host.state.maskedWord;
+  await sleep(gameMs(20));
+  check('word length is visible and letters stay masked', Boolean(initialMasked) && revealedCount(initialMasked) === 0 && totalSlots(initialMasked) > 0 && host.state.maskedWord === initialMasked);
 
   const round2Guessers = guesserClients();
   const wrongGuesser = round2Guessers.find((client) => !client.state.you?.hasGuessed);

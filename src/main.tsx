@@ -41,6 +41,7 @@ function App() {
   const [state, setState] = useState<ClientState | null>(null);
   const [toastMessage, setToastMessage] = useState('');
   const [guessBanner, setGuessBanner] = useState<GuessSuccessPayload | null>(null);
+  const [reactionToast, setReactionToast] = useState<Reaction | null>(null);
   const [flying, setFlying] = useState<FlyingReaction[]>([]);
   const [muted, setMutedState] = useState(() => isMuted());
   const [name, setName] = useState(() => linkedName || localStorage.getItem('mln131-name') || '');
@@ -135,6 +136,7 @@ function App() {
 
     nextSocket.on(EVENTS.toast, (message: string) => {
       setToastMessage(message);
+      if (message.includes('Chưa đúng') || message.includes('thiếu dấu')) sfx.wrong();
       window.setTimeout(() => setToastMessage(''), 2600);
     });
 
@@ -142,6 +144,9 @@ function App() {
       if (typeof payload?.reaction !== 'string' || !payload.reaction) return;
       const id = typeof payload.id === 'string' && payload.id ? payload.id : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
       const item: FlyingReaction = { id, reaction: payload.reaction, x: 4 + Math.random() * 88, drift: Math.round(Math.random() * 80 - 40) };
+      setReactionToast(payload);
+      sfx.pop();
+      window.setTimeout(() => setReactionToast((current) => (current?.id === id ? null : current)), 2400);
       setFlying((current) => [...current.slice(-39), item]);
       window.setTimeout(() => {
         setFlying((current) => current.filter((entry) => entry.id !== id));
@@ -174,17 +179,32 @@ function App() {
     setMutedState(next);
   };
 
+  const sendStrokeChunk = (chunk: StrokeChunk) => {
+    setState((current) => {
+      if (!current) return current;
+      const strokes = current.strokes;
+      const lastIndex = strokes.length - 1;
+      if (lastIndex >= 0 && strokes[lastIndex].id === chunk.id) {
+        const next = strokes.slice();
+        next[lastIndex] = { ...strokes[lastIndex], points: [...strokes[lastIndex].points, ...chunk.points] };
+        return { ...current, strokes: next };
+      }
+      return { ...current, strokes: [...strokes, { ...chunk, points: [...chunk.points] }] };
+    });
+    socket?.emit(EVENTS.strokeChunk, chunk);
+  };
+
   const shellProps = { muted, onToggleMuted: toggleMuted };
 
   if (!state || !socket) return <><LoadingScreen {...shellProps} /><ReactionStorm flying={flying} /><Toast message={toastMessage} /></>;
-  if (isProjector) return <><ProjectorScreen state={state} socket={socket} guessBanner={guessBanner} {...shellProps} /><ReactionStorm flying={flying} /><Toast message={toastMessage} /></>;
+  if (isProjector) return <><ProjectorScreen state={state} socket={socket} guessBanner={guessBanner} reactionToast={reactionToast} {...shellProps} /><ReactionStorm flying={flying} /><Toast message={toastMessage} /></>;
 
   const inRoom = Boolean(state.you && state.players.some((player) => player.id === state.you?.id));
   if (!joined || (state.phase === 'lobby' && !inRoom && !isHost)) {
     return <><JoinScreen name={name} setName={setName} onSubmit={join} {...shellProps} /><ReactionStorm flying={flying} /><Toast message={toastMessage} /></>;
   }
   if (state.phase === 'lobby') return <><LobbyScreen state={state} socket={socket} isHost={isHost} {...shellProps} /><ReactionStorm flying={flying} /><Toast message={toastMessage} /></>;
-  return <><GameScreen state={state} socket={socket} isHost={isHost} guessBanner={guessBanner} {...shellProps} /><ReactionStorm flying={flying} /><Toast message={toastMessage} /></>;
+  return <><GameScreen state={state} socket={socket} isHost={isHost} guessBanner={guessBanner} reactionToast={reactionToast} onStrokeChunk={sendStrokeChunk} {...shellProps} /><ReactionStorm flying={flying} /><Toast message={toastMessage} /></>;
 }
 
 createRoot(document.getElementById('root')!).render(<App />);

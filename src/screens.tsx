@@ -2,12 +2,14 @@ import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type 
 import type { Socket } from 'socket.io-client';
 import { EVENTS } from '../shared/events';
 import type { ClientState, GuessSuccessPayload, Player, QuizResult, SummaryItem } from '../shared/types';
+import type { Reaction, StrokeChunk } from '../shared/types';
+import twemoji from 'twemoji';
 import { DrawingBoard } from './board';
 import { GuessBanner, PreDrawCountdown, RoundIntro, burstConfetti } from './effects';
 import { sfx } from './audio';
 import { copyLeaderboard, downloadLeaderboardPng } from './export';
 
-const REACTIONS = ['👏', '💡', '❤️', '🤔', '🎉'];
+const REACTIONS = ['😭', '🥀', '❓', '💀', '😮‍💨', '🙏', '🥶', '😓'];
 
 function useGameEffects(state: ClientState, isProjector: boolean) {
   const prevRef = useRef<{ phase?: string; subPhase?: string }>({});
@@ -131,9 +133,11 @@ type GameScreenProps = ShellProps & {
   socket: Socket;
   isHost: boolean;
   guessBanner: GuessSuccessPayload | null;
+  reactionToast: Reaction | null;
+  onStrokeChunk: (chunk: StrokeChunk) => void;
 };
 
-export function GameScreen({ state, socket, isHost, guessBanner, muted, onToggleMuted }: GameScreenProps) {
+export function GameScreen({ state, socket, isHost, guessBanner, reactionToast, onStrokeChunk, muted, onToggleMuted }: GameScreenProps) {
   const you = state.you;
   const isDrawer = Boolean(you?.isDrawer);
   const hasGuessed = Boolean(you?.hasGuessed);
@@ -144,6 +148,7 @@ export function GameScreen({ state, socket, isHost, guessBanner, muted, onToggle
     <>
       <PreDrawCountdown phase={state.phase} subPhase={state.subPhase} secondsLeft={state.secondsLeft} flashDraw={flashDraw} />
       <GuessBanner banner={guessBanner} />
+      <ReactionToast notification={reactionToast} />
     </>
   );
   return (
@@ -183,7 +188,7 @@ export function GameScreen({ state, socket, isHost, guessBanner, muted, onToggle
                 strokes={state.strokes}
                 interactive={canDraw}
                 showTools={canDraw}
-                onChunk={(chunk) => socket.emit(EVENTS.strokeChunk, chunk)}
+                onChunk={onStrokeChunk}
                 onErase={(payload) => socket.emit(EVENTS.erase, payload)}
                 onUndo={() => socket.emit(EVENTS.undo)}
                 onClear={() => socket.emit(EVENTS.clearCanvas)}
@@ -324,11 +329,10 @@ function RevealCard({ state }: { state: ClientState }) {
 function MaskedWord({ word, projector = false }: { word?: string; projector?: boolean }) {
   if (!word) return null;
   return (
-    <div className={projector ? 'masked-word projector' : 'masked-word'} aria-label="Từ khóa đang được che">
+    <div className={projector ? 'masked-word projector' : 'masked-word'} aria-label={`Từ khóa gồm ${[...word].filter((character) => /\S/.test(character)).length} chữ cái`}>
       {[...word].map((character, index) => {
         if (/\s/.test(character)) return <span key={index} className="masked-gap" />;
-        if (character === '•') return <span key={index} className="masked-char" />;
-        return <span key={index} className="masked-char revealed">{character}</span>;
+        return <span key={index} className="masked-char" aria-hidden="true">{character === '•' ? '' : character}</span>;
       })}
     </div>
   );
@@ -337,14 +341,13 @@ function MaskedWord({ word, projector = false }: { word?: string; projector?: bo
 function ReactionPanel({ socket }: { socket: Socket }) {
   const send = (reaction: string) => {
     socket.emit(EVENTS.reaction, reaction);
-    sfx.pop();
   };
   return (
     <div className="reaction-card surface-card">
       <div className="reaction-header"><span className="eyebrow">PHẢN ỨNG</span></div>
       <div className="reaction-row">
         {REACTIONS.map((reaction) => (
-          <button key={reaction} className="reaction-button" aria-label={`Gửi phản ứng ${reaction}`} onClick={() => send(reaction)}>{reaction}</button>
+          <button key={reaction} className="reaction-button" aria-label={`Gửi phản ứng ${reaction}`} onClick={() => send(reaction)}><EmojiMark reaction={reaction} /></button>
         ))}
       </div>
     </div>
@@ -352,6 +355,20 @@ function ReactionPanel({ socket }: { socket: Socket }) {
 }
 
 export type FlyingReaction = { id: string; reaction: string; x: number; drift: number };
+
+function EmojiMark({ reaction }: { reaction: string }) {
+  return <span className="emoji-mark" aria-hidden="true" dangerouslySetInnerHTML={{ __html: twemoji.parse(reaction, { base: '/twemoji/', folder: 'svg', ext: '.svg' }) }} />;
+}
+
+function ReactionToast({ notification }: { notification: Reaction | null }) {
+  if (!notification) return null;
+  return (
+    <div className="reaction-toast" role="status">
+      <EmojiMark reaction={notification.reaction} />
+      <span><strong>{notification.name}</strong> thả cảm xúc</span>
+    </div>
+  );
+}
 
 export function ReactionStorm({ flying }: { flying: FlyingReaction[] }) {
   return (
@@ -362,7 +379,7 @@ export function ReactionStorm({ flying }: { flying: FlyingReaction[] }) {
           className="flying-reaction"
           style={{ left: `${item.x}%`, ['--drift' as string]: `${item.drift}px` }}
         >
-          {item.reaction}
+          <EmojiMark reaction={item.reaction} />
         </span>
       ))}
     </div>
@@ -525,12 +542,13 @@ function FinalRanking({ state, socket, isHost }: { state: ClientState; socket: S
   );
 }
 
-export function ProjectorScreen({ state, socket, guessBanner, muted, onToggleMuted }: ShellProps & { state: ClientState; socket: Socket; guessBanner: GuessSuccessPayload | null }) {
+export function ProjectorScreen({ state, socket, guessBanner, reactionToast, muted, onToggleMuted }: ShellProps & { state: ClientState; socket: Socket; guessBanner: GuessSuccessPayload | null; reactionToast: Reaction | null }) {
   const { roundIntro, flashDraw } = useGameEffects(state, true);
   const overlay = (
     <>
       <PreDrawCountdown phase={state.phase} subPhase={state.subPhase} secondsLeft={state.secondsLeft} flashDraw={flashDraw} />
       <GuessBanner banner={guessBanner} />
+      <ReactionToast notification={reactionToast} />
     </>
   );
   const heading = state.phase === 'finished'

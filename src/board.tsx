@@ -13,6 +13,7 @@ export const PALETTE: Array<{ value: string; label: string }> = [
   { value: '#ec2ce2', label: 'Hồng' },
   { value: '#8d5524', label: 'Nâu' },
   { value: '#9aa0a6', label: 'Xám' },
+  { value: '#b5179e', label: 'Tím hồng' },
 ];
 
 const ERASE_EMIT_INTERVAL_MS = 40;
@@ -20,6 +21,7 @@ const BRUSH_MIN = 2;
 const BRUSH_MAX = 16;
 const ERASER_MIN = 10;
 const ERASER_MAX = 64;
+const FILL_TOLERANCE = 36;
 
 function uuid() {
   if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') return crypto.randomUUID();
@@ -44,7 +46,7 @@ export function DrawingBoard({ strokes, interactive, showTools = false, onChunk,
   const sentCountRef = useRef(0);
   const lastEmitRef = useRef(0);
   const lastEraseRef = useRef(0);
-  const [tool, setTool] = useState<'brush' | 'eraser'>('brush');
+  const [tool, setTool] = useState<'brush' | 'eraser' | 'fill'>('brush');
   const [color, setColor] = useState(PALETTE[0].value);
   const [brushSize, setBrushSize] = useState(5);
   const [eraserSize, setEraserSize] = useState(28);
@@ -65,6 +67,10 @@ export function DrawingBoard({ strokes, interactive, showTools = false, onChunk,
   const drawSegment = (context: CanvasRenderingContext2D, stroke: { points: Point[]; color: string; width: number }, fromIndex: number) => {
     const points = stroke.points;
     if (!points.length) return;
+    if ('tool' in stroke && stroke.tool === 'fill') {
+      fillRegion(context, points[0], stroke.color);
+      return;
+    }
     const rect = applyScale(context);
     context.lineCap = 'round';
     context.lineJoin = 'round';
@@ -82,6 +88,55 @@ export function DrawingBoard({ strokes, interactive, showTools = false, onChunk,
     context.moveTo(points[start].x * rect.width, points[start].y * rect.height);
     for (const point of points.slice(start + 1)) context.lineTo(point.x * rect.width, point.y * rect.height);
     context.stroke();
+  };
+
+  const fillRegion = (context: CanvasRenderingContext2D, point: Point, color: string) => {
+    const canvas = context.canvas;
+    const width = canvas.width;
+    const height = canvas.height;
+    const image = context.getImageData(0, 0, width, height);
+    const pixels = image.data;
+    const startX = Math.min(width - 1, Math.floor(point.x * width));
+    const startY = Math.min(height - 1, Math.floor(point.y * height));
+    const startIndex = (startY * width + startX) * 4;
+    const targetR = pixels[startIndex];
+    const targetG = pixels[startIndex + 1];
+    const targetB = pixels[startIndex + 2];
+    const match = (index: number) =>
+      Math.abs(pixels[index] - targetR) <= FILL_TOLERANCE &&
+      Math.abs(pixels[index + 1] - targetG) <= FILL_TOLERANCE &&
+      Math.abs(pixels[index + 2] - targetB) <= FILL_TOLERANCE;
+    const hex = color.slice(1);
+    const fillR = Number.parseInt(hex.slice(0, 2), 16);
+    const fillG = Number.parseInt(hex.slice(2, 4), 16);
+    const fillB = Number.parseInt(hex.slice(4, 6), 16);
+    if (targetR === fillR && targetG === fillG && targetB === fillB) return;
+    const stack = new Int32Array(width * height);
+    const visited = new Uint8Array(width * height);
+    let stackSize = 1;
+    stack[0] = startY * width + startX;
+    visited[startY * width + startX] = 1;
+    pixels[startIndex] = fillR;
+    pixels[startIndex + 1] = fillG;
+    pixels[startIndex + 2] = fillB;
+    const addNeighbor = (neighbor: number) => {
+      if (neighbor < 0 || visited[neighbor]) return;
+      const index = neighbor * 4;
+      if (!match(index)) return;
+      visited[neighbor] = 1;
+      pixels[index] = fillR;
+      pixels[index + 1] = fillG;
+      pixels[index + 2] = fillB;
+      stack[stackSize++] = neighbor;
+    };
+    while (stackSize > 0) {
+      const pixel = stack[--stackSize];
+      addNeighbor(pixel % width > 0 ? pixel - 1 : -1);
+      addNeighbor(pixel % width < width - 1 ? pixel + 1 : -1);
+      addNeighbor(pixel >= width ? pixel - width : -1);
+      addNeighbor(pixel < width * (height - 1) ? pixel + width : -1);
+    }
+    context.putImageData(image, 0, 0);
   };
 
   const redrawAll = (context: CanvasRenderingContext2D, list: Stroke[]) => {
@@ -161,6 +216,13 @@ export function DrawingBoard({ strokes, interactive, showTools = false, onChunk,
     if (!interactive) return;
     event.currentTarget.setPointerCapture(event.pointerId);
     const point = pointFromEvent(event);
+    if (tool === 'fill') {
+      const fill = { id: uuid(), points: [point], color, width: 1, tool: 'fill' as const };
+      onChunk?.(fill);
+      const context = context2d();
+      if (context) fillRegion(context, point, color);
+      return;
+    }
     if (erasing) {
       emitErase(point, true);
       return;
@@ -213,7 +275,7 @@ export function DrawingBoard({ strokes, interactive, showTools = false, onChunk,
     <div className="board-wrap">
       <canvas
         ref={canvasRef}
-        className={interactive ? `drawing-canvas interactive${erasing ? ' erasing' : ''}` : 'drawing-canvas'}
+        className={interactive ? `drawing-canvas interactive${erasing ? ' erasing' : ''}${tool === 'fill' ? ' filling' : ''}` : 'drawing-canvas'}
         onPointerDown={pointerDown}
         onPointerMove={pointerMove}
         onPointerUp={pointerUp}
@@ -236,6 +298,9 @@ export function DrawingBoard({ strokes, interactive, showTools = false, onChunk,
                 onClick={() => setColor(item.value)}
               />
             ))}
+            <label className="custom-color" title="Chọn màu riêng">
+              <input type="color" value={color} onChange={(event) => setColor(event.target.value)} aria-label="Chọn màu riêng" />
+            </label>
           </div>
           <div className="tool-group">
             <button
@@ -258,20 +323,32 @@ export function DrawingBoard({ strokes, interactive, showTools = false, onChunk,
             >
               ⌫
             </button>
+            <button
+              type="button"
+              className={tool === 'fill' ? 'tool-button active' : 'tool-button'}
+              aria-pressed={tool === 'fill'}
+              aria-label="Tô vùng kín"
+              title="Tô vùng kín"
+              onClick={() => setTool('fill')}
+            >
+              ▧
+            </button>
           </div>
-          <label className="brush-label">
-            {erasing ? 'Tẩy' : 'Nét'}
-            <input
-              type="range"
-              min={erasing ? ERASER_MIN : BRUSH_MIN}
-              max={erasing ? ERASER_MAX : BRUSH_MAX}
-              value={erasing ? eraserSize : brushSize}
-              onChange={(event) => (erasing ? setEraserSize(Number(event.target.value)) : setBrushSize(Number(event.target.value)))}
-              aria-label={erasing ? 'Độ rộng tẩy xóa' : 'Độ dày nét vẽ'}
-            />
-          </label>
+          {tool !== 'fill' && (
+            <label className="brush-label">
+              {erasing ? 'Tẩy' : 'Nét'}
+              <input
+                type="range"
+                min={erasing ? ERASER_MIN : BRUSH_MIN}
+                max={erasing ? ERASER_MAX : BRUSH_MAX}
+                value={erasing ? eraserSize : brushSize}
+                onChange={(event) => (erasing ? setEraserSize(Number(event.target.value)) : setBrushSize(Number(event.target.value)))}
+                aria-label={erasing ? 'Độ rộng tẩy xóa' : 'Độ dày nét vẽ'}
+              />
+            </label>
+          )}
           <div className="tool-group">
-            <button type="button" className="tool-button" onClick={() => onUndo?.()} aria-label="Hoàn tác nét vẽ cuối" title="Hoàn tác">↶</button>
+            <button type="button" className="tool-button undo-button" onClick={() => onUndo?.()} aria-label="Hoàn tác thao tác cuối" title="Hoàn tác thao tác cuối">↶ <span>Hoàn tác</span></button>
             <button type="button" className="tool-button danger" onClick={() => onClear?.()} aria-label="Xóa bảng vẽ" title="Xóa bảng vẽ">✕</button>
           </div>
         </div>

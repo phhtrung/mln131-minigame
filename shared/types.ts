@@ -21,6 +21,7 @@ export type Stroke = {
   points: Point[];
   color: string;
   width: number;
+  tool?: 'fill';
 };
 
 export type Quiz = {
@@ -63,7 +64,6 @@ export type RoomState = {
   firstGuesserId?: string;
   wordChoices?: string[];
   maskedWord?: string;
-  hintLevel: number;
   quiz?: Quiz;
   quizAnswered?: boolean;
   reveal?: Reveal;
@@ -95,6 +95,7 @@ export type StrokeChunk = {
   points: Point[];
   color: string;
   width: number;
+  tool?: 'fill';
 };
 
 export type ErasePayload = {
