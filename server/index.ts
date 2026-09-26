@@ -1,55 +1,89 @@
 import express from 'express';
 import http from 'node:http';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { randomUUID } from 'node:crypto';
 import { Server, type Socket } from 'socket.io';
 import { z } from 'zod';
 import { EVENTS } from '../shared/events.js';
 import { ROUND_CONTENT, type RoundContent } from '../shared/content.js';
-import type { ClientState, Player, Reveal, RoomState, Stroke } from '../shared/types.js';
+import type {
+  ClientState,
+  ErasePayload,
+  Phase,
+  Player,
+  Point,
+  Quiz,
+  Reveal,
+  Stroke,
+  SubPhase,
+  SummaryItem,
+} from '../shared/types.js';
 
 const PORT = Number(process.env.PORT ?? 3000);
+const TIMER_SCALE = Math.min(1, Math.max(0.02, Number(process.env.TIMER_SCALE ?? 1) || 1));
 const ROOM_CODE = 'MLN131';
 const TOTAL_ROUNDS = 7;
+const WORD_CHOICE_SECONDS = 8;
+const PRE_DRAW_SECONDS = 3;
 const DRAW_SECONDS = 45;
-const QUIZ_SECONDS = 20;
-const REVEAL_SECONDS = 9;
+const DRAWER_GRACE_MS = Math.round(3000 * TIMER_SCALE);
+const GUESS_COOLDOWN_MS = 400;
+const CHUNK_COOLDOWN_MS = 20;
+const ERASE_COOLDOWN_MS = 40;
+const WARN_COOLDOWN_MS = 3000;
+const MAX_POINTS_PER_STROKE = 2000;
+const HINT_FIRST_AT = 30;
+const HINT_SECOND_AT = 15;
 
 type ClientSocket = Socket;
 
+type PlayerEntry = Player & { socketId?: string };
+
+type RateState = { guess?: number; chunk?: number; erase?: number; warn?: number };
+
 type Room = {
-  phase: RoomState['phase'];
+  phase: Phase;
+  subPhase: SubPhase;
   round: number;
   secondsLeft: number;
-  players: Map<string, Player>;
-  order: string[];
+  players: Map<string, PlayerEntry>;
+  tokens: Map<string, string>;
   drawerHistory: string[];
   drawerId?: string;
   currentContent?: RoundContent;
   wordChoices?: string[];
   wordSelected: boolean;
+  usedWords: string[];
   strokes: Stroke[];
   guessedPlayerIds: string[];
   firstGuesserId?: string;
-  quiz?: RoomState['quiz'];
+  quiz?: Quiz;
+  quizAnswer?: number;
+  quizDrawSeconds?: number;
+  quizStartedAt?: number;
   reveal?: Reveal;
-  recentReactions: RoomState['recentReactions'];
+  summary: SummaryItem[];
+  hintLevel: number;
+  hintIndices: number[];
   timer?: ReturnType<typeof setInterval>;
-  transitionTimer?: ReturnType<typeof setTimeout>;
+  drawerGraceTimer?: ReturnType<typeof setTimeout>;
 };
 
 const room: Room = {
   phase: 'lobby',
+  subPhase: 'choosing',
   round: 0,
   secondsLeft: 0,
   players: new Map(),
-  order: [],
+  tokens: new Map(),
   drawerHistory: [],
   wordSelected: false,
+  usedWords: [],
   strokes: [],
   guessedPlayerIds: [],
-  recentReactions: [],
+  summary: [],
+  hintLevel: 0,
+  hintIndices: [],
 };
 
 const app = express();
@@ -60,7 +94,16 @@ const io = new Server(httpServer, {
 });
 
 app.get('/healthz', (_request, response) => {
-  response.json({ ok: true, service: 'mln131-family-sketch', phase: room.phase, players: room.players.size });
+  const connected = [...room.players.values()].filter((player) => player.connected).length;
+  response.json({
+    ok: true,
+    service: 'mln131-family-sketch',
+    phase: room.phase,
+    subPhase: room.subPhase,
+    round: room.round,
+    players: room.players.size,
+    connected,
+  });
 });
 
 const clientDist = path.resolve(process.cwd(), 'dist');
@@ -74,68 +117,249 @@ const wordIndexSchema = z.number().int().min(0).max(2);
 const guessSchema = z.string().trim().min(1).max(80);
 const reactionSchema = z.string().trim().min(1).max(8);
 const answerSchema = z.number().int().min(0).max(3);
+const pointSchema = z.object({ x: z.number().min(0).max(1), y: z.number().min(0).max(1) });
+const strokeIdSchema = z.string().trim().min(1).max(64);
+const strokeChunkSchema = z.object({
+  id: strokeIdSchema,
+  points: z.array(pointSchema).min(1).max(64),
+  color: z.string().trim().regex(/^#[0-9a-fA-F]{6}$/),
+  width: z.number().min(1).max(40),
+});
+const eraseSchema = z.object({
+  x: z.number().min(0).max(1),
+  y: z.number().min(0).max(1),
+  radius: z.number().min(0.005).max(0.5),
+  aspect: z.number().min(0.1).max(10),
+});
 
+function segmentHitsEraser(a: Point, b: Point, payload: ErasePayload) {
+  const ax = a.x;
+  const ay = a.y * payload.aspect;
+  const bx = b.x;
+  const by = b.y * payload.aspect;
+  const dx = bx - ax;
+  const dy = by - ay;
+  const lengthSquared = dx * dx + dy * dy;
+  const projection = lengthSquared === 0 ? 0 : ((payload.x - ax) * dx + (payload.y - ay) * dy) / lengthSquared;
+  const t = Math.max(0, Math.min(1, projection));
+  const nearestX = ax + dx * t;
+  const nearestY = ay + dy * t;
+  const offsetX = nearestX - payload.x;
+  const offsetY = nearestY - payload.y;
+  return offsetX * offsetX + offsetY * offsetY <= payload.radius * payload.radius;
+}
+
+function eraseStroke(stroke: Stroke, payload: ErasePayload): Stroke[] | null {
+  if (stroke.points.length === 0) return null;
+  const pieces: Point[][] = [];
+  let current: Point[] = [];
+  let touched = false;
+  for (const point of stroke.points) {
+    const offsetX = point.x - payload.x;
+    const offsetY = (point.y - payload.y) * payload.aspect;
+    const inside = offsetX * offsetX + offsetY * offsetY <= payload.radius * payload.radius;
+    const previous = current[current.length - 1];
+    if (inside) {
+      touched = true;
+      if (current.length) pieces.push(current);
+      current = [];
+      continue;
+    }
+    if (previous && segmentHitsEraser(previous, point, payload)) {
+      touched = true;
+      if (current.length) pieces.push(current);
+      current = [point];
+      continue;
+    }
+    current.push(point);
+  }
+  if (current.length) pieces.push(current);
+  if (!touched) return null;
+  return pieces.map((points, index) => ({ ...stroke, id: index === 0 ? stroke.id : randomUUID(), points }));
+}
+
+function eraseStrokes(list: Stroke[], payload: ErasePayload): Stroke[] | null {
+  const next: Stroke[] = [];
+  let changed = false;
+  for (const stroke of list) {
+    const pieces = eraseStroke(stroke, payload);
+    if (!pieces) {
+      next.push(stroke);
+      continue;
+    }
+    changed = true;
+    next.push(...pieces);
+  }
+  return changed ? next : null;
+}
+
+// Diacritics are part of the answer: never strip them. Case and spacing are not.
 function normalized(value: string) {
   return value
+    .normalize('NFC')
     .toLocaleLowerCase('vi-VN')
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/đ/g, 'd')
-    .replace(/[^a-z0-9]+/g, ' ')
+    .replace(/[^\p{L}\p{N}]+/gu, ' ')
     .trim();
 }
 
-function scoreForGuess(position: number) {
-  return [500, 380, 320, 250, 170, 100, 60][position] ?? 40;
+// Loose comparison used only to tell players their answer was right but unaccented.
+function folded(value: string) {
+  return normalized(value)
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/đ/g, 'd');
 }
 
-function chooseUniqueWords() {
-  return [...ROUND_CONTENT]
-    .sort(() => Math.random() - 0.5)
-    .slice(0, 3)
-    .map((content) => content.word);
+function scoreForGuess(secondsLeft: number, position: number) {
+  const safeSeconds = Math.min(DRAW_SECONDS, Math.max(0, secondsLeft));
+  const timePoints = Math.round((safeSeconds / DRAW_SECONDS) * 350);
+  const orderBonus = position === 0 ? 100 : position === 1 ? 50 : position === 2 ? 25 : 0;
+  return 50 + timePoints + orderBonus;
+}
+
+// The drawing clock freezes when the first correct guess starts the quiz, so late guessers
+// are charged for the real seconds they have spent waiting instead of keeping the full bonus.
+function effectiveSecondsLeft() {
+  if (room.phase === 'drawing') return room.secondsLeft;
+  const elapsed = room.quizStartedAt ? Math.floor((Date.now() - room.quizStartedAt) / 1000) : 0;
+  return Math.max(0, (room.quizDrawSeconds ?? 0) - elapsed);
+}
+
+function shuffle<T>(items: T[]): T[] {
+  const copy = [...items];
+  for (let i = copy.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [copy[i], copy[j]] = [copy[j], copy[i]];
+  }
+  return copy;
 }
 
 function contentForWord(word: string) {
   return ROUND_CONTENT.find((content) => content.word === word) ?? ROUND_CONTENT[0];
 }
 
-function playersForState() {
-  return room.order.map((id) => room.players.get(id)).filter(Boolean) as Player[];
+function chooseWordChoices(): string[] {
+  const unused = ROUND_CONTENT.filter((content) => !room.usedWords.includes(content.word));
+  const source = unused.length > 0 ? unused : ROUND_CONTENT;
+  return shuffle(source).slice(0, Math.min(3, source.length)).map((content) => content.word);
+}
+
+function buildShuffledQuiz(content: RoundContent): Quiz {
+  const options = content.quiz.options.map((text, index) => ({ text, correct: index === content.quiz.correctIndex }));
+  const shuffled = shuffle(options);
+  return {
+    prompt: content.quiz.prompt,
+    options: shuffled.map((option) => option.text),
+    correctIndex: shuffled.findIndex((option) => option.correct),
+  };
+}
+
+function hintIndicesFor(word: string, fraction: number): number[] {
+  const nonSpace = [...word].map((character, index) => ({ character, index })).filter((item) => /\S/.test(item.character));
+  if (nonSpace.length <= 1) return [];
+  const count = Math.min(nonSpace.length - 1, Math.max(1, Math.round(nonSpace.length * fraction)));
+  const step = nonSpace.length / count;
+  const picked = new Set<number>();
+  for (let k = 0; k < count; k += 1) {
+    const item = nonSpace[Math.min(nonSpace.length - 1, Math.floor(k * step))];
+    picked.add(item.index);
+  }
+  return [...picked].sort((a, b) => a - b);
+}
+
+function maskedWordFor(word: string, hintIndices: number[]): string {
+  return [...word]
+    .map((character, index) => {
+      if (/\s/.test(character)) return ' ';
+      return hintIndices.includes(index) ? character : '•';
+    })
+    .join('');
+}
+
+function currentMaskedWord(): string | undefined {
+  if (!room.currentContent || !room.wordSelected) return undefined;
+  if (room.phase !== 'drawing' && room.phase !== 'quiz') return undefined;
+  return maskedWordFor(room.currentContent.word, room.hintIndices);
+}
+
+function toPublicPlayer(player: PlayerEntry): Player {
+  return {
+    id: player.id,
+    name: player.name,
+    score: player.score,
+    quizCorrect: player.quizCorrect,
+    firstGuesses: player.firstGuesses,
+    connected: player.connected,
+    isDrawer: player.id === room.drawerId,
+  };
+}
+
+function connectedPlayers(): PlayerEntry[] {
+  return [...room.players.values()].filter((player) => player.connected);
 }
 
 function publicState(socket: ClientSocket): ClientState {
   const isHost = socket.data.isHost === true;
   const playerId = socket.data.playerId as string | undefined;
+  const player = playerId ? room.players.get(playerId) : undefined;
   const isDrawer = Boolean(playerId && playerId === room.drawerId);
   const state: ClientState = {
     code: ROOM_CODE,
     phase: room.phase,
+    subPhase: room.subPhase,
     round: room.round,
     totalRounds: TOTAL_ROUNDS,
     secondsLeft: room.secondsLeft,
-    players: playersForState(),
+    players: [...room.players.values()].map(toPublicPlayer),
     drawerId: room.drawerId,
     strokes: room.strokes,
     guessedPlayerIds: room.guessedPlayerIds,
     firstGuesserId: room.firstGuesserId,
-    recentReactions: room.recentReactions,
+    hintLevel: room.hintLevel,
     isHost,
   };
 
-  if ((isDrawer || isHost) && room.wordChoices) state.wordChoices = room.wordChoices;
-  if (isDrawer && room.currentContent && room.wordSelected) state.privateWord = room.currentContent.word;
+  if (player) {
+    state.you = {
+      id: player.id,
+      token: room.tokens.get(player.id) ?? '',
+      isDrawer,
+      hasGuessed: room.guessedPlayerIds.includes(player.id),
+    };
+    if (isDrawer && room.currentContent && room.wordSelected) state.privateWord = room.currentContent.word;
+  }
+  if ((isDrawer || isHost) && room.wordChoices && room.phase === 'drawing' && room.subPhase === 'choosing' && !room.wordSelected) {
+    state.wordChoices = room.wordChoices;
+  }
+  if (!isDrawer) {
+    const masked = currentMaskedWord();
+    if (masked) state.maskedWord = masked;
+  }
   if ((isHost || playerId === room.firstGuesserId) && room.quiz) state.quiz = room.quiz;
+  if (room.phase === 'quiz' && room.quiz) state.quizAnswered = room.quizAnswer !== undefined;
   if (isHost || room.phase === 'reveal' || room.phase === 'finished') state.reveal = room.reveal;
+  if (isHost || room.phase === 'finished') state.summary = room.summary;
+
   if (room.phase === 'lobby') state.message = 'Đợi cả lớp vào phòng rồi bắt đầu.';
-  if (room.phase === 'drawing' && !room.wordSelected && isDrawer) state.message = 'Chọn một từ để bắt đầu vẽ.';
-  if (room.phase === 'drawing' && room.wordSelected && playerId !== room.drawerId) state.message = 'Đoán thật nhanh — câu trả lời được gửi riêng.';
+  if (room.phase === 'drawing' && room.subPhase === 'choosing' && isDrawer) state.message = 'Chọn một từ để bắt đầu vẽ.';
+  if (room.phase === 'drawing' && room.subPhase === 'choosing' && !isDrawer) state.message = 'Họa sĩ đang chọn từ khóa…';
+  if (room.phase === 'drawing' && room.subPhase === 'countdown') state.message = 'Sẵn sàng…';
+  if (room.phase === 'drawing' && room.subPhase === 'drawing' && !isDrawer) state.message = 'Đoán thật nhanh — câu trả lời được gửi riêng.';
   if (room.phase === 'quiz' && playerId !== room.firstGuesserId) state.message = 'Bạn vẫn có thể đoán; người đầu tiên đang trả lời câu hỏi.';
   return state;
 }
 
 function broadcastState() {
   for (const socket of io.sockets.sockets.values()) socket.emit(EVENTS.roomState, publicState(socket));
+}
+
+function broadcastTick() {
+  io.emit(EVENTS.tick, {
+    phase: room.phase,
+    subPhase: room.subPhase,
+    secondsLeft: room.secondsLeft,
+    maskedWord: currentMaskedWord(),
+  });
 }
 
 function toast(message: string, target?: ClientSocket) {
@@ -145,24 +369,37 @@ function toast(message: string, target?: ClientSocket) {
 
 function clearTimers() {
   if (room.timer) clearInterval(room.timer);
-  if (room.transitionTimer) clearTimeout(room.transitionTimer);
+  if (room.drawerGraceTimer) clearTimeout(room.drawerGraceTimer);
   room.timer = undefined;
-  room.transitionTimer = undefined;
+  room.drawerGraceTimer = undefined;
 }
 
 function startCountdown(seconds: number, onComplete: () => void) {
-  if (room.timer) clearInterval(room.timer);
+  clearTimers();
   room.secondsLeft = seconds;
   broadcastState();
   room.timer = setInterval(() => {
     room.secondsLeft -= 1;
-    broadcastState();
+    if (room.phase === 'drawing' && room.subPhase === 'drawing') updateHints();
+    broadcastTick();
     if (room.secondsLeft <= 0) {
       if (room.timer) clearInterval(room.timer);
       room.timer = undefined;
       onComplete();
     }
-  }, 1000);
+  }, Math.round(1000 * TIMER_SCALE));
+}
+
+function updateHints() {
+  const word = room.currentContent?.word;
+  if (!word) return;
+  if (room.secondsLeft <= HINT_SECOND_AT && room.hintLevel < 2) {
+    room.hintLevel = 2;
+    room.hintIndices = hintIndicesFor(word, 0.5);
+  } else if (room.secondsLeft <= HINT_FIRST_AT && room.hintLevel < 1) {
+    room.hintLevel = 1;
+    room.hintIndices = hintIndicesFor(word, 0.25);
+  }
 }
 
 function awardDrawer() {
@@ -170,192 +407,403 @@ function awardDrawer() {
   const drawer = room.players.get(room.drawerId);
   if (!drawer) return;
   const guessedCount = room.guessedPlayerIds.length;
-  const drawerPoints = Math.min(500, 150 + guessedCount * 75);
-  drawer.score += drawerPoints;
+  const totalGuessers = connectedPlayers().filter((player) => player.id !== room.drawerId).length;
+  if (guessedCount === 0 || totalGuessers === 0) return;
+  drawer.score += Math.round(Math.min(1, guessedCount / totalGuessers) * 500);
 }
 
-function beginRound() {
-  clearTimers();
-  room.round += 1;
-  if (room.round > TOTAL_ROUNDS || room.order.length === 0) {
-    room.phase = 'finished';
-    room.secondsLeft = 0;
-    room.reveal = undefined;
-    for (const player of room.players.values()) player.isDrawer = false;
-    broadcastState();
-    return;
-  }
-
-  const available = room.order.filter((id) => !room.drawerHistory.includes(id));
+function pickDrawerFrom(pool: PlayerEntry[]): PlayerEntry | undefined {
+  if (pool.length === 0) return undefined;
+  const available = pool.filter((player) => !room.drawerHistory.includes(player.id));
+  const source = available.length > 0 ? available : pool;
   if (available.length === 0) room.drawerHistory = [];
-  const candidates = room.order.filter((id) => !room.drawerHistory.includes(id));
-  room.drawerId = candidates[Math.floor(Math.random() * candidates.length)] ?? room.order[0];
-  room.drawerHistory.push(room.drawerId);
-  for (const player of room.players.values()) player.isDrawer = player.id === room.drawerId;
-  room.currentContent = ROUND_CONTENT[(room.round - 1) % ROUND_CONTENT.length];
-  room.wordChoices = chooseUniqueWords();
+  const drawer = source[Math.floor(Math.random() * source.length)];
+  room.drawerHistory.push(drawer.id);
+  return drawer;
+}
+
+function resetRoundState() {
+  room.currentContent = undefined;
+  room.wordChoices = undefined;
   room.wordSelected = false;
   room.strokes = [];
   room.guessedPlayerIds = [];
   room.firstGuesserId = undefined;
   room.quiz = undefined;
+  room.quizAnswer = undefined;
+  room.quizDrawSeconds = undefined;
+  room.quizStartedAt = undefined;
   room.reveal = undefined;
-  room.phase = 'drawing';
-  startCountdown(8, () => {
-    if (room.phase === 'drawing' && !room.wordSelected) {
-      room.wordSelected = true;
-      room.currentContent = contentForWord(room.wordChoices?.[0] ?? ROUND_CONTENT[0].word);
-      startDrawingTimer();
-    }
-  });
+  room.hintLevel = 0;
+  room.hintIndices = [];
+}
+
+function resetForNewGame() {
+  clearTimers();
+  room.phase = 'lobby';
+  room.subPhase = 'choosing';
+  room.round = 0;
+  room.secondsLeft = 0;
+  room.drawerHistory = [];
+  room.drawerId = undefined;
+  room.usedWords = [];
+  room.summary = [];
+  resetRoundState();
+  for (const player of room.players.values()) {
+    player.score = 0;
+    player.quizCorrect = 0;
+    player.firstGuesses = 0;
+    player.isDrawer = false;
+  }
+}
+
+function bailToLobby(reason: string) {
+  clearTimers();
+  room.phase = 'lobby';
+  room.subPhase = 'choosing';
+  room.secondsLeft = 0;
+  room.drawerId = undefined;
+  room.wordChoices = undefined;
+  toast(`${reason} Host bấm Bắt đầu khi đã đủ người.`);
   broadcastState();
 }
 
-function startDrawingTimer() {
-  startCountdown(DRAW_SECONDS, () => finishRound('timeout'));
+function selectWord(index: number) {
+  const word = room.wordChoices?.[index] ?? ROUND_CONTENT[0].word;
+  room.currentContent = contentForWord(word);
+  room.wordSelected = true;
+  if (!room.usedWords.includes(word)) room.usedWords.push(word);
+  room.subPhase = 'countdown';
+  startCountdown(PRE_DRAW_SECONDS, () => {
+    room.subPhase = 'drawing';
+    startCountdown(DRAW_SECONDS, () => finishRound('not_asked'));
+  });
+}
+
+function beginRound() {
+  clearTimers();
+  if (room.round >= TOTAL_ROUNDS) return finishGame();
+  const connected = connectedPlayers();
+  if (connected.length < 2) {
+    bailToLobby('Không đủ người chơi trực tuyến để tiếp tục — ván chơi tạm dừng.');
+    return;
+  }
+  room.round += 1;
+  const drawer = pickDrawerFrom(connected);
+  if (!drawer) {
+    bailToLobby('Không tìm được họa sĩ — ván chơi tạm dừng.');
+    return;
+  }
+  room.drawerId = drawer.id;
+  resetRoundState();
+  room.wordChoices = chooseWordChoices();
+  room.subPhase = 'choosing';
+  room.phase = 'drawing';
+  startCountdown(WORD_CHOICE_SECONDS, () => {
+    if (room.phase === 'drawing' && room.subPhase === 'choosing' && !room.wordSelected) selectWord(0);
+  });
 }
 
 function finishRound(result: Reveal['quizResult']) {
   if (room.phase === 'reveal' || room.phase === 'finished') return;
   clearTimers();
   awardDrawer();
+  const content = room.currentContent;
+  room.summary.push({
+    round: room.round,
+    word: content?.word ?? '—',
+    explanation: content?.explanation ?? '',
+    takeaway: content?.takeaway ?? '',
+    drawerName: room.players.get(room.drawerId ?? '')?.name ?? '—',
+    guessedCount: room.guessedPlayerIds.length,
+  });
   room.phase = 'reveal';
   room.reveal = {
-    word: room.currentContent?.word ?? 'Chủ đề gia đình',
-    explanation: room.currentContent?.explanation ?? '',
-    takeaway: room.currentContent?.takeaway ?? '',
+    word: content?.word ?? 'Chủ đề gia đình',
+    explanation: content?.explanation ?? '',
+    takeaway: content?.takeaway ?? '',
     quizResult: result,
   };
-  room.secondsLeft = REVEAL_SECONDS;
+  if (room.quiz) {
+    room.reveal.answer = room.quiz.options[room.quiz.correctIndex];
+    if (room.quizAnswer !== undefined) room.reveal.chosenAnswer = room.quiz.options[room.quizAnswer];
+  }
+  room.secondsLeft = 0;
   broadcastState();
-  startCountdown(REVEAL_SECONDS, beginRound);
 }
 
 function startQuiz(firstGuesserId: string) {
   const content = room.currentContent;
   if (!content) return;
+  clearTimers();
   room.phase = 'quiz';
   room.firstGuesserId = firstGuesserId;
-  room.quiz = content.quiz;
-  startCountdown(QUIZ_SECONDS, () => {
-    const player = room.players.get(firstGuesserId);
-    if (player) player.score -= 100;
-    finishRound('timeout');
-  });
-}
-
-function joinPlayer(socket: ClientSocket, rawName: unknown) {
-  const parsed = nameSchema.safeParse(rawName);
-  if (!parsed.success) return toast('Tên cần từ 1 đến 24 ký tự.', socket);
-  if (room.phase !== 'lobby') return toast('Ván chơi đã bắt đầu; hãy tham gia ở ván sau.', socket);
-  const id = socket.data.playerId ?? socket.id;
-  socket.data.playerId = id;
-  const existing = room.players.get(id);
-  if (existing) {
-    existing.connected = true;
-    existing.name = parsed.data;
-  } else {
-    room.players.set(id, { id, name: parsed.data, score: 0, quizCorrect: 0, firstGuesses: 0, connected: true, isDrawer: false });
-    room.order.push(id);
-  }
-  toast(`Chào mừng ${parsed.data}!`, socket);
+  room.quiz = buildShuffledQuiz(content);
+  room.quizDrawSeconds = room.secondsLeft;
+  room.quizStartedAt = Date.now();
+  room.secondsLeft = 0;
+  room.quizAnswer = undefined;
   broadcastState();
 }
 
-io.on('connection', (socket) => {
+function finishGame() {
+  clearTimers();
+  room.phase = 'finished';
+  room.subPhase = 'choosing';
+  room.secondsLeft = 0;
+  room.drawerId = undefined;
+  room.wordChoices = undefined;
+  toast('Ván chơi kết thúc — cảm ơn cả lớp đã cùng chơi!');
+  broadcastState();
+}
+
+function scheduleDrawerReplacement(leavingDrawerId: string) {
+  if (room.drawerGraceTimer) clearTimeout(room.drawerGraceTimer);
+  room.drawerGraceTimer = setTimeout(() => {
+    room.drawerGraceTimer = undefined;
+    const player = room.players.get(leavingDrawerId);
+    if (room.phase !== 'drawing' || room.drawerId !== leavingDrawerId || (player && player.connected)) return;
+    if (!replaceDrawer()) bailToLobby('Họa sĩ rời phòng và không đủ người thay thế — ván chơi tạm dừng.');
+  }, DRAWER_GRACE_MS);
+}
+
+function replaceDrawer(): boolean {
+  const connected = connectedPlayers();
+  if (connected.length < 2) return false;
+  const nextDrawer = pickDrawerFrom(connected);
+  if (!nextDrawer) return false;
+  const oldName = room.players.get(room.drawerId ?? '')?.name ?? 'Họa sĩ';
+  room.drawerId = nextDrawer.id;
+  resetRoundState();
+  room.wordChoices = chooseWordChoices();
+  room.subPhase = 'choosing';
+  room.phase = 'drawing';
+  toast(`${oldName} rời phòng — ${nextDrawer.name} sẽ vẽ thay.`);
+  startCountdown(WORD_CHOICE_SECONDS, () => {
+    if (room.phase === 'drawing' && room.subPhase === 'choosing' && !room.wordSelected) selectWord(0);
+  });
+  return true;
+}
+
+function joinPlayer(socket: ClientSocket, payload: { name?: unknown; playerId?: unknown; token?: unknown }) {
+  const parsedName = nameSchema.safeParse(payload?.name);
+  if (!parsedName.success) return toast('Tên cần từ 1 đến 24 ký tự.', socket);
+  const playerId = typeof payload?.playerId === 'string' ? payload.playerId : undefined;
+  const token = typeof payload?.token === 'string' ? payload.token : undefined;
+
+  if (playerId && token && room.tokens.get(playerId) === token) {
+    const existing = room.players.get(playerId);
+    if (existing) {
+      existing.connected = true;
+      existing.name = parsedName.data;
+      existing.socketId = socket.id;
+      socket.data.playerId = playerId;
+      socket.data.rate = {};
+      if (room.drawerGraceTimer && room.drawerId === playerId) {
+        clearTimeout(room.drawerGraceTimer);
+        room.drawerGraceTimer = undefined;
+      }
+      toast(`Kết nối lại thành công — chào mừng trở lại, ${parsedName.data}!`, socket);
+      broadcastState();
+      return;
+    }
+  }
+
+  if (room.phase !== 'lobby') return toast('Ván chơi đang diễn ra; hãy tham gia ở ván sau.', socket);
+  const id = randomUUID();
+  socket.data.playerId = id;
+  socket.data.rate = {};
+  room.tokens.set(id, randomUUID());
+  room.players.set(id, {
+    id,
+    name: parsedName.data,
+    score: 0,
+    quizCorrect: 0,
+    firstGuesses: 0,
+    connected: true,
+    isDrawer: false,
+    socketId: socket.id,
+  });
+  toast(`Chào mừng ${parsedName.data}!`, socket);
+  broadcastState();
+}
+
+io.on('connection', (socket: ClientSocket) => {
   socket.data.isHost = socket.handshake.query.host === '1';
+  socket.data.rate = {};
   socket.emit(EVENTS.roomState, publicState(socket));
 
-  socket.on(EVENTS.joinRoom, (payload: { name?: unknown }) => joinPlayer(socket, payload?.name));
+  socket.on(EVENTS.joinRoom, (payload: { name?: unknown; playerId?: unknown; token?: unknown }) => joinPlayer(socket, payload ?? {}));
 
   socket.on(EVENTS.startGame, () => {
     if (!socket.data.isHost) return toast('Chỉ host mới có thể bắt đầu.', socket);
     if (room.phase !== 'lobby') return;
-    if (room.players.size === 0) return toast('Cần ít nhất một người chơi.', socket);
+    if (connectedPlayers().length < 2) return toast('Cần ít nhất 2 người chơi trực tuyến để bắt đầu.', socket);
+    resetForNewGame();
     beginRound();
   });
 
+  socket.on(EVENTS.nextRound, () => {
+    if (!socket.data.isHost) return toast('Chỉ host mới có thể bắt đầu ván mới.', socket);
+    if (room.phase !== 'finished') return;
+    resetForNewGame();
+    toast('Đã thiết lập lại phòng — host bấm Bắt đầu để chơi ván mới.');
+    broadcastState();
+  });
+
   socket.on(EVENTS.chooseWord, (payload: { index?: unknown }) => {
-    if (room.phase !== 'drawing' || room.wordSelected || socket.data.playerId !== room.drawerId) return;
+    if (room.phase !== 'drawing' || room.subPhase !== 'choosing' || room.wordSelected) return;
+    if (socket.data.playerId !== room.drawerId) return;
     const parsed = wordIndexSchema.safeParse(payload?.index);
     if (!parsed.success || !room.wordChoices?.[parsed.data]) return;
-    room.currentContent = contentForWord(room.wordChoices[parsed.data]);
-    room.wordSelected = true;
-    startDrawingTimer();
+    selectWord(parsed.data);
     toast('Từ khóa đã được chọn — bắt đầu vẽ!', socket);
   });
 
-  socket.on(EVENTS.stroke, (stroke: Stroke) => {
-    if (room.phase !== 'drawing' || !room.wordSelected || socket.data.playerId !== room.drawerId) return;
-    if (!stroke || !Array.isArray(stroke.points) || stroke.points.length > 1000) return;
-    room.strokes.push(stroke);
-    io.emit(EVENTS.stroke, stroke);
+  socket.on(EVENTS.strokeChunk, (payload: unknown) => {
+    if (room.phase !== 'drawing' || room.subPhase !== 'drawing' || socket.data.playerId !== room.drawerId) return;
+    const rate = socket.data.rate as RateState;
+    const now = Date.now();
+    if (rate.chunk && now - rate.chunk < CHUNK_COOLDOWN_MS) return;
+    rate.chunk = now;
+    const parsed = strokeChunkSchema.safeParse(payload);
+    if (!parsed.success) return;
+    const chunk = parsed.data;
+    let stroke = [...room.strokes].reverse().find((item) => item.id === chunk.id);
+    if (!stroke) {
+      stroke = { id: chunk.id, points: [], color: chunk.color, width: chunk.width };
+      room.strokes.push(stroke);
+    }
+    if (stroke.points.length + chunk.points.length > MAX_POINTS_PER_STROKE) return;
+    stroke.points.push(...chunk.points);
+    socket.broadcast.emit(EVENTS.strokeChunk, chunk);
+  });
+
+  socket.on(EVENTS.erase, (payload: unknown) => {
+    if (room.phase !== 'drawing' || room.subPhase !== 'drawing' || socket.data.playerId !== room.drawerId) return;
+    const rate = socket.data.rate as RateState;
+    const now = Date.now();
+    if (rate.erase && now - rate.erase < ERASE_COOLDOWN_MS) return;
+    rate.erase = now;
+    const parsed = eraseSchema.safeParse(payload);
+    if (!parsed.success) return;
+    const next = eraseStrokes(room.strokes, parsed.data);
+    if (!next) return;
+    room.strokes = next;
+    io.emit(EVENTS.erase, { strokes: next });
+  });
+
+  socket.on(EVENTS.undo, () => {
+    if (room.phase !== 'drawing' || room.subPhase !== 'drawing' || socket.data.playerId !== room.drawerId) return;
+    const removed = room.strokes.pop();
+    if (!removed) return;
+    io.emit(EVENTS.undo, { id: removed.id });
   });
 
   socket.on(EVENTS.clearCanvas, () => {
-    if (room.phase === 'drawing' && socket.data.playerId === room.drawerId) {
-      room.strokes = [];
-      io.emit(EVENTS.clearCanvas);
-      broadcastState();
-    }
+    if (room.phase !== 'drawing' || room.subPhase !== 'drawing' || socket.data.playerId !== room.drawerId) return;
+    room.strokes = [];
+    io.emit(EVENTS.clearCanvas);
   });
 
   socket.on(EVENTS.submitGuess, (payload: { guess?: unknown }) => {
-    if (room.phase !== 'drawing' && room.phase !== 'quiz') return;
+    const canGuess = room.phase === 'quiz' || (room.phase === 'drawing' && room.wordSelected && room.subPhase === 'drawing');
+    if (!canGuess) return;
     const playerId = socket.data.playerId as string | undefined;
-    if (!playerId || playerId === room.drawerId || room.guessedPlayerIds.includes(playerId)) return;
+    if (!playerId) return toast('Hãy vào phòng trước khi đoán.', socket);
+    if (playerId === room.drawerId || room.guessedPlayerIds.includes(playerId)) return;
+    const rate = socket.data.rate as RateState;
+    const now = Date.now();
+    if (rate.guess && now - rate.guess < GUESS_COOLDOWN_MS) {
+      if (!rate.warn || now - rate.warn > WARN_COOLDOWN_MS) {
+        rate.warn = now;
+        toast('Chậm lại một chút nhé!', socket);
+      }
+      return;
+    }
+    rate.guess = now;
     const parsed = guessSchema.safeParse(payload?.guess);
     if (!parsed.success || !room.currentContent) return;
     const guess = normalized(parsed.data);
-    const correct = [room.currentContent.word, ...room.currentContent.aliases].some((answer) => normalized(answer) === guess);
-    if (!correct) return toast('Chưa đúng — thử một ý khác nhé.', socket);
+    const answers = [room.currentContent.word, ...room.currentContent.aliases];
+    const correct = answers.some((answer) => normalized(answer) === guess);
+    if (!correct) {
+      const missingDiacritics = answers.some((answer) => folded(answer) === folded(parsed.data));
+      return toast(missingDiacritics ? 'Đúng nội dung rồi, nhưng thiếu dấu — hãy gõ kèm dấu nhé.' : 'Chưa đúng — thử một ý khác nhé.', socket);
+    }
     const position = room.guessedPlayerIds.length;
     room.guessedPlayerIds.push(playerId);
+    const secondsLeft = effectiveSecondsLeft();
+    const points = scoreForGuess(secondsLeft, position);
     const player = room.players.get(playerId);
     if (player) {
-      player.score += scoreForGuess(position);
+      player.score += points;
       if (position === 0) player.firstGuesses += 1;
     }
-    toast(`${player?.name ?? 'Một bạn'} đã đoán đúng!`, undefined);
+    io.emit(EVENTS.guessSuccess, { playerId, name: player?.name ?? 'Một bạn', points, position });
     if (position === 0) startQuiz(playerId);
     else broadcastState();
   });
 
   socket.on(EVENTS.submitQuiz, (payload: { answer?: unknown }) => {
     if (room.phase !== 'quiz' || socket.data.playerId !== room.firstGuesserId || !room.quiz) return;
+    if (room.quizAnswer !== undefined) return;
     const parsed = answerSchema.safeParse(payload?.answer);
     if (!parsed.success) return;
-    const player = room.players.get(socket.data.playerId);
-    if (!player) return;
-    const correct = parsed.data === room.quiz.correctIndex;
-    if (correct) {
-      player.score += 400;
-      player.quizCorrect += 1;
-      toast(`${player.name} trả lời đúng câu hỏi củng cố!`, undefined);
-    } else {
-      player.score -= 200;
-      toast(`${player.name} chưa chọn đúng — kiến thức sẽ được giải thích ngay.`, undefined);
+    room.quizAnswer = parsed.data;
+    toast('Đã chốt đáp án — chờ máy chiếu mở đáp án.');
+    broadcastState();
+  });
+
+  socket.on(EVENTS.revealQuiz, () => {
+    if (!socket.data.isHost) return toast('Chỉ host hoặc máy chiếu mới có thể mở đáp án.', socket);
+    if (room.phase !== 'quiz' || !room.quiz) return;
+    const decided = room.quizAnswer;
+    if (decided === undefined) {
+      finishRound('not_asked');
+      return;
+    }
+    const player = room.players.get(room.firstGuesserId ?? '');
+    const correct = decided === room.quiz.correctIndex;
+    if (player) {
+      if (correct) {
+        player.score += 400;
+        player.quizCorrect += 1;
+        toast(`${player.name} trả lời đúng câu hỏi củng cố!`, undefined);
+      } else {
+        player.score -= 200;
+        toast(`${player.name} chưa chọn đúng — kiến thức sẽ được giải thích ngay.`, undefined);
+      }
     }
     finishRound(correct ? 'correct' : 'incorrect');
+  });
+
+  socket.on(EVENTS.advanceRound, () => {
+    if (!socket.data.isHost) return toast('Chỉ host hoặc máy chiếu mới có thể chuyển vòng.', socket);
+    if (room.phase !== 'reveal') return;
+    beginRound();
   });
 
   socket.on(EVENTS.reaction, (rawReaction: unknown) => {
     const parsed = reactionSchema.safeParse(rawReaction);
     if (!parsed.success) return;
     const player = room.players.get(socket.data.playerId as string);
-    room.recentReactions = [...room.recentReactions.slice(-11), { id: randomUUID(), name: player?.name ?? 'Bạn', reaction: parsed.data }];
-    broadcastState();
+    io.emit(EVENTS.reaction, { id: randomUUID(), name: player?.name ?? 'Bạn', reaction: parsed.data });
   });
 
   socket.on('disconnect', () => {
     const playerId = socket.data.playerId as string | undefined;
     if (!playerId) return;
     const player = room.players.get(playerId);
-    if (player) {
-      player.connected = false;
-      player.isDrawer = false;
+    if (!player || player.socketId !== socket.id) return;
+    player.connected = false;
+    player.socketId = undefined;
+    if (room.phase === 'drawing' && playerId === room.drawerId) {
+      scheduleDrawerReplacement(playerId);
       broadcastState();
+      return;
     }
+    broadcastState();
   });
 });
 

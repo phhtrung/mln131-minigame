@@ -1,5 +1,9 @@
 export type Phase = 'lobby' | 'drawing' | 'quiz' | 'reveal' | 'finished';
 
+export type SubPhase = 'choosing' | 'countdown' | 'drawing';
+
+export type QuizResult = 'correct' | 'incorrect' | 'not_asked';
+
 export type Player = {
   id: string;
   name: string;
@@ -10,8 +14,11 @@ export type Player = {
   isDrawer: boolean;
 };
 
+export type Point = { x: number; y: number };
+
 export type Stroke = {
-  points: Array<{ x: number; y: number }>;
+  id: string;
+  points: Point[];
   color: string;
   width: number;
 };
@@ -26,28 +33,87 @@ export type Reveal = {
   word: string;
   explanation: string;
   takeaway: string;
-  quizResult?: 'correct' | 'incorrect' | 'timeout' | 'not_asked';
+  quizResult?: QuizResult;
+  answer?: string;
+  chosenAnswer?: string;
 };
+
+export type SummaryItem = {
+  round: number;
+  word: string;
+  explanation: string;
+  takeaway: string;
+  drawerName: string;
+  guessedCount: number;
+};
+
+export type Reaction = { id: string; name: string; reaction: string };
 
 export type RoomState = {
   code: string;
   phase: Phase;
+  subPhase: SubPhase;
   round: number;
   totalRounds: number;
   secondsLeft: number;
   players: Player[];
   drawerId?: string;
-  wordChoices?: string[];
   strokes: Stroke[];
-  firstGuesserId?: string;
   guessedPlayerIds: string[];
+  firstGuesserId?: string;
+  wordChoices?: string[];
+  maskedWord?: string;
+  hintLevel: number;
   quiz?: Quiz;
+  quizAnswered?: boolean;
   reveal?: Reveal;
-  recentReactions: Array<{ id: string; name: string; reaction: string }>;
+  summary?: SummaryItem[];
   message?: string;
 };
 
+export type YouInfo = {
+  id: string;
+  token: string;
+  isDrawer: boolean;
+  hasGuessed: boolean;
+};
+
 export type ClientState = RoomState & {
+  you?: YouInfo;
   privateWord?: string;
   isHost?: boolean;
+};
+
+export type JoinPayload = {
+  name: string;
+  playerId?: string;
+  token?: string;
+};
+
+export type StrokeChunk = {
+  id: string;
+  points: Point[];
+  color: string;
+  width: number;
+};
+
+export type ErasePayload = {
+  x: number;
+  y: number;
+  radius: number;
+  aspect: number;
+};
+
+export type TickPayload = {
+  phase: Phase;
+  subPhase: SubPhase;
+  secondsLeft: number;
+  maskedWord?: string;
+};
+
+export type GuessSuccessPayload = {
+  playerId: string;
+  name: string;
+  points: number;
+  position: number;
 };
