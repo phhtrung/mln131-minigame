@@ -81,7 +81,6 @@ export type YouInfo = {
 export type ClientState = RoomState & {
   you?: YouInfo;
   privateWord?: string;
-  isHost?: boolean;
 };
 
 export type JoinPayload = {

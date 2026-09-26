@@ -32,7 +32,6 @@ function readSession(): StoredSession | null {
 
 function App() {
   const params = useMemo(() => new URLSearchParams(window.location.search), []);
-  const isHost = params.get('host') === '1';
   const isProjector = params.get('projector') === '1';
   const linkedName = (params.get('name') ?? '').trim().slice(0, 24);
   const sessionRef = useRef<StoredSession | null>(readSession());
@@ -45,11 +44,11 @@ function App() {
   const [flying, setFlying] = useState<FlyingReaction[]>([]);
   const [muted, setMutedState] = useState(() => isMuted());
   const [name, setName] = useState(() => linkedName || localStorage.getItem('mln131-name') || '');
-  const [joined, setJoined] = useState(() => isHost || isProjector || Boolean(linkedName) || Boolean(readSession() && (linkedName || localStorage.getItem('mln131-name'))));
+  const [joined, setJoined] = useState(() => Boolean(linkedName) || Boolean(readSession() && (linkedName || localStorage.getItem('mln131-name'))));
   const joinedRef = useRef(Boolean(linkedName) || Boolean(sessionRef.current));
 
   useEffect(() => {
-    const nextSocket = io(window.location.origin, { query: { host: isHost || isProjector ? '1' : '0' } });
+    const nextSocket = io(window.location.origin, { query: { projector: isProjector ? '1' : '0' } });
     setSocket(nextSocket);
 
     nextSocket.on('connect', () => {
@@ -104,7 +103,7 @@ function App() {
         }
         return {
           ...current,
-          strokes: [...strokes, { id: chunk.id, points: [...chunk.points], color: chunk.color, width: chunk.width }],
+          strokes: [...strokes, { id: chunk.id, points: [...chunk.points], color: chunk.color, width: chunk.width, tool: chunk.tool }],
         };
       });
     });
@@ -156,7 +155,7 @@ function App() {
     return () => {
       nextSocket.disconnect();
     };
-  }, [isHost, isProjector, linkedName]);
+  }, [isProjector, linkedName]);
 
   const join = (event: FormEvent) => {
     event.preventDefault();
@@ -200,11 +199,11 @@ function App() {
   if (isProjector) return <><ProjectorScreen state={state} socket={socket} guessBanner={guessBanner} reactionToast={reactionToast} {...shellProps} /><ReactionStorm flying={flying} /><Toast message={toastMessage} /></>;
 
   const inRoom = Boolean(state.you && state.players.some((player) => player.id === state.you?.id));
-  if (!joined || (state.phase === 'lobby' && !inRoom && !isHost)) {
+  if (!joined || (state.phase === 'lobby' && !inRoom)) {
     return <><JoinScreen name={name} setName={setName} onSubmit={join} {...shellProps} /><ReactionStorm flying={flying} /><Toast message={toastMessage} /></>;
   }
-  if (state.phase === 'lobby') return <><LobbyScreen state={state} socket={socket} isHost={isHost} {...shellProps} /><ReactionStorm flying={flying} /><Toast message={toastMessage} /></>;
-  return <><GameScreen state={state} socket={socket} isHost={isHost} guessBanner={guessBanner} reactionToast={reactionToast} onStrokeChunk={sendStrokeChunk} {...shellProps} /><ReactionStorm flying={flying} /><Toast message={toastMessage} /></>;
+  if (state.phase === 'lobby') return <><LobbyScreen state={state} {...shellProps} /><ReactionStorm flying={flying} /><Toast message={toastMessage} /></>;
+  return <><GameScreen state={state} socket={socket} guessBanner={guessBanner} reactionToast={reactionToast} onStrokeChunk={sendStrokeChunk} {...shellProps} /><ReactionStorm flying={flying} /><Toast message={toastMessage} /></>;
 }
 
 createRoot(document.getElementById('root')!).render(<App />);

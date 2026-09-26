@@ -116,7 +116,7 @@ input::placeholder { color: #696662; opacity: 1; }
 @keyframes urgent { to { filter: blur(.6px); transform: scale(1.025); } }
 .game-grid { max-width: 1480px; margin: 0 auto; display: grid; grid-template-columns: minmax(0, 2.2fr) minmax(320px, .82fr); gap: 22px; align-items: start; }
 .game-grid > *, .side-stack, .action-card, .reaction-card, .leaderboard { min-width: 0; }
-.canvas-card { padding: 14px 0 0; border-top-color: var(--ink); background: transparent; }
+.canvas-card { padding: 14px 16px 16px; border-top-color: var(--ink); background: transparent; }
 .canvas-topline { padding: 0 0 10px; align-items: center; }
 .canvas-label, .quiet-label { font-size: 15px; }
 .canvas-status { font-size: 12px; font-weight: 700; text-transform: uppercase; display: flex; align-items: center; gap: 8px; }
@@ -272,7 +272,6 @@ input::placeholder { color: #696662; opacity: 1; }
 .tool-button:hover { background: var(--ink); color: var(--white); }
 .tool-button.active { background: var(--ink); color: var(--white); border-color: var(--ink); box-shadow: 0 2px 5px rgba(36,35,35,.18); }
 .tool-button.danger:hover { background: #b3261e; border-color: #b3261e; }
-.undo-button span { margin-left: 3px; font-size: 11px; }
 .board-tools .brush-label { min-height: 34px; padding: 0 9px; border: 1px solid var(--hairline); border-radius: 9px; background: rgba(255,255,255,.65); }
 .drawing-canvas.erasing { cursor: cell; }
 .action-card > :last-child { margin-bottom: 0; }

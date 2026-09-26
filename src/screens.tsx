@@ -91,7 +91,7 @@ export function JoinScreen({ name, setName, onSubmit, muted, onToggleMuted }: Sh
   );
 }
 
-export function LobbyScreen({ state, socket, isHost, muted, onToggleMuted }: ShellProps & { state: ClientState; socket: Socket; isHost: boolean }) {
+export function LobbyScreen({ state, muted, onToggleMuted }: ShellProps & { state: ClientState }) {
   return (
     <PageShell muted={muted} onToggleMuted={onToggleMuted}>
       <section className="lobby-layout">
@@ -99,11 +99,7 @@ export function LobbyScreen({ state, socket, isHost, muted, onToggleMuted }: She
           <h1>Lớp mình<br /><span>chơi nhé.</span></h1>
           <p className="room-code">Phòng {state.code}</p>
           <p className="lobby-note">{state.message ?? 'Đợi cả lớp vào phòng rồi bắt đầu.'}</p>
-          {isHost ? (
-            <button className="primary-button large" onClick={() => socket.emit(EVENTS.startGame)}>Bắt đầu trò chơi <span aria-hidden="true">→</span></button>
-          ) : (
-            <div className="waiting-note"><span className="pulse-dot" /> Đang chờ host bắt đầu…</div>
-          )}
+          <div className="waiting-note"><span className="pulse-dot" /> Đang chờ máy chiếu bắt đầu…</div>
         </div>
         <div className="player-card surface-card">
           <div className="card-heading">
@@ -131,13 +127,12 @@ export function LobbyScreen({ state, socket, isHost, muted, onToggleMuted }: She
 type GameScreenProps = ShellProps & {
   state: ClientState;
   socket: Socket;
-  isHost: boolean;
   guessBanner: GuessSuccessPayload | null;
   reactionToast: Reaction | null;
   onStrokeChunk: (chunk: StrokeChunk) => void;
 };
 
-export function GameScreen({ state, socket, isHost, guessBanner, reactionToast, onStrokeChunk, muted, onToggleMuted }: GameScreenProps) {
+export function GameScreen({ state, socket, guessBanner, reactionToast, onStrokeChunk, muted, onToggleMuted }: GameScreenProps) {
   const you = state.you;
   const isDrawer = Boolean(you?.isDrawer);
   const hasGuessed = Boolean(you?.hasGuessed);
@@ -155,7 +150,7 @@ export function GameScreen({ state, socket, isHost, guessBanner, reactionToast, 
     <PageShell muted={muted} onToggleMuted={onToggleMuted}>
       <RoundIntro show={roundIntro} round={state.round} totalRounds={state.totalRounds} />
       {state.phase === 'finished' ? (
-        <FinalRanking state={state} socket={socket} isHost={isHost} />
+        <FinalRanking state={state} />
       ) : (
         <>
           <div className="game-header">
@@ -196,7 +191,7 @@ export function GameScreen({ state, socket, isHost, guessBanner, reactionToast, 
               />
             </section>
             <aside className="side-stack">
-              <ActionPanel state={state} socket={socket} isDrawer={isDrawer} hasGuessed={hasGuessed} canGuess={canGuess} isHost={isHost} />
+              <ActionPanel state={state} socket={socket} isDrawer={isDrawer} hasGuessed={hasGuessed} canGuess={canGuess} />
               <ReactionPanel socket={socket} />
               <Leaderboard players={state.players} meId={you?.id} compact />
             </aside>
@@ -207,7 +202,7 @@ export function GameScreen({ state, socket, isHost, guessBanner, reactionToast, 
   );
 }
 
-function ActionPanel({ state, socket, isDrawer, hasGuessed, canGuess, isHost }: { state: ClientState; socket: Socket; isDrawer: boolean; hasGuessed: boolean; canGuess: boolean; isHost: boolean }) {
+function ActionPanel({ state, socket, isDrawer, hasGuessed, canGuess }: { state: ClientState; socket: Socket; isDrawer: boolean; hasGuessed: boolean; canGuess: boolean }) {
   const [guess, setGuess] = useState('');
   const submitGuess = (event: FormEvent) => {
     event.preventDefault();
@@ -220,11 +215,6 @@ function ActionPanel({ state, socket, isDrawer, hasGuessed, canGuess, isHost }: 
     return (
       <>
         <RevealCard state={state} />
-        {isHost && (
-          <button className="primary-button large advance-button" onClick={() => socket.emit(EVENTS.advanceRound)}>
-            Vòng tiếp theo <span aria-hidden="true">→</span>
-          </button>
-        )}
       </>
     );
   }
@@ -273,7 +263,6 @@ function ActionPanel({ state, socket, isDrawer, hasGuessed, canGuess, isHost }: 
       </div>
     );
   }
-  if (isHost) return null;
   return <p className="inline-status">{state.message ?? 'Vòng tiếp theo đang chuẩn bị…'}</p>;
 }
 
@@ -516,7 +505,7 @@ function SummaryList({ items }: { items: SummaryItem[] }) {
   );
 }
 
-function FinalRanking({ state, socket, isHost }: { state: ClientState; socket: Socket; isHost: boolean }) {
+function FinalRanking({ state }: { state: ClientState }) {
   const [copied, setCopied] = useState(false);
   const copy = async () => {
     const ok = await copyLeaderboard(state.players);
@@ -530,7 +519,6 @@ function FinalRanking({ state, socket, isHost }: { state: ClientState; socket: S
         <div className="final-actions">
           <button className="ghost-button" onClick={() => downloadLeaderboardPng(state.players, state.code)}>⬇ Tải ảnh xếp hạng</button>
           <button className="ghost-button" onClick={copy}>{copied ? '✓ Đã sao chép' : '⧉ Sao chép bảng xếp hạng'}</button>
-          {isHost && <button className="primary-button restart-button" onClick={() => socket.emit(EVENTS.nextRound)}>Chơi lại <span aria-hidden="true">→</span></button>}
         </div>
         {state.summary && <SummaryList items={state.summary} />}
       </div>

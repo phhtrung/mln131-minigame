@@ -348,7 +348,7 @@ export function DrawingBoard({ strokes, interactive, showTools = false, onChunk,
             </label>
           )}
           <div className="tool-group">
-            <button type="button" className="tool-button undo-button" onClick={() => onUndo?.()} aria-label="Hoàn tác thao tác cuối" title="Hoàn tác thao tác cuối">↶ <span>Hoàn tác</span></button>
+            <button type="button" className="tool-button undo-button" onClick={() => onUndo?.()} aria-label="Hoàn tác thao tác cuối" title="Hoàn tác thao tác cuối">↶</button>
             <button type="button" className="tool-button danger" onClick={() => onClear?.()} aria-label="Xóa bảng vẽ" title="Xóa bảng vẽ">✕</button>
           </div>
         </div>

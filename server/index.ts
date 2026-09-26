@@ -28,7 +28,6 @@ const PRE_DRAW_SECONDS = 3;
 const DRAW_SECONDS = 45;
 const DRAWER_GRACE_MS = Math.round(3000 * TIMER_SCALE);
 const GUESS_COOLDOWN_MS = 400;
-const CHUNK_COOLDOWN_MS = 20;
 const ERASE_COOLDOWN_MS = 40;
 const WARN_COOLDOWN_MS = 3000;
 const MAX_POINTS_PER_STROKE = 2000;
@@ -37,7 +36,7 @@ type ClientSocket = Socket;
 
 type PlayerEntry = Player & { socketId?: string };
 
-type RateState = { guess?: number; chunk?: number; erase?: number; warn?: number };
+type RateState = { guess?: number; erase?: number; warn?: number };
 
 type Room = {
   phase: Phase;
@@ -281,7 +280,7 @@ function connectedPlayers(): PlayerEntry[] {
 }
 
 function publicState(socket: ClientSocket): ClientState {
-  const isHost = socket.data.isHost === true;
+  const isProjector = socket.data.isProjector === true;
   const playerId = socket.data.playerId as string | undefined;
   const player = playerId ? room.players.get(playerId) : undefined;
   const isDrawer = Boolean(playerId && playerId === room.drawerId);
@@ -297,7 +296,6 @@ function publicState(socket: ClientSocket): ClientState {
     strokes: room.strokes,
     guessedPlayerIds: room.guessedPlayerIds,
     firstGuesserId: room.firstGuesserId,
-    isHost,
   };
 
   if (player) {
@@ -309,17 +307,17 @@ function publicState(socket: ClientSocket): ClientState {
     };
     if (isDrawer && room.currentContent && room.wordSelected) state.privateWord = room.currentContent.word;
   }
-  if ((isDrawer || isHost) && room.wordChoices && room.phase === 'drawing' && room.subPhase === 'choosing' && !room.wordSelected) {
+  if ((isDrawer || isProjector) && room.wordChoices && room.phase === 'drawing' && room.subPhase === 'choosing' && !room.wordSelected) {
     state.wordChoices = room.wordChoices;
   }
   if (!isDrawer) {
     const masked = currentMaskedWord();
     if (masked) state.maskedWord = masked;
   }
-  if ((isHost || playerId === room.firstGuesserId) && room.quiz) state.quiz = room.quiz;
+  if ((isProjector || playerId === room.firstGuesserId) && room.quiz) state.quiz = room.quiz;
   if (room.phase === 'quiz' && room.quiz) state.quizAnswered = room.quizAnswer !== undefined;
-  if (isHost || room.phase === 'reveal' || room.phase === 'finished') state.reveal = room.reveal;
-  if (isHost || room.phase === 'finished') state.summary = room.summary;
+  if (isProjector || room.phase === 'reveal' || room.phase === 'finished') state.reveal = room.reveal;
+  if (isProjector || room.phase === 'finished') state.summary = room.summary;
 
   if (room.phase === 'lobby') state.message = 'Đợi cả lớp vào phòng rồi bắt đầu.';
   if (room.phase === 'drawing' && room.subPhase === 'choosing' && isDrawer) state.message = 'Chọn một từ để bắt đầu vẽ.';
@@ -430,7 +428,7 @@ function bailToLobby(reason: string) {
   room.secondsLeft = 0;
   room.drawerId = undefined;
   room.wordChoices = undefined;
-  toast(`${reason} Host bấm Bắt đầu khi đã đủ người.`);
+  toast(`${reason} Máy chiếu bấm Bắt đầu khi đã đủ người.`);
   broadcastState();
 }
 
@@ -595,14 +593,14 @@ function joinPlayer(socket: ClientSocket, payload: { name?: unknown; playerId?: 
 }
 
 io.on('connection', (socket: ClientSocket) => {
-  socket.data.isHost = socket.handshake.query.host === '1';
+  socket.data.isProjector = socket.handshake.query.projector === '1';
   socket.data.rate = {};
   socket.emit(EVENTS.roomState, publicState(socket));
 
   socket.on(EVENTS.joinRoom, (payload: { name?: unknown; playerId?: unknown; token?: unknown }) => joinPlayer(socket, payload ?? {}));
 
   socket.on(EVENTS.startGame, () => {
-    if (!socket.data.isHost) return toast('Chỉ host mới có thể bắt đầu.', socket);
+    if (!socket.data.isProjector) return toast('Chỉ máy chiếu mới có thể bắt đầu.', socket);
     if (room.phase !== 'lobby') return;
     if (connectedPlayers().length < 2) return toast('Cần ít nhất 2 người chơi trực tuyến để bắt đầu.', socket);
     resetForNewGame();
@@ -610,10 +608,10 @@ io.on('connection', (socket: ClientSocket) => {
   });
 
   socket.on(EVENTS.nextRound, () => {
-    if (!socket.data.isHost) return toast('Chỉ host mới có thể bắt đầu ván mới.', socket);
+    if (!socket.data.isProjector) return toast('Chỉ máy chiếu mới có thể bắt đầu ván mới.', socket);
     if (room.phase !== 'finished') return;
     resetForNewGame();
-    toast('Đã thiết lập lại phòng — host bấm Bắt đầu để chơi ván mới.');
+    toast('Đã thiết lập lại phòng — máy chiếu bấm Bắt đầu để chơi ván mới.');
     broadcastState();
   });
 
@@ -628,10 +626,6 @@ io.on('connection', (socket: ClientSocket) => {
 
   socket.on(EVENTS.strokeChunk, (payload: unknown) => {
     if (room.phase !== 'drawing' || room.subPhase !== 'drawing' || socket.data.playerId !== room.drawerId) return;
-    const rate = socket.data.rate as RateState;
-    const now = Date.now();
-    if (rate.chunk && now - rate.chunk < CHUNK_COOLDOWN_MS) return;
-    rate.chunk = now;
     const parsed = strokeChunkSchema.safeParse(payload);
     if (!parsed.success) return;
     const chunk = parsed.data;
@@ -722,7 +716,7 @@ io.on('connection', (socket: ClientSocket) => {
   });
 
   socket.on(EVENTS.revealQuiz, () => {
-    if (!socket.data.isHost) return toast('Chỉ host hoặc máy chiếu mới có thể mở đáp án.', socket);
+    if (!socket.data.isProjector) return toast('Chỉ máy chiếu mới có thể mở đáp án.', socket);
     if (room.phase !== 'quiz' || !room.quiz) return;
     const decided = room.quizAnswer;
     if (decided === undefined) {
@@ -745,7 +739,7 @@ io.on('connection', (socket: ClientSocket) => {
   });
 
   socket.on(EVENTS.advanceRound, () => {
-    if (!socket.data.isHost) return toast('Chỉ host hoặc máy chiếu mới có thể chuyển vòng.', socket);
+    if (!socket.data.isProjector) return toast('Chỉ máy chiếu mới có thể chuyển vòng.', socket);
     if (room.phase !== 'reveal') return;
     beginRound();
   });
