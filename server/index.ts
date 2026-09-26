@@ -59,6 +59,7 @@ type Room = {
   guessedPlayerIds: string[];
   firstGuesserId?: string;
   quiz?: Quiz;
+  quizDrawSeconds?: number;
   reveal?: Reveal;
   summary: SummaryItem[];
   recentReactions: RoomState['recentReactions'];
@@ -136,8 +137,11 @@ function normalized(value: string) {
     .trim();
 }
 
-function scoreForGuess(position: number) {
-  return [500, 380, 320, 250, 170, 100, 60][position] ?? 40;
+function scoreForGuess(secondsLeft: number, position: number) {
+  const safeSeconds = Math.min(DRAW_SECONDS, Math.max(0, secondsLeft));
+  const timePoints = Math.round((safeSeconds / DRAW_SECONDS) * 350);
+  const orderBonus = position === 0 ? 100 : position === 1 ? 50 : position === 2 ? 25 : 0;
+  return 50 + timePoints + orderBonus;
 }
 
 function shuffle<T>(items: T[]): T[] {
@@ -322,7 +326,9 @@ function awardDrawer() {
   const drawer = room.players.get(room.drawerId);
   if (!drawer) return;
   const guessedCount = room.guessedPlayerIds.length;
-  drawer.score += Math.min(500, 150 + guessedCount * 75);
+  const totalGuessers = connectedPlayers().filter((player) => player.id !== room.drawerId).length;
+  if (guessedCount === 0 || totalGuessers === 0) return;
+  drawer.score += Math.round(Math.min(1, guessedCount / totalGuessers) * 500);
 }
 
 function pickDrawerFrom(pool: PlayerEntry[]): PlayerEntry | undefined {
@@ -343,6 +349,7 @@ function resetRoundState() {
   room.guessedPlayerIds = [];
   room.firstGuesserId = undefined;
   room.quiz = undefined;
+  room.quizDrawSeconds = undefined;
   room.reveal = undefined;
   room.hintLevel = 0;
   room.hintIndices = [];
@@ -444,6 +451,7 @@ function startQuiz(firstGuesserId: string) {
   room.phase = 'quiz';
   room.firstGuesserId = firstGuesserId;
   room.quiz = buildShuffledQuiz(content);
+  room.quizDrawSeconds = room.secondsLeft;
   startCountdown(QUIZ_SECONDS, () => {
     const player = room.players.get(firstGuesserId);
     if (player) player.score -= 100;
@@ -620,7 +628,11 @@ io.on('connection', (socket: ClientSocket) => {
     if (!correct) return toast('Chưa đúng — thử một ý khác nhé.', socket);
     const position = room.guessedPlayerIds.length;
     room.guessedPlayerIds.push(playerId);
-    const points = scoreForGuess(position);
+    const secondsLeft =
+      room.phase === 'drawing'
+        ? room.secondsLeft
+        : Math.max(0, (room.quizDrawSeconds ?? 0) - (QUIZ_SECONDS - room.secondsLeft));
+    const points = scoreForGuess(secondsLeft, position);
     const player = room.players.get(playerId);
     if (player) {
       player.score += points;

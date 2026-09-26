@@ -239,13 +239,14 @@ async function main() {
   await waitState(host, (state) => state.phase === 'quiz');
   check('quiz phase after first correct guess', host.state.phase === 'quiz');
   const success1 = viewer.successes.find((payload) => payload.playerId === g1.id);
-  check('guess success broadcast with 500 points', Boolean(success1) && success1.points === 500 && success1.position === 0);
-  check('first guesser scored +500', playerIn(host.state, g1.id).score === scoreBefore1 + 500);
+  check('first guesser gets fast-guess points (150-500)', Boolean(success1) && success1.position === 0 && success1.points >= 150 && success1.points <= 500);
+  check('first guesser score matches broadcast points', Boolean(success1) && playerIn(host.state, g1.id).score === scoreBefore1 + success1.points);
 
   g2.emit(EVENTS.submitGuess, { guess: aliasFor(chosenWord1) });
   await sleep(350);
   check('second guesser accepted during quiz', host.state.guessedPlayerIds.includes(g2.id));
-  check('second guesser scored +380', playerIn(host.state, g2.id).score === 380);
+  const success2 = viewer.successes.find((payload) => payload.playerId === g2.id);
+  check('second guesser scores less than first (time + order)', Boolean(success1) && Boolean(success2) && success2.position === 1 && success2.points >= 100 && success2.points <= 450 && success2.points < success1.points && playerIn(host.state, g2.id).score === success2.points);
 
   const content1 = ROUND_CONTENT.find((item) => item.word === chosenWord1);
   check('first guesser receives quiz', g1.state.quiz?.prompt === content1.quiz.prompt);
@@ -256,9 +257,9 @@ async function main() {
   g1.emit(EVENTS.submitQuiz, { answer: g1.state.quiz.correctIndex });
   await waitState(host, (state) => state.phase === 'reveal');
   check('reveal after correct quiz answer', host.state.phase === 'reveal' && host.state.reveal?.quizResult === 'correct');
-  check('quiz correct awarded +400', playerIn(host.state, g1.id).score === scoreBefore1 + 900);
+  check('quiz correct awarded +400', Boolean(success1) && playerIn(host.state, g1.id).score === scoreBefore1 + success1.points + 400);
   check('summary recorded for round 1', host.state.summary?.length === 1 && host.state.summary[0].word === chosenWord1);
-  check('drawer awarded for 2 guessers', playerIn(host.state, drawer1.id).score === 300);
+  check('drawer awarded 250 for 2 of 4 guessers', playerIn(host.state, drawer1.id).score === 250);
 
   console.log('\n== Round 2: hints + wrong quiz ==');
   await waitState(host, (state) => state.phase === 'drawing' && state.subPhase === 'choosing' && state.round === 2);
@@ -266,6 +267,7 @@ async function main() {
   const drawer2 = drawerClient();
   check('drawer rotates to a new player', drawer2.id !== previousDrawerId);
   previousDrawerId = drawer2.id;
+  const drawer2Before = playerIn(host.state, drawer2.id).score;
   const choices2 = drawer2.state.wordChoices;
   drawer2.emit(EVENTS.chooseWord, { index: 1 });
   const chosenWord2 = choices2[1];
@@ -300,13 +302,16 @@ async function main() {
   const r2Before = playerIn(host.state, r2Guesser.id).score;
   r2Guesser.emit(EVENTS.submitGuess, { guess: aliasFor(chosenWord2) });
   await waitState(host, (state) => state.phase === 'quiz');
+  const r2Success = r2Guesser.successes.find((payload) => payload.playerId === r2Guesser.id);
+  check('round 2 first guess earns time-based points', Boolean(r2Success) && r2Success.position === 0 && r2Success.points >= 150 && r2Success.points <= 500);
   const content2 = ROUND_CONTENT.find((item) => item.word === chosenWord2);
   check('round 2 quiz correct answer preserved', r2Guesser.state.quiz.options[r2Guesser.state.quiz.correctIndex] === content2.quiz.options[content2.quiz.correctIndex]);
   quizIndices.push(r2Guesser.state.quiz.correctIndex);
   r2Guesser.emit(EVENTS.submitQuiz, { answer: (r2Guesser.state.quiz.correctIndex + 1) % 4 });
   await waitState(host, (state) => state.phase === 'reveal');
-  check('wrong quiz answer −200', playerIn(host.state, r2Guesser.id).score === r2Before + 500 - 200);
+  check('wrong quiz answer −200', Boolean(r2Success) && playerIn(host.state, r2Guesser.id).score === r2Before + r2Success.points - 200);
   check('reveal shows incorrect result', host.state.reveal?.quizResult === 'incorrect');
+  check('drawer awarded 125 for 1 of 4 guessers', playerIn(host.state, drawer2.id).score === drawer2Before + 125);
 
   console.log('\n== Round 3: reconnect + quiz timeout ==');
   await waitState(host, (state) => state.phase === 'drawing' && state.round === 3 && state.subPhase === 'choosing');
@@ -340,9 +345,10 @@ async function main() {
   r3Guesser.emit(EVENTS.submitGuess, { guess: aliasFor(chosenWord3) });
   await waitState(host, (state) => state.phase === 'quiz');
   const r3FirstGuesserId = host.state.firstGuesserId;
-  check('round 3 quiz underway', playerIn(host.state, r3FirstGuesserId).score === r3Before + 500);
+  const r3Success = r3Guesser.successes.find((payload) => payload.playerId === r3Guesser.id);
+  check('round 3 quiz underway', Boolean(r3Success) && playerIn(host.state, r3FirstGuesserId).score === r3Before + r3Success.points);
   await waitState(host, (state) => state.phase === 'reveal' && state.reveal?.quizResult === 'timeout', 9000);
-  check('unanswered quiz times out at −100', playerIn(host.state, r3FirstGuesserId).score === r3Before + 500 - 100);
+  check('unanswered quiz times out at −100', Boolean(r3Success) && playerIn(host.state, r3FirstGuesserId).score === r3Before + r3Success.points - 100);
 
   console.log('\n== Round 4: drawer disconnect + replacement + auto-pick ==');
   await waitState(host, (state) => state.phase === 'drawing' && state.round === 4 && state.subPhase === 'choosing');
@@ -383,6 +389,14 @@ async function main() {
     roundDrawer.emit(EVENTS.chooseWord, { index: 0 });
     const chosenWord = roundChoices[0];
     await waitState(host, (state) => state.subPhase === 'drawing');
+    if (roundNumber === 5) {
+      const idleDrawerId = host.state.drawerId;
+      const idleDrawerBefore = playerIn(host.state, idleDrawerId).score;
+      await waitState(host, (state) => state.phase === 'reveal', 15000);
+      check('timeout reveal when nobody guesses', host.state.reveal?.quizResult === 'timeout');
+      check('drawer scores nothing when nobody guesses', playerIn(host.state, idleDrawerId).score === idleDrawerBefore);
+      continue;
+    }
     const answerer = guesserClients().find((client) => !client.state.you?.hasGuessed);
     answerer.emit(EVENTS.submitGuess, { guess: aliasFor(chosenWord) });
     await waitState(host, (state) => state.phase === 'quiz');
