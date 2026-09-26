@@ -342,8 +342,8 @@ async function main() {
 
   const scoreBefore1 = playerIn(projector.state, g1.id).score;
   g1.emit(EVENTS.submitGuess, { guess: aliasFor(chosenWord1) });
-  await waitState(projector, (state) => state.phase === 'quiz');
-  check('quiz phase after first correct guess', projector.state.phase === 'quiz');
+  await waitState(projector, (state) => state.firstGuesserId === g1.id);
+  check('drawing stays open after first correct guess', projector.state.phase === 'drawing' && projector.state.quiz === undefined);
   const success1 = viewer.successes.find((payload) => payload.playerId === g1.id);
   check('first guesser gets fast-guess points (150-500)', Boolean(success1) && success1.position === 0 && success1.points >= 150 && success1.points <= 500);
   check('first guesser score matches broadcast points', Boolean(success1) && playerIn(projector.state, g1.id).score === scoreBefore1 + success1.points);
@@ -363,6 +363,9 @@ async function main() {
     'answer is accepted regardless of letter case',
     projector.state.guessedPlayerIds.includes(accentProbe.id) && playerIn(projector.state, accentProbe.id).score > 0,
   );
+
+  await waitState(projector, (state) => state.phase === 'quiz', gameMs(DRAW_SECONDS) + 8000);
+  check('quiz opens after the full drawing timer', projector.state.phase === 'quiz' && projector.state.quiz !== undefined);
 
   const content1 = ROUND_CONTENT.find((item) => item.word === chosenWord1);
   check('first guesser receives quiz', g1.state.quiz?.prompt === content1.quiz.prompt);
@@ -427,7 +430,7 @@ async function main() {
   // successes accumulate for the whole session, so drop round 1 events before looking this one up.
   r2Guesser.successes.length = 0;
   r2Guesser.emit(EVENTS.submitGuess, { guess: aliasFor(chosenWord2) });
-  await waitState(projector, (state) => state.phase === 'quiz');
+  await waitState(projector, (state) => state.phase === 'quiz', gameMs(DRAW_SECONDS) + 8000);
   const r2Success = r2Guesser.successes.find((payload) => payload.playerId === r2Guesser.id);
   check('round 2 first guess is recorded as position 0', Boolean(r2Success) && r2Success.position === 0);
   check('round 2 first guess earns time-based points', Boolean(r2Success) && r2Success.points >= 150 && r2Success.points <= 500);
@@ -474,7 +477,7 @@ async function main() {
   const r3Guesser = guesserClients().find((client) => !client.state.you?.hasGuessed);
   const r3Before = playerIn(projector.state, r3Guesser.id).score;
   r3Guesser.emit(EVENTS.submitGuess, { guess: aliasFor(chosenWord3) });
-  await waitState(projector, (state) => state.phase === 'quiz');
+  await waitState(projector, (state) => state.phase === 'quiz', gameMs(DRAW_SECONDS) + 8000);
   const r3FirstGuesserId = projector.state.firstGuesserId;
   const r3Success = r3Guesser.successes.find((payload) => payload.playerId === r3Guesser.id);
   check('round 3 quiz underway', Boolean(r3Success) && playerIn(projector.state, r3FirstGuesserId).score === r3Before + r3Success.points);
@@ -508,7 +511,7 @@ async function main() {
 
   const r4Guesser = guesserClients().find((client) => !client.state.you?.hasGuessed);
   r4Guesser.emit(EVENTS.submitGuess, { guess: aliasFor(autoPickState.privateWord) });
-  await waitState(projector, (state) => state.phase === 'quiz');
+  await waitState(projector, (state) => state.phase === 'quiz', gameMs(DRAW_SECONDS) + 8000);
   const r4Answerer = players.find((client) => client.id === projector.state.firstGuesserId);
   quizIndices.push(r4Answerer.state.quiz.correctIndex);
   r4Answerer.emit(EVENTS.submitQuiz, { answer: r4Answerer.state.quiz.correctIndex });
@@ -540,7 +543,7 @@ async function main() {
     }
     const answerer = guesserClients().find((client) => !client.state.you?.hasGuessed);
     answerer.emit(EVENTS.submitGuess, { guess: aliasFor(chosenWord) });
-    await waitState(projector, (state) => state.phase === 'quiz');
+    await waitState(projector, (state) => state.phase === 'quiz', gameMs(DRAW_SECONDS) + 8000);
     quizIndices.push(answerer.state.quiz.correctIndex);
     answerer.emit(EVENTS.submitQuiz, { answer: answerer.state.quiz.correctIndex });
     await waitFor(() => projector.state.quizAnswered === true);
