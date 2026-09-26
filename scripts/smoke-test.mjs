@@ -182,6 +182,8 @@ async function main() {
       [item.word, ...item.aliases].every((answer) => isAscii(answer) || stripDiacritics(answer) !== answer.toLocaleLowerCase('vi-VN')),
     ),
   );
+  check('question bank has at least 30 unique family words', ROUND_CONTENT.length >= 30 && new Set(ROUND_CONTENT.map((item) => item.word)).size === ROUND_CONTENT.length);
+  check('every word has a complete ABCD quiz', ROUND_CONTENT.every((item) => item.quiz.prompt && item.quiz.options.length === 4 && new Set(item.quiz.options).size === 4 && item.quiz.correctIndex >= 0 && item.quiz.correctIndex < 4));
 
   console.log('\n== Reactions have no rate limit ==');
   const reactionsBefore = projector.reactions.length;
@@ -201,6 +203,7 @@ async function main() {
   await waitState(projector, (state) => state.phase === 'drawing' && state.subPhase === 'choosing');
   check('game started into choosing', projector.state.phase === 'drawing' && projector.state.subPhase === 'choosing');
   check('round is 1', projector.state.round === 1);
+  check('game has 10 rounds', projector.state.totalRounds === 10);
 
   const drawerClient = () => players.find((client) => client.live && client.id === projector.state.drawerId);
   const guesserClients = () => players.filter((client) => client.live && client.id !== projector.state.drawerId);
@@ -493,12 +496,12 @@ async function main() {
   await waitState(projector, (state) => state.phase === 'reveal');
   projector.emit(EVENTS.advanceRound);
 
-  console.log('\n== Rounds 5-7: finish the game ==');
-  for (const roundNumber of [5, 6, 7]) {
+  console.log('\n== Rounds 5-10: finish the game ==');
+  for (const roundNumber of [5, 6, 7, 8, 9, 10]) {
     await waitState(projector, (state) => state.phase === 'drawing' && state.round === roundNumber && state.subPhase === 'choosing');
     const roundDrawer = drawerClient();
-    if (roundNumber === 7) {
-      check('final round has a single remaining word', roundDrawer.state.wordChoices?.length === 1);
+    if (roundNumber === 10) {
+      check('final round offers three words from the larger bank', roundDrawer.state.wordChoices?.length === 3);
     }
     const roundChoices = roundDrawer.state.wordChoices;
     roundDrawer.emit(EVENTS.chooseWord, { index: 0 });
@@ -522,19 +525,19 @@ async function main() {
     projector.emit(EVENTS.revealQuiz);
     await waitState(projector, (state) => state.phase === 'reveal');
     projector.emit(EVENTS.advanceRound);
-    if (roundNumber === 7) {
+    if (roundNumber === 10) {
       await waitState(projector, (state) => state.phase === 'finished', 9000);
     }
   }
 
-  check('game finished after 7 rounds', projector.state.phase === 'finished');
-  check('summary contains all 7 rounds', projector.state.summary?.length === 7);
+  check('game finished after 10 rounds', projector.state.phase === 'finished');
+  check('summary contains all 10 rounds', projector.state.summary?.length === 10);
   const summaryWords = projector.state.summary.map((item) => item.word);
-  check('no repeated words across the game', new Set(summaryWords).size === 7);
+  check('no repeated words across the game', new Set(summaryWords).size === 10);
   check('quiz answer positions are shuffled', new Set(quizIndices).size >= 2);
   const livePlayer = players.find((client) => client.live);
   await waitState(livePlayer, (state) => state.phase === 'finished', 6000);
-  check('summary visible to regular players after finish', livePlayer.state.summary?.length === 7);
+  check('summary visible to regular players after finish', livePlayer.state.summary?.length === 10);
   check('someone has a positive score', projector.state.players.some((player) => player.score > 0));
 
   console.log('\n== Restart: play again ==');

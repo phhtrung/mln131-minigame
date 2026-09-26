@@ -30,7 +30,7 @@ Sau đó mở http://localhost:3000/.
 - Từ khóa hiển thị dạng gạch dưới theo độ dài; chữ cái luôn được che trong suốt lượt vẽ.
 - Điểm người đoán tăng theo thời gian vẽ còn lại khi đáp án đúng (nhanh nhất tối đa 500, sàn 50) kèm thưởng thứ tự cho ba người đoán đầu; họa sĩ được điểm theo tỉ lệ người đoán đúng so với số người trực tuyến (tối đa 500, không ai đoán đúng thì không được điểm).
 - Người đoán đầu tiên trả lời câu hỏi ABCD (thứ tự đáp án xáo trộn mỗi ván, không giới hạn thời gian; câu hỏi hiển thị trên máy chiếu để cả lớp cùng theo dõi): chốt đáp án rồi máy chiếu bấm "Mở đáp án" — đúng +400, sai −200, chưa trả lời thì không bị trừ điểm.
-- Sau mỗi vòng có Educational Reveal: đáp án, giải thích ngắn và ý chính liên hệ chủ đề; reveal đứng yên chờ máy chiếu bấm "Vòng tiếp theo" (không tự nhảy giờ); hết game có trang tổng kết cả 7 chủ đề, podium top 3 và xuất bảng xếp hạng (ảnh PNG/chép văn bản).
+- Mỗi ván có 10 vòng, chọn từ ngân hàng 36 từ về gia đình; người đoán đúng đầu tiên trả lời câu hỏi ABCD gắn với từ đó. Sau mỗi vòng có Educational Reveal: đáp án, giải thích ngắn và ý chính liên hệ chủ đề; reveal đứng yên chờ máy chiếu bấm "Vòng tiếp theo" (không tự nhảy giờ); hết game có trang tổng kết cả 10 chủ đề, podium top 3 và xuất bảng xếp hạng (ảnh PNG/chép văn bản).
 - Từ khóa không lặp lại trong một ván chơi; máy chiếu bấm "Chơi lại" sau khi kết thúc để quay về sảnh với điểm số về 0. Máy chiếu bấm "Bắt đầu trò chơi", "Mở đáp án" và "Vòng tiếp theo".
 - Mất kết nối (kể cả refresh trang) vào lại bằng đúng danh tính cũ và giữ nguyên điểm số; họa sĩ rời phòng quá 3 giây sẽ có người thay ngay.
 - Reactions dùng tám emoji Twemoji nhất quán như khóc, hoa héo, dấu hỏi, đầu lâu, thở dài, chắp tay, lạnh cóng và toát mồ hôi; emoji bay lên từ đáy màn hình và hiện thông báo cạnh bảng vẽ (kể cả trên máy chiếu); không có open chat để giữ nhịp; có âm thanh và nút tắt tiếng trên thanh trên.
@@ -45,7 +45,7 @@ npm run build
 npm run test:smoke
 ```
 
-`test:smoke` tự dựng server thử nghiệm (port 4123, tăng tốc timer) và mô phỏng projector + 5 người chơi qua đủ 7 vòng: đoán, quiz, từ khóa che cố định, reconnect, thay họa sĩ, chơi lại. Muốn chạy production giống thật: `npm run build && npm start` rồi mở http://localhost:3000/.
+`test:smoke` tự dựng server thử nghiệm (port 4123, tăng tốc timer) và mô phỏng projector + 5 người chơi qua đủ 10 vòng: đoán, quiz, từ khóa che cố định, reconnect, thay họa sĩ, chơi lại. Muốn chạy production giống thật: `npm run build && npm start` rồi mở http://localhost:3000/.
 
 ## Triển khai Render
 

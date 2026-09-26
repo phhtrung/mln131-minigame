@@ -22,7 +22,7 @@ import type {
 const PORT = Number(process.env.PORT ?? 3000);
 const TIMER_SCALE = Math.min(1, Math.max(0.02, Number(process.env.TIMER_SCALE ?? 1) || 1));
 const ROOM_CODE = 'MLN131';
-const TOTAL_ROUNDS = 7;
+const TOTAL_ROUNDS = 10;
 const WORD_CHOICE_SECONDS = 8;
 const PRE_DRAW_SECONDS = 3;
 const DRAW_SECONDS = 45;
