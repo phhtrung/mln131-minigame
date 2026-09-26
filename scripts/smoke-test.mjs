@@ -1,6 +1,7 @@
 import { spawn } from 'node:child_process';
 import { io } from 'socket.io-client';
-import { EVENTS } from '../dist-server/shared/events.js';
+import { EVENTS, PROJECTOR_PASSWORD_QUERY, PROJECTOR_REJECTED_ERROR } from '../dist-server/shared/events.js';
+import { PROJECTOR_PASSWORD } from '../dist-server/shared/projector.js';
 import { ROUND_CONTENT } from '../dist-server/shared/content.js';
 
 const PORT = Number(process.env.TEST_PORT ?? 4123);
@@ -28,7 +29,12 @@ function check(label, condition) {
 class Client {
   constructor(label, { projector = false } = {}) {
     this.label = label;
-    this.socket = io(URL, { query: { projector: projector ? '1' : '0' }, transports: ['websocket'] });
+    this.socket = io(URL, {
+      query: projector
+        ? { projector: '1', [PROJECTOR_PASSWORD_QUERY]: PROJECTOR_PASSWORD }
+        : { projector: '0' },
+      transports: ['websocket'],
+    });
     this.states = [];
     this.ticks = [];
     this.toasts = [];
@@ -146,6 +152,20 @@ async function main() {
   }
   check('healthz responds ok', healthy);
   if (!healthy) throw new Error('server did not start');
+
+  console.log('\n== Projector password gate ==');
+  const lockedSocket = io(URL, {
+    query: { projector: '1', [PROJECTOR_PASSWORD_QUERY]: 'sai-mat-khau' },
+    transports: ['websocket'],
+    reconnection: false,
+  });
+  const rejection = await new Promise((resolve) => {
+    lockedSocket.on('connect_error', resolve);
+    lockedSocket.on('connect', () => resolve(new Error('connected without password')));
+    setTimeout(() => resolve(new Error('no rejection')), 3000);
+  });
+  check('projector with a wrong password is rejected', rejection.message === PROJECTOR_REJECTED_ERROR);
+  lockedSocket.close();
 
   console.log('\n== Setup: projector + 5 players ==');
   const projector = new Client('projector', { projector: true });
@@ -351,6 +371,8 @@ async function main() {
   g1.emit(EVENTS.submitQuiz, { answer: g1.state.quiz.correctIndex });
   await waitFor(() => projector.state.quizAnswered === true);
   check('answer locks in without finishing the round', projector.state.phase === 'quiz' && projector.state.quizAnswered === true);
+  check('projector sees chosen option before reveal', projector.state.quizAnswer === g1.state.quiz.correctIndex);
+  check('chosen option hidden from other players', g2.state.quizAnswer === undefined);
   g1.emit(EVENTS.submitQuiz, { answer: (g1.state.quiz.correctIndex + 1) % 4 });
   await sleep(300);
   check('locked answer cannot be changed', projector.state.phase === 'quiz' && projector.state.quizAnswered === true);

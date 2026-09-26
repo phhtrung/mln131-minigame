@@ -17,3 +17,7 @@ export const EVENTS = {
   guessSuccess: 'guess_success',
   toast: 'toast',
 } as const;
+
+export const PROJECTOR_PASSWORD_QUERY = 'projectorPassword';
+
+export const PROJECTOR_REJECTED_ERROR = 'projector_password_required';

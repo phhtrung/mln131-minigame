@@ -72,6 +72,8 @@ h2 { font-weight: 750; letter-spacing: -.04em; }
 .join-form { max-width: 760px; margin: 42px 0 0 auto; padding-top: 18px; border-top: 1px solid var(--line); text-align: left; }
 .join-form label { display: block; font-family: var(--body); font-size: 13px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; margin-bottom: 10px; }
 .input-row, .guess-form { display: flex; gap: 10px; }
+.gate-error { margin: 14px 0 0; font-weight: 800; color: var(--magenta); }
+.gate-note { margin: 14px 0 0; color: var(--muted); font-weight: 700; font-size: 15px; line-height: 1.5; }
 input { width: 100%; min-width: 0; min-height: 52px; border: 1px solid var(--line); border-radius: 11px; background: rgba(255,255,255,.66); color: var(--ink); padding: 13px 15px; font-size: 16px; caret-color: var(--magenta); }
 input::placeholder { color: #696662; opacity: 1; }
 .primary-button { min-height: 52px; border: 0; border-radius: 11px; background: var(--blue); color: var(--white); font-weight: 800; padding: 13px 22px; white-space: nowrap; transition: background .18s ease, transform .18s ease; }
@@ -224,6 +226,9 @@ input::placeholder { color: #696662; opacity: 1; }
 .projector-quiz-options { margin: 18px 0; }
 .projector-quiz-options .quiz-option { font-size: clamp(1.05rem, 2.2vw, 1.6rem); min-height: 56px; }
 .projector-quiz-status { font-weight: 800; color: var(--blue-deep); }
+.projector-quiz-options .quiz-option.chosen { background: rgba(241,5,230,.1); border-bottom-color: var(--magenta); color: var(--ink); font-weight: 800; }
+.chosen-tag { font-style: normal; font-family: var(--body); font-size: 12px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: var(--magenta); animation: chosenIn .32s ease both; }
+@keyframes chosenIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: none; } }
 .toast { position: fixed; z-index: 20; left: 50%; bottom: 22px; transform: translateX(-50%); padding: 13px 18px; background: var(--ink); color: var(--white); border-top: 3px solid var(--magenta); font-size: 14px; font-weight: 700; box-shadow: 0 12px 30px rgba(50,46,41,.18); }
 
 .sound-toggle { border: 1px solid var(--line); background: transparent; border-radius: 999px; min-width: 42px; height: 34px; font-size: 15px; line-height: 1; padding: 0 8px; transition: background .16s ease; }

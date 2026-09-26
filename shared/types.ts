@@ -66,6 +66,7 @@ export type RoomState = {
   maskedWord?: string;
   quiz?: Quiz;
   quizAnswered?: boolean;
+  quizAnswer?: number;
   reveal?: Reveal;
   summary?: SummaryItem[];
   message?: string;

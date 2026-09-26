@@ -91,6 +91,41 @@ export function JoinScreen({ name, setName, onSubmit, muted, onToggleMuted }: Sh
   );
 }
 
+export function ProjectorGate({ error, onSubmit, muted, onToggleMuted }: ShellProps & { error: string; onSubmit: (password: string) => void }) {
+  const [password, setPassword] = useState('');
+  const submit = (event: FormEvent) => {
+    event.preventDefault();
+    onSubmit(password);
+  };
+  return (
+    <PageShell muted={muted} onToggleMuted={onToggleMuted}>
+      <section className="hero hero-join">
+        <p className="eyebrow">MÀN HÌNH MÁY CHIẾU · MLN131</p>
+        <h1>Nhập<br /><span>mật khẩu.</span></h1>
+        <form className="join-form" onSubmit={submit}>
+          <label htmlFor="projector-password">Mật khẩu máy chiếu</label>
+          <div className="input-row">
+            <input
+              id="projector-password"
+              type="password"
+              autoFocus
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+              placeholder="Nhập mật khẩu"
+              maxLength={64}
+              autoComplete="off"
+            />
+            <button className="primary-button" type="submit">Mở màn hình <span aria-hidden="true">→</span></button>
+          </div>
+          {error
+            ? <p className="gate-error" role="alert">{error}</p>
+            : <p className="gate-note">Chỉ máy chiếu của lớp mới cần mật khẩu — người chơi vào bằng link thường.</p>}
+        </form>
+      </section>
+    </PageShell>
+  );
+}
+
 export function LobbyScreen({ state, muted, onToggleMuted }: ShellProps & { state: ClientState }) {
   return (
     <PageShell muted={muted} onToggleMuted={onToggleMuted}>
@@ -243,9 +278,10 @@ function ActionPanel({ state, socket, isDrawer, hasGuessed, canGuess }: { state:
     return <QuizCard state={state} socket={socket} />;
   }
   if (canGuess && state.you && !isDrawer) {
+    const waitingForQuiz = hasGuessed && state.phase === 'drawing' && state.firstGuesserId === state.you.id;
     return (
       <div className="action-card">
-        <h2>{hasGuessed ? 'Đã ghi nhận.' : 'Bạn đoán là gì?'}</h2>
+        <h2>{waitingForQuiz ? 'Đúng rồi!' : hasGuessed ? 'Đã ghi nhận.' : 'Bạn đoán là gì?'}</h2>
         <form onSubmit={submitGuess} className="guess-form">
           <input
             value={guess}
@@ -260,6 +296,7 @@ function ActionPanel({ state, socket, isDrawer, hasGuessed, canGuess }: { state:
           />
           <button className="primary-button" disabled={hasGuessed}>Gửi <span aria-hidden="true">→</span></button>
         </form>
+        {waitingForQuiz && <p className="first-guesser-note">Bạn trả lời đúng đầu tiên — cả lớp vẫn đoán đến hết giờ, rồi bạn trả lời câu hỏi củng cố.</p>}
       </div>
     );
   }
@@ -548,6 +585,8 @@ export function ProjectorScreen({ state, socket, guessBanner, reactionToast, mut
         : state.phase === 'drawing'
           ? 'Đang vẽ…'
           : 'Sẵn sàng!';
+  const firstGuesser = state.players.find((player) => player.id === state.firstGuesserId);
+  const waitingForClock = state.phase === 'drawing' && state.subPhase === 'drawing' && Boolean(firstGuesser);
   return (
     <PageShell muted={muted} onToggleMuted={onToggleMuted}>
       <section className="projector-layout">
@@ -561,6 +600,13 @@ export function ProjectorScreen({ state, socket, guessBanner, reactionToast, mut
             <div className="projector-timer">{state.secondsLeft}<span>s</span></div>
           )}
         </div>
+        {waitingForClock && firstGuesser && (
+          <div className="first-guesser-flag">
+            <span className="eyebrow">TRẢ LỜI ĐÚNG ĐẦU TIÊN</span>
+            <strong>{firstGuesser.name}</strong>
+            <span>Hết giờ là câu hỏi củng cố.</span>
+          </div>
+        )}
         {state.phase === 'finished' ? (
           <>
             <button className="primary-button large projector-restart" onClick={() => socket.emit(EVENTS.nextRound)}>Chơi lại <span aria-hidden="true">→</span></button>
@@ -616,19 +662,24 @@ function projectorResultLabel(quizResult: QuizResult | undefined) {
 
 function ProjectorQuiz({ state, socket }: { state: ClientState; socket: Socket }) {
   const answerer = state.players.find((player) => player.id === state.firstGuesserId);
+  const chosenIndex = state.quizAnswer;
+  const chosenText = chosenIndex !== undefined ? state.quiz?.options[chosenIndex] : undefined;
   return (
     <section className="projector-quiz">
       <p className="eyebrow">CÂU HỎI CỦA VÒNG {state.round}/{state.totalRounds}</p>
       <h2>{state.quiz?.prompt}</h2>
       <div className="quiz-options projector-quiz-options">
         {state.quiz?.options.map((option, index) => (
-          <div className="quiz-option static" key={option}>
+          <div className={chosenIndex === index ? 'quiz-option static chosen' : 'quiz-option static'} key={option}>
             <span>{String.fromCharCode(65 + index)}</span>{option}
+            {chosenIndex === index && <em className="chosen-tag">Đã chọn</em>}
           </div>
         ))}
       </div>
       <p className="projector-quiz-status">
-        {state.quizAnswered ? 'Đã chốt đáp án.' : `${answerer?.name ?? 'Bạn chơi'} đang chọn đáp án…`}
+        {state.quizAnswered
+          ? `${answerer?.name ?? 'Bạn chơi'} đã chốt${chosenText ? `: ${chosenText}` : '.'}`
+          : `${answerer?.name ?? 'Bạn chơi'} đang chọn đáp án…`}
       </p>
       <button className="primary-button large" onClick={() => socket.emit(EVENTS.revealQuiz)}>Mở đáp án <span aria-hidden="true">→</span></button>
     </section>
