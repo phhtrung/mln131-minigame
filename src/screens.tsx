@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type FormEvent, type ReactNode } from 'react';
 import type { Socket } from 'socket.io-client';
 import { EVENTS } from '../shared/events';
 import type { ClientState, GuessSuccessPayload, Player, SummaryItem } from '../shared/types';
@@ -329,16 +329,77 @@ function sortPlayers(players: Player[]) {
   return [...players].sort((a, b) => b.score - a.score || b.quizCorrect - a.quizCorrect || b.firstGuesses - a.firstGuesses);
 }
 
-function Leaderboard({ players, meId, compact = false }: { players: Player[]; meId?: string; compact?: boolean }) {
+const MIN_RANK_ROW_HEIGHT = 19;
+const MAX_RANK_ROW_HEIGHT = 46;
+const RANK_LIST_BOTTOM_GAP = 30;
+
+function useFittedRankRows(count: number, enabled: boolean) {
+  const ref = useRef<HTMLDivElement | null>(null);
+  const [fit, setFit] = useState<{ rowHeight: number; maxHeight: number } | null>(null);
+
+  useLayoutEffect(() => {
+    if (!enabled) {
+      setFit(null);
+      return;
+    }
+    const measure = () => {
+      const node = ref.current;
+      if (!node) return;
+      const top = node.getBoundingClientRect().top;
+      const available = Math.floor(window.innerHeight - top - RANK_LIST_BOTTOM_GAP);
+      if (available <= 0 || count <= 0) {
+        setFit(null);
+        return;
+      }
+      const rowHeight = Math.max(MIN_RANK_ROW_HEIGHT, Math.min(MAX_RANK_ROW_HEIGHT, Math.floor(available / count)));
+      const maxHeight = Math.max(rowHeight, available);
+      setFit((current) => {
+        if (current && current.rowHeight === rowHeight && current.maxHeight === maxHeight) return current;
+        return { rowHeight, maxHeight };
+      });
+    };
+    measure();
+    window.addEventListener('resize', measure);
+    const observer = typeof ResizeObserver === 'function' ? new ResizeObserver(measure) : null;
+    if (ref.current) observer?.observe(ref.current);
+    return () => {
+      window.removeEventListener('resize', measure);
+      observer?.disconnect();
+    };
+  }, [count, enabled]);
+
+  const style = fit
+    ? ({ '--rank-row-h': `${fit.rowHeight}px`, '--rank-list-max': `${fit.maxHeight}px` } as CSSProperties)
+    : undefined;
+  return { ref, style };
+}
+
+function Leaderboard({
+  players,
+  meId,
+  compact = false,
+  limit,
+  fitRows = false,
+}: {
+  players: Player[];
+  meId?: string;
+  compact?: boolean;
+  limit?: number;
+  fitRows?: boolean;
+}) {
   const ordered = sortPlayers(players);
+  const visible = limit ? ordered.slice(0, limit) : compact ? ordered.slice(0, 5) : ordered;
+  const fitted = useFittedRankRows(visible.length, fitRows);
+  const hidden = ordered.length - visible.length;
+  const heading = compact ? 'Top hiện tại' : limit ? `Top ${limit} điểm cao nhất` : 'Kết quả công bằng';
   return (
     <div className={compact ? 'leaderboard surface-card compact' : 'leaderboard surface-card'}>
       <div className="card-heading">
-        <h2>{compact ? 'Top hiện tại' : 'Kết quả công bằng'}</h2>
-        <span className="quiet-label">điểm</span>
+        <h2>{heading}</h2>
+        <span className="quiet-label">{hidden > 0 ? `${visible.length}/${ordered.length}` : 'điểm'}</span>
       </div>
-      <div className="ranking-list">
-        {ordered.slice(0, compact ? 5 : 60).map((player, index) => (
+      <div className={`ranking-list${fitRows ? ' fitted' : ''}`} ref={fitted.ref} style={fitted.style}>
+        {visible.map((player, index) => (
           <div className={`${player.id === meId ? 'ranking-row me' : 'ranking-row'}${player.connected ? '' : ' offline'}`} key={player.id}>
             <span className="rank">{String(index + 1).padStart(2, '0')}</span>
             <span className="rank-name">{player.name}{player.id === meId && <small>bạn</small>}</span>
@@ -445,20 +506,22 @@ export function ProjectorScreen({ state, guessBanner, muted, onToggleMuted }: Sh
           <>
             <Podium players={state.players} />
             {state.summary && <SummaryList items={state.summary} />}
-            <Leaderboard players={state.players} />
+            <Leaderboard players={state.players} limit={10} />
           </>
         ) : (
-          <>
-            <MaskedWord word={state.maskedWord} projector />
-            <DrawingBoard strokes={state.strokes} interactive={false} overlay={overlay} />
-            {state.phase === 'reveal' && state.reveal && (
-              <div className="projector-reveal">
-                <p>{state.reveal.explanation}</p>
-                <strong>{state.reveal.takeaway}</strong>
-              </div>
-            )}
-            <Leaderboard players={state.players} />
-          </>
+          <div className="projector-grid">
+            <div className="projector-stage">
+              <MaskedWord word={state.maskedWord} projector />
+              <DrawingBoard strokes={state.strokes} interactive={false} overlay={overlay} />
+              {state.phase === 'reveal' && state.reveal && (
+                <div className="projector-reveal">
+                  <p>{state.reveal.explanation}</p>
+                  <strong>{state.reveal.takeaway}</strong>
+                </div>
+              )}
+            </div>
+            <Leaderboard players={state.players} fitRows />
+          </div>
         )}
       </section>
     </PageShell>

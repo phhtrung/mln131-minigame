@@ -181,6 +181,14 @@ input::placeholder { color: #696662; opacity: 1; }
 .final-copy h2 { font-family: var(--body); font-size: clamp(4rem, 9vw, 7rem); line-height: .9; letter-spacing: -.075em; text-transform: uppercase; font-weight: 800; }
 .final-layout .leaderboard { border-top-color: var(--magenta); }
 .projector-layout { max-width: 1480px; margin: 26px auto 0; }
+.projector-grid { display: grid; grid-template-columns: minmax(0, 2.2fr) minmax(300px, 1fr); gap: 22px; align-items: start; }
+.projector-stage { min-width: 0; }
+.projector-grid > .leaderboard { padding: 18px 20px; }
+.projector-grid .card-heading h2 { font-size: 1.1rem; }
+.projector-grid .ranking-list.fitted { margin-top: 12px; max-height: var(--rank-list-max, none); overflow-y: auto; overscroll-behavior: contain; }
+.projector-grid .ranking-list.fitted .ranking-row { min-height: var(--rank-row-h, 34px); padding-block: 0; }
+.projector-grid .ranking-list.fitted .rank { font-size: 15px; }
+.projector-grid .ranking-list.fitted .ranking-row strong { font-size: 15px; }
 .projector-heading { display: flex; justify-content: space-between; align-items: end; gap: 30px; margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid var(--line); }
 .projector-heading h1 { font-size: clamp(4.5rem, 10vw, 9rem); }
 .projector-timer { font-family: var(--display); font-size: clamp(7rem, 14vw, 12rem); line-height: .72; color: var(--blue); font-variant-numeric: tabular-nums; }
@@ -294,6 +302,7 @@ input::placeholder { color: #696662; opacity: 1; }
   .game-grid { grid-template-columns: 1fr; }
   .side-stack { border-left: 0; grid-template-columns: 1fr 1fr; column-gap: 22px; }
   .side-stack .leaderboard { grid-column: 1 / -1; }
+  .projector-grid { grid-template-columns: 1fr; }
   .drawing-canvas { height: min(58vh, 590px); }
 }
 
