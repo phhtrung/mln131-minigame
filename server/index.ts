@@ -14,7 +14,6 @@ import type {
   Point,
   Quiz,
   Reveal,
-  RoomState,
   Stroke,
   SubPhase,
   SummaryItem,
@@ -27,11 +26,8 @@ const TOTAL_ROUNDS = 7;
 const WORD_CHOICE_SECONDS = 8;
 const PRE_DRAW_SECONDS = 3;
 const DRAW_SECONDS = 45;
-const QUIZ_SECONDS = 20;
-const REVEAL_SECONDS = 9;
 const DRAWER_GRACE_MS = Math.round(3000 * TIMER_SCALE);
 const GUESS_COOLDOWN_MS = 400;
-const REACTION_COOLDOWN_MS = 3000;
 const CHUNK_COOLDOWN_MS = 20;
 const ERASE_COOLDOWN_MS = 40;
 const WARN_COOLDOWN_MS = 3000;
@@ -43,7 +39,7 @@ type ClientSocket = Socket;
 
 type PlayerEntry = Player & { socketId?: string };
 
-type RateState = { guess?: number; reaction?: number; chunk?: number; erase?: number; warn?: number };
+type RateState = { guess?: number; chunk?: number; erase?: number; warn?: number };
 
 type Room = {
   phase: Phase;
@@ -62,10 +58,10 @@ type Room = {
   guessedPlayerIds: string[];
   firstGuesserId?: string;
   quiz?: Quiz;
+  quizAnswer?: number;
   quizDrawSeconds?: number;
   reveal?: Reveal;
   summary: SummaryItem[];
-  recentReactions: RoomState['recentReactions'];
   hintLevel: number;
   hintIndices: number[];
   timer?: ReturnType<typeof setInterval>;
@@ -85,7 +81,6 @@ const room: Room = {
   strokes: [],
   guessedPlayerIds: [],
   summary: [],
-  recentReactions: [],
   hintLevel: 0,
   hintIndices: [],
 };
@@ -305,7 +300,6 @@ function publicState(socket: ClientSocket): ClientState {
     guessedPlayerIds: room.guessedPlayerIds,
     firstGuesserId: room.firstGuesserId,
     hintLevel: room.hintLevel,
-    recentReactions: room.recentReactions,
     isHost,
   };
 
@@ -326,6 +320,7 @@ function publicState(socket: ClientSocket): ClientState {
     if (masked) state.maskedWord = masked;
   }
   if ((isHost || playerId === room.firstGuesserId) && room.quiz) state.quiz = room.quiz;
+  if (room.phase === 'quiz' && room.quiz) state.quizAnswered = room.quizAnswer !== undefined;
   if (isHost || room.phase === 'reveal' || room.phase === 'finished') state.reveal = room.reveal;
   if (isHost || room.phase === 'finished') state.summary = room.summary;
 
@@ -419,6 +414,7 @@ function resetRoundState() {
   room.guessedPlayerIds = [];
   room.firstGuesserId = undefined;
   room.quiz = undefined;
+  room.quizAnswer = undefined;
   room.quizDrawSeconds = undefined;
   room.reveal = undefined;
   room.hintLevel = 0;
@@ -435,7 +431,6 @@ function resetForNewGame() {
   room.drawerId = undefined;
   room.usedWords = [];
   room.summary = [];
-  room.recentReactions = [];
   resetRoundState();
   for (const player of room.players.values()) {
     player.score = 0;
@@ -464,7 +459,7 @@ function selectWord(index: number) {
   room.subPhase = 'countdown';
   startCountdown(PRE_DRAW_SECONDS, () => {
     room.subPhase = 'drawing';
-    startCountdown(DRAW_SECONDS, () => finishRound('timeout'));
+    startCountdown(DRAW_SECONDS, () => finishRound('not_asked'));
   });
 }
 
@@ -512,21 +507,25 @@ function finishRound(result: Reveal['quizResult']) {
     takeaway: content?.takeaway ?? '',
     quizResult: result,
   };
-  startCountdown(REVEAL_SECONDS, beginRound);
+  if (room.quiz) {
+    room.reveal.answer = room.quiz.options[room.quiz.correctIndex];
+    if (room.quizAnswer !== undefined) room.reveal.chosenAnswer = room.quiz.options[room.quizAnswer];
+  }
+  room.secondsLeft = 0;
+  broadcastState();
 }
 
 function startQuiz(firstGuesserId: string) {
   const content = room.currentContent;
   if (!content) return;
+  clearTimers();
   room.phase = 'quiz';
   room.firstGuesserId = firstGuesserId;
   room.quiz = buildShuffledQuiz(content);
   room.quizDrawSeconds = room.secondsLeft;
-  startCountdown(QUIZ_SECONDS, () => {
-    const player = room.players.get(firstGuesserId);
-    if (player) player.score -= 100;
-    finishRound('timeout');
-  });
+  room.secondsLeft = 0;
+  room.quizAnswer = undefined;
+  broadcastState();
 }
 
 function finishGame() {
@@ -712,10 +711,7 @@ io.on('connection', (socket: ClientSocket) => {
     if (!correct) return toast('Chưa đúng — thử một ý khác nhé.', socket);
     const position = room.guessedPlayerIds.length;
     room.guessedPlayerIds.push(playerId);
-    const secondsLeft =
-      room.phase === 'drawing'
-        ? room.secondsLeft
-        : Math.max(0, (room.quizDrawSeconds ?? 0) - (QUIZ_SECONDS - room.secondsLeft));
+    const secondsLeft = room.phase === 'drawing' ? room.secondsLeft : (room.quizDrawSeconds ?? 0);
     const points = scoreForGuess(secondsLeft, position);
     const player = room.players.get(playerId);
     if (player) {
@@ -729,32 +725,48 @@ io.on('connection', (socket: ClientSocket) => {
 
   socket.on(EVENTS.submitQuiz, (payload: { answer?: unknown }) => {
     if (room.phase !== 'quiz' || socket.data.playerId !== room.firstGuesserId || !room.quiz) return;
+    if (room.quizAnswer !== undefined) return;
     const parsed = answerSchema.safeParse(payload?.answer);
     if (!parsed.success) return;
-    const player = room.players.get(socket.data.playerId as string);
-    if (!player) return;
-    const correct = parsed.data === room.quiz.correctIndex;
-    if (correct) {
-      player.score += 400;
-      player.quizCorrect += 1;
-      toast(`${player.name} trả lời đúng câu hỏi củng cố!`, undefined);
-    } else {
-      player.score -= 200;
-      toast(`${player.name} chưa chọn đúng — kiến thức sẽ được giải thích ngay.`, undefined);
+    room.quizAnswer = parsed.data;
+    toast('Đã chốt đáp án — chờ máy chiếu mở đáp án.');
+    broadcastState();
+  });
+
+  socket.on(EVENTS.revealQuiz, () => {
+    if (!socket.data.isHost) return toast('Chỉ host hoặc máy chiếu mới có thể mở đáp án.', socket);
+    if (room.phase !== 'quiz' || !room.quiz) return;
+    const decided = room.quizAnswer;
+    if (decided === undefined) {
+      finishRound('not_asked');
+      return;
+    }
+    const player = room.players.get(room.firstGuesserId ?? '');
+    const correct = decided === room.quiz.correctIndex;
+    if (player) {
+      if (correct) {
+        player.score += 400;
+        player.quizCorrect += 1;
+        toast(`${player.name} trả lời đúng câu hỏi củng cố!`, undefined);
+      } else {
+        player.score -= 200;
+        toast(`${player.name} chưa chọn đúng — kiến thức sẽ được giải thích ngay.`, undefined);
+      }
     }
     finishRound(correct ? 'correct' : 'incorrect');
   });
 
+  socket.on(EVENTS.advanceRound, () => {
+    if (!socket.data.isHost) return toast('Chỉ host hoặc máy chiếu mới có thể chuyển vòng.', socket);
+    if (room.phase !== 'reveal') return;
+    beginRound();
+  });
+
   socket.on(EVENTS.reaction, (rawReaction: unknown) => {
-    const rate = socket.data.rate as RateState;
-    const now = Date.now();
-    if (rate.reaction && now - rate.reaction < REACTION_COOLDOWN_MS) return;
-    rate.reaction = now;
     const parsed = reactionSchema.safeParse(rawReaction);
     if (!parsed.success) return;
     const player = room.players.get(socket.data.playerId as string);
-    room.recentReactions = [...room.recentReactions.slice(-11), { id: randomUUID(), name: player?.name ?? 'Bạn', reaction: parsed.data }];
-    broadcastState();
+    io.emit(EVENTS.reaction, { id: randomUUID(), name: player?.name ?? 'Bạn', reaction: parsed.data });
   });
 
   socket.on('disconnect', () => {

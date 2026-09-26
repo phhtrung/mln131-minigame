@@ -1,7 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type FormEvent, type ReactNode } from 'react';
 import type { Socket } from 'socket.io-client';
 import { EVENTS } from '../shared/events';
-import type { ClientState, GuessSuccessPayload, Player, SummaryItem } from '../shared/types';
+import type { ClientState, GuessSuccessPayload, Player, QuizResult, SummaryItem } from '../shared/types';
 import { DrawingBoard } from './board';
 import { GuessBanner, PreDrawCountdown, RoundIntro, burstConfetti } from './effects';
 import { sfx } from './audio';
@@ -160,10 +160,17 @@ export function GameScreen({ state, socket, isHost, guessBanner, muted, onToggle
                 {isDrawer ? state.privateWord ?? 'Chọn một từ.' : 'Bạn nhìn thấy gì?'}
               </h1>
             </div>
-            <div className="timer" aria-label={`${state.secondsLeft} giây`}>
-              <span className={state.secondsLeft <= 5 ? 'timer-number urgent' : 'timer-number'}>{state.secondsLeft}</span>
-              <span>GIÂY</span>
-            </div>
+            {state.phase === 'drawing' ? (
+              <div className="timer" aria-label={`${state.secondsLeft} giây`}>
+                <span className={state.secondsLeft <= 5 ? 'timer-number urgent' : 'timer-number'}>{state.secondsLeft}</span>
+                <span>GIÂY</span>
+              </div>
+            ) : (
+              <div className="timer timer-idle" aria-label={state.phase === 'quiz' ? 'Đang trả lời câu hỏi' : 'Đang xem lại kiến thức'}>
+                <span className="timer-number timer-idle-number">–</span>
+                <span>{state.phase === 'quiz' ? 'CHỐT ĐÁP ÁN' : 'XEM LẠI'}</span>
+              </div>
+            )}
           </div>
           <div className="game-grid">
             <section className="canvas-card surface-card">
@@ -185,7 +192,7 @@ export function GameScreen({ state, socket, isHost, guessBanner, muted, onToggle
             </section>
             <aside className="side-stack">
               <ActionPanel state={state} socket={socket} isDrawer={isDrawer} hasGuessed={hasGuessed} canGuess={canGuess} isHost={isHost} />
-              <ReactionPanel state={state} socket={socket} />
+              <ReactionPanel socket={socket} />
               <Leaderboard players={state.players} meId={you?.id} compact />
             </aside>
           </div>
@@ -204,7 +211,18 @@ function ActionPanel({ state, socket, isDrawer, hasGuessed, canGuess, isHost }: 
       setGuess('');
     }
   };
-  if (state.phase === 'reveal') return <RevealCard state={state} />;
+  if (state.phase === 'reveal') {
+    return (
+      <>
+        <RevealCard state={state} />
+        {isHost && (
+          <button className="primary-button large advance-button" onClick={() => socket.emit(EVENTS.advanceRound)}>
+            Vòng tiếp theo <span aria-hidden="true">→</span>
+          </button>
+        )}
+      </>
+    );
+  }
   if (state.phase === 'finished') return null;
   if (isDrawer && state.phase === 'drawing' && state.subPhase === 'choosing' && state.wordChoices) {
     return (
@@ -252,21 +270,24 @@ function ActionPanel({ state, socket, isDrawer, hasGuessed, canGuess, isHost }: 
 
 function QuizCard({ state, socket }: { state: ClientState; socket: Socket }) {
   const [selected, setSelected] = useState<number | null>(null);
+  const locked = state.quizAnswered === true;
   const submit = () => {
-    if (selected !== null) socket.emit(EVENTS.submitQuiz, { answer: selected });
+    if (selected !== null && !locked) socket.emit(EVENTS.submitQuiz, { answer: selected });
   };
   return (
     <div className="action-card quiz-card" key={state.quiz?.prompt}>
       <h2>{state.quiz?.prompt}</h2>
-      <p className="score-risk">Đúng +400 · Sai −200 · Hết giờ −100</p>
+      <p className="score-risk">Đúng +400 · Sai −200</p>
       <div className="quiz-options">
         {state.quiz?.options.map((option, index) => (
-          <button className={selected === index ? 'quiz-option selected' : 'quiz-option'} key={option} onClick={() => setSelected(index)}>
+          <button className={selected === index ? 'quiz-option selected' : 'quiz-option'} key={option} disabled={locked} onClick={() => setSelected(index)}>
             <span>{String.fromCharCode(65 + index)}</span>{option}
           </button>
         ))}
       </div>
-      <button className="primary-button" disabled={selected === null} onClick={submit}>Chốt đáp án <span aria-hidden="true">→</span></button>
+      {locked
+        ? <p className="locked-note">Đã chốt — chờ máy chiếu mở đáp án.</p>
+        : <button className="primary-button" disabled={selected === null} onClick={submit}>Chốt đáp án <span aria-hidden="true">→</span></button>}
     </div>
   );
 }
@@ -277,13 +298,19 @@ function RevealCard({ state }: { state: ClientState }) {
     ? 'Trả lời đúng · +400'
     : quizResult === 'incorrect'
       ? 'Chưa đúng · −200'
-      : quizResult === 'timeout'
-        ? 'Hết giờ · −100'
+      : quizResult === 'not_asked'
+        ? 'Chưa trả lời'
         : 'Cùng xem lại ý chính';
   return (
     <div className="action-card reveal-card">
       <h2>{state.reveal?.word}</h2>
       <p className="result-line">{resultLabel}</p>
+      {state.reveal?.answer && (
+        <p className="quiz-answer-line">
+          Đáp án đúng: {state.reveal.answer}
+          {state.reveal.chosenAnswer ? ` · Đã chốt: ${state.reveal.chosenAnswer}` : ''}
+        </p>
+      )}
       <p>{state.reveal?.explanation}</p>
       <div className="takeaway"><span>Ý chính</span>{state.reveal?.takeaway}</div>
     </div>
@@ -303,24 +330,37 @@ function MaskedWord({ word, projector = false }: { word?: string; projector?: bo
   );
 }
 
-function ReactionPanel({ state, socket }: { state: ClientState; socket: Socket }) {
-  const [cooling, setCooling] = useState(false);
+function ReactionPanel({ socket }: { socket: Socket }) {
   const send = (reaction: string) => {
-    if (cooling) return;
     socket.emit(EVENTS.reaction, reaction);
     sfx.pop();
-    setCooling(true);
-    window.setTimeout(() => setCooling(false), 2600);
   };
   return (
     <div className="reaction-card surface-card">
       <div className="reaction-header"><span className="eyebrow">PHẢN ỨNG</span></div>
       <div className="reaction-row">
         {REACTIONS.map((reaction) => (
-          <button key={reaction} className="reaction-button" aria-label={`Gửi phản ứng ${reaction}`} disabled={cooling} onClick={() => send(reaction)}>{reaction}</button>
+          <button key={reaction} className="reaction-button" aria-label={`Gửi phản ứng ${reaction}`} onClick={() => send(reaction)}>{reaction}</button>
         ))}
       </div>
-      <div className="reaction-feed">{state.recentReactions.slice(-3).map((item) => <span key={item.id} title={item.name}>{item.reaction}</span>)}</div>
+    </div>
+  );
+}
+
+export type FlyingReaction = { id: string; reaction: string; x: number; drift: number };
+
+export function ReactionStorm({ flying }: { flying: FlyingReaction[] }) {
+  return (
+    <div className="reaction-storm" aria-hidden="true">
+      {flying.map((item) => (
+        <span
+          key={item.id}
+          className="flying-reaction"
+          style={{ left: `${item.x}%`, ['--drift' as string]: `${item.drift}px` }}
+        >
+          {item.reaction}
+        </span>
+      ))}
     </div>
   );
 }
@@ -481,7 +521,7 @@ function FinalRanking({ state, socket, isHost }: { state: ClientState; socket: S
   );
 }
 
-export function ProjectorScreen({ state, guessBanner, muted, onToggleMuted }: ShellProps & { state: ClientState; guessBanner: GuessSuccessPayload | null }) {
+export function ProjectorScreen({ state, socket, guessBanner, muted, onToggleMuted }: ShellProps & { state: ClientState; socket: Socket; guessBanner: GuessSuccessPayload | null }) {
   const { roundIntro, flashDraw } = useGameEffects(state, true);
   const overlay = (
     <>
@@ -489,6 +529,15 @@ export function ProjectorScreen({ state, guessBanner, muted, onToggleMuted }: Sh
       <GuessBanner banner={guessBanner} />
     </>
   );
+  const heading = state.phase === 'finished'
+    ? 'Bảng vàng của lớp'
+    : state.phase === 'reveal'
+      ? state.reveal?.word ?? 'Cùng xem lại'
+      : state.phase === 'quiz'
+        ? 'Trả lời câu hỏi'
+        : state.phase === 'drawing'
+          ? 'Đang vẽ…'
+          : 'Sẵn sàng!';
   return (
     <PageShell muted={muted} onToggleMuted={onToggleMuted}>
       <section className="projector-layout">
@@ -496,35 +545,83 @@ export function ProjectorScreen({ state, guessBanner, muted, onToggleMuted }: Sh
         <div className="projector-heading">
           <div>
             <p className="eyebrow">{state.phase === 'finished' ? 'KẾT QUẢ CUỐI' : `VÒNG ${state.round}/${state.totalRounds}`}</p>
-            <h1>
-              {state.phase === 'reveal' ? state.reveal?.word : state.phase === 'finished' ? 'Bảng vàng của lớp' : state.phase === 'drawing' ? 'Đang vẽ…' : 'Sẵn sàng!'}
-            </h1>
+            <h1>{heading}</h1>
           </div>
-          <div className="projector-timer">{state.secondsLeft}<span>s</span></div>
+          {state.phase === 'drawing' && (
+            <div className="projector-timer">{state.secondsLeft}<span>s</span></div>
+          )}
         </div>
         {state.phase === 'finished' ? (
           <>
+            <button className="primary-button large projector-restart" onClick={() => socket.emit(EVENTS.nextRound)}>Chơi lại <span aria-hidden="true">→</span></button>
             <Podium players={state.players} />
             {state.summary && <SummaryList items={state.summary} />}
-            <Leaderboard players={state.players} limit={10} />
+            <Leaderboard players={state.players} />
+          </>
+        ) : state.phase === 'lobby' ? (
+          <>
+            <div className="projector-controls">
+              <p className="projector-waiting">{state.players.length} người chơi đã vào phòng — đợi cả lớp rồi bắt đầu.</p>
+              <button className="primary-button large" onClick={() => socket.emit(EVENTS.startGame)}>Bắt đầu trò chơi <span aria-hidden="true">→</span></button>
+            </div>
+            <Leaderboard players={state.players} />
+          </>
+        ) : state.phase === 'quiz' ? (
+          <>
+            <ProjectorQuiz state={state} socket={socket} />
+            <Leaderboard players={state.players} />
           </>
         ) : (
-          <div className="projector-grid">
-            <div className="projector-stage">
-              <MaskedWord word={state.maskedWord} projector />
-              <DrawingBoard strokes={state.strokes} interactive={false} overlay={overlay} />
-              {state.phase === 'reveal' && state.reveal && (
-                <div className="projector-reveal">
-                  <p>{state.reveal.explanation}</p>
-                  <strong>{state.reveal.takeaway}</strong>
-                </div>
-              )}
-            </div>
-            <Leaderboard players={state.players} fitRows />
-          </div>
+          <>
+            <MaskedWord word={state.maskedWord} projector />
+            <DrawingBoard strokes={state.strokes} interactive={false} overlay={overlay} />
+            {state.phase === 'reveal' && state.reveal && (
+              <div className="projector-reveal">
+                <p className="projector-result">{projectorResultLabel(state.reveal.quizResult)}</p>
+                {state.reveal.answer && (
+                  <p className="projector-answer-line">
+                    Đáp án đúng: {state.reveal.answer}
+                    {state.reveal.chosenAnswer ? ` · Đã chốt: ${state.reveal.chosenAnswer}` : ''}
+                  </p>
+                )}
+                <p>{state.reveal.explanation}</p>
+                <strong>{state.reveal.takeaway}</strong>
+                <button className="primary-button large projector-advance" onClick={() => socket.emit(EVENTS.advanceRound)}>Vòng tiếp theo <span aria-hidden="true">→</span></button>
+              </div>
+            )}
+            <Leaderboard players={state.players} />
+          </>
         )}
       </section>
     </PageShell>
+  );
+}
+
+function projectorResultLabel(quizResult: QuizResult | undefined) {
+  if (quizResult === 'correct') return 'Trả lời đúng · +400';
+  if (quizResult === 'incorrect') return 'Chưa đúng · −200';
+  if (quizResult === 'not_asked') return 'Chưa trả lời';
+  return 'Cùng xem lại ý chính';
+}
+
+function ProjectorQuiz({ state, socket }: { state: ClientState; socket: Socket }) {
+  const answerer = state.players.find((player) => player.id === state.firstGuesserId);
+  return (
+    <section className="projector-quiz">
+      <p className="eyebrow">CÂU HỎI CỦA VÒNG {state.round}/{state.totalRounds}</p>
+      <h2>{state.quiz?.prompt}</h2>
+      <div className="quiz-options projector-quiz-options">
+        {state.quiz?.options.map((option, index) => (
+          <div className="quiz-option static" key={option}>
+            <span>{String.fromCharCode(65 + index)}</span>{option}
+          </div>
+        ))}
+      </div>
+      <p className="projector-quiz-status">
+        {state.quizAnswered ? 'Đã chốt đáp án.' : `${answerer?.name ?? 'Bạn chơi'} đang chọn đáp án…`}
+      </p>
+      <button className="primary-button large" onClick={() => socket.emit(EVENTS.revealQuiz)}>Mở đáp án <span aria-hidden="true">→</span></button>
+    </section>
   );
 }
 

@@ -2,10 +2,10 @@ import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import { createRoot } from 'react-dom/client';
 import { io, type Socket } from 'socket.io-client';
 import { EVENTS } from '../shared/events';
-import type { ClientState, GuessSuccessPayload, Stroke, StrokeChunk, TickPayload } from '../shared/types';
+import type { ClientState, GuessSuccessPayload, Reaction, Stroke, StrokeChunk, TickPayload } from '../shared/types';
 import { isMuted, setMuted, sfx } from './audio';
 import { burstConfetti } from './effects';
-import { GameScreen, JoinScreen, LoadingScreen, LobbyScreen, ProjectorScreen, Toast } from './screens';
+import { GameScreen, JoinScreen, LoadingScreen, LobbyScreen, ProjectorScreen, ReactionStorm, Toast, type FlyingReaction } from './screens';
 import './styles.css';
 
 /*
@@ -41,13 +41,14 @@ function App() {
   const [state, setState] = useState<ClientState | null>(null);
   const [toastMessage, setToastMessage] = useState('');
   const [guessBanner, setGuessBanner] = useState<GuessSuccessPayload | null>(null);
+  const [flying, setFlying] = useState<FlyingReaction[]>([]);
   const [muted, setMutedState] = useState(() => isMuted());
   const [name, setName] = useState(() => linkedName || localStorage.getItem('mln131-name') || '');
   const [joined, setJoined] = useState(() => isHost || isProjector || Boolean(linkedName) || Boolean(readSession() && (linkedName || localStorage.getItem('mln131-name'))));
   const joinedRef = useRef(Boolean(linkedName) || Boolean(sessionRef.current));
 
   useEffect(() => {
-    const nextSocket = io(window.location.origin, { query: { host: isHost ? '1' : '0' } });
+    const nextSocket = io(window.location.origin, { query: { host: isHost || isProjector ? '1' : '0' } });
     setSocket(nextSocket);
 
     nextSocket.on('connect', () => {
@@ -83,7 +84,8 @@ function App() {
       if (
         tick.secondsLeft > 0 &&
         tick.secondsLeft <= 5 &&
-        ((tick.phase === 'drawing' && tick.subPhase === 'drawing') || tick.phase === 'quiz')
+        tick.phase === 'drawing' &&
+        tick.subPhase === 'drawing'
       ) {
         sfx.tick();
       }
@@ -136,10 +138,20 @@ function App() {
       window.setTimeout(() => setToastMessage(''), 2600);
     });
 
+    nextSocket.on(EVENTS.reaction, (payload: Reaction) => {
+      if (typeof payload?.reaction !== 'string' || !payload.reaction) return;
+      const id = typeof payload.id === 'string' && payload.id ? payload.id : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+      const item: FlyingReaction = { id, reaction: payload.reaction, x: 4 + Math.random() * 88, drift: Math.round(Math.random() * 80 - 40) };
+      setFlying((current) => [...current.slice(-39), item]);
+      window.setTimeout(() => {
+        setFlying((current) => current.filter((entry) => entry.id !== id));
+      }, 3400);
+    });
+
     return () => {
       nextSocket.disconnect();
     };
-  }, [isHost, linkedName]);
+  }, [isHost, isProjector, linkedName]);
 
   const join = (event: FormEvent) => {
     event.preventDefault();
@@ -164,15 +176,15 @@ function App() {
 
   const shellProps = { muted, onToggleMuted: toggleMuted };
 
-  if (!state || !socket) return <><LoadingScreen {...shellProps} /><Toast message={toastMessage} /></>;
-  if (isProjector) return <><ProjectorScreen state={state} guessBanner={guessBanner} {...shellProps} /><Toast message={toastMessage} /></>;
+  if (!state || !socket) return <><LoadingScreen {...shellProps} /><ReactionStorm flying={flying} /><Toast message={toastMessage} /></>;
+  if (isProjector) return <><ProjectorScreen state={state} socket={socket} guessBanner={guessBanner} {...shellProps} /><ReactionStorm flying={flying} /><Toast message={toastMessage} /></>;
 
   const inRoom = Boolean(state.you && state.players.some((player) => player.id === state.you?.id));
   if (!joined || (state.phase === 'lobby' && !inRoom && !isHost)) {
-    return <><JoinScreen name={name} setName={setName} onSubmit={join} {...shellProps} /><Toast message={toastMessage} /></>;
+    return <><JoinScreen name={name} setName={setName} onSubmit={join} {...shellProps} /><ReactionStorm flying={flying} /><Toast message={toastMessage} /></>;
   }
-  if (state.phase === 'lobby') return <><LobbyScreen state={state} socket={socket} isHost={isHost} {...shellProps} /><Toast message={toastMessage} /></>;
-  return <><GameScreen state={state} socket={socket} isHost={isHost} guessBanner={guessBanner} {...shellProps} /><Toast message={toastMessage} /></>;
+  if (state.phase === 'lobby') return <><LobbyScreen state={state} socket={socket} isHost={isHost} {...shellProps} /><ReactionStorm flying={flying} /><Toast message={toastMessage} /></>;
+  return <><GameScreen state={state} socket={socket} isHost={isHost} guessBanner={guessBanner} {...shellProps} /><ReactionStorm flying={flying} /><Toast message={toastMessage} /></>;
 }
 
 createRoot(document.getElementById('root')!).render(<App />);

@@ -29,6 +29,7 @@ class Client {
     this.ticks = [];
     this.toasts = [];
     this.successes = [];
+    this.reactions = [];
     this.chunks = [];
     this.undos = [];
     this.clears = [];
@@ -45,6 +46,7 @@ class Client {
     });
     this.socket.on(EVENTS.tick, (tick) => this.ticks.push(tick));
     this.socket.on(EVENTS.toast, (message) => this.toasts.push(message));
+    this.socket.on(EVENTS.reaction, (payload) => this.reactions.push(payload));
     this.socket.on(EVENTS.guessSuccess, (payload) => this.successes.push(payload));
     this.socket.on(EVENTS.strokeChunk, (chunk) => this.chunks.push(chunk));
     this.socket.on(EVENTS.undo, (payload) => this.undos.push(payload));
@@ -141,11 +143,14 @@ async function main() {
   check('healthz responds ok', healthy);
   if (!healthy) throw new Error('server did not start');
 
-  console.log('\n== Setup: host + 5 players ==');
+  console.log('\n== Setup: host + projector + 5 players ==');
   const host = new Client('host', { host: true });
   await host.open;
   await sleep(200);
   check('initial phase is lobby', host.state.phase === 'lobby');
+  const projector = new Client('projector', { host: true });
+  await projector.open;
+  await sleep(200);
 
   host.emit(EVENTS.startGame);
   await sleep(400);
@@ -164,12 +169,15 @@ async function main() {
   check('host without name has no you info', host.state.you === undefined);
   check('regular player does not see word choices', players[0].state.wordChoices === undefined);
 
-  console.log('\n== Reaction rate limit ==');
-  const reactionsBefore = host.state.recentReactions.length;
+  console.log('\n== Reactions have no rate limit ==');
+  const reactionsBefore = host.reactions.length;
   for (let i = 0; i < 6; i += 1) players[4].emit(EVENTS.reaction, '🎉');
-  await sleep(600);
-  const reactionsAfter = host.state.recentReactions.length;
-  check('reaction spam limited to at most 2', reactionsAfter - reactionsBefore >= 1 && reactionsAfter - reactionsBefore <= 2);
+  await waitFor(() => host.reactions.length >= reactionsBefore + 6);
+  check('reaction spam is not rate limited', host.reactions.length >= reactionsBefore + 6);
+  check('reaction payload carries the emoji', host.reactions.slice(-6).every((item) => item.reaction === '🎉' && typeof item.id === 'string'));
+  players[4].emit(EVENTS.reaction, '');
+  await sleep(300);
+  check('empty reaction is dropped', host.reactions.length === reactionsBefore + 6);
 
   console.log('\n== Round 1: full happy path ==');
   host.emit(EVENTS.startGame);
@@ -293,13 +301,23 @@ async function main() {
   check('quiz correct answer preserved after shuffle', g1.state.quiz.options[g1.state.quiz.correctIndex] === content1.quiz.options[content1.quiz.correctIndex]);
   quizIndices.push(g1.state.quiz.correctIndex);
   check('quiz hidden from other players', g2.state.quiz === undefined);
+  check('quiz visible on projector', projector.state.quiz?.prompt === content1.quiz.prompt);
 
   g1.emit(EVENTS.submitQuiz, { answer: g1.state.quiz.correctIndex });
+  await waitFor(() => host.state.quizAnswered === true);
+  check('answer locks in without finishing the round', host.state.phase === 'quiz' && host.state.quizAnswered === true);
+  g1.emit(EVENTS.submitQuiz, { answer: (g1.state.quiz.correctIndex + 1) % 4 });
+  await sleep(300);
+  check('locked answer cannot be changed', host.state.phase === 'quiz' && host.state.quizAnswered === true);
+  check('no quiz points applied before projector reveals', Boolean(success1) && playerIn(host.state, g1.id).score === scoreBefore1 + success1.points);
+  host.emit(EVENTS.revealQuiz);
   await waitState(host, (state) => state.phase === 'reveal');
-  check('reveal after correct quiz answer', host.state.phase === 'reveal' && host.state.reveal?.quizResult === 'correct');
+  check('reveal after projector opens the answer', host.state.phase === 'reveal' && host.state.reveal?.quizResult === 'correct');
   check('quiz correct awarded +400', Boolean(success1) && playerIn(host.state, g1.id).score === scoreBefore1 + success1.points + 400);
+  check('reveal carries the correct answer', host.state.reveal?.answer === content1.quiz.options[content1.quiz.correctIndex]);
   check('summary recorded for round 1', host.state.summary?.length === 1 && host.state.summary[0].word === chosenWord1);
   check('drawer awarded 250 for 2 of 4 guessers', playerIn(host.state, drawer1.id).score === 250);
+  projector.emit(EVENTS.advanceRound);
 
   console.log('\n== Round 2: hints + wrong quiz ==');
   await waitState(host, (state) => state.phase === 'drawing' && state.subPhase === 'choosing' && state.round === 2);
@@ -348,12 +366,16 @@ async function main() {
   check('round 2 quiz correct answer preserved', r2Guesser.state.quiz.options[r2Guesser.state.quiz.correctIndex] === content2.quiz.options[content2.quiz.correctIndex]);
   quizIndices.push(r2Guesser.state.quiz.correctIndex);
   r2Guesser.emit(EVENTS.submitQuiz, { answer: (r2Guesser.state.quiz.correctIndex + 1) % 4 });
+  await waitFor(() => host.state.quizAnswered === true);
+  check('wrong answer locks in without finishing the round', host.state.phase === 'quiz' && host.state.quizAnswered === true);
+  host.emit(EVENTS.revealQuiz);
   await waitState(host, (state) => state.phase === 'reveal');
   check('wrong quiz answer −200', Boolean(r2Success) && playerIn(host.state, r2Guesser.id).score === r2Before + r2Success.points - 200);
   check('reveal shows incorrect result', host.state.reveal?.quizResult === 'incorrect');
   check('drawer awarded 125 for 1 of 4 guessers', playerIn(host.state, drawer2.id).score === drawer2Before + 125);
+  host.emit(EVENTS.advanceRound);
 
-  console.log('\n== Round 3: reconnect + quiz timeout ==');
+  console.log('\n== Round 3: reconnect + skipped quiz ==');
   await waitState(host, (state) => state.phase === 'drawing' && state.round === 3 && state.subPhase === 'choosing');
   const drawer3 = drawerClient();
   previousDrawerId = drawer3.id;
@@ -387,8 +409,13 @@ async function main() {
   const r3FirstGuesserId = host.state.firstGuesserId;
   const r3Success = r3Guesser.successes.find((payload) => payload.playerId === r3Guesser.id);
   check('round 3 quiz underway', Boolean(r3Success) && playerIn(host.state, r3FirstGuesserId).score === r3Before + r3Success.points);
-  await waitState(host, (state) => state.phase === 'reveal' && state.reveal?.quizResult === 'timeout', 9000);
-  check('unanswered quiz times out at −100', Boolean(r3Success) && playerIn(host.state, r3FirstGuesserId).score === r3Before + r3Success.points - 100);
+  r3Guesser.emit(EVENTS.revealQuiz);
+  await sleep(300);
+  check('non-host cannot open the answer', host.state.phase === 'quiz' && host.state.quizAnswered !== true);
+  host.emit(EVENTS.revealQuiz);
+  await waitState(host, (state) => state.phase === 'reveal' && state.reveal?.quizResult === 'not_asked');
+  check('skipped quiz reveals not_asked with no penalty', Boolean(r3Success) && playerIn(host.state, r3FirstGuesserId).score === r3Before + r3Success.points);
+  host.emit(EVENTS.advanceRound);
 
   console.log('\n== Round 4: drawer disconnect + replacement + auto-pick ==');
   await waitState(host, (state) => state.phase === 'drawing' && state.round === 4 && state.subPhase === 'choosing');
@@ -416,7 +443,11 @@ async function main() {
   const r4Answerer = players.find((client) => client.id === host.state.firstGuesserId);
   quizIndices.push(r4Answerer.state.quiz.correctIndex);
   r4Answerer.emit(EVENTS.submitQuiz, { answer: r4Answerer.state.quiz.correctIndex });
+  await waitFor(() => host.state.quizAnswered === true);
+  check('round 4 answer locked in', host.state.phase === 'quiz' && host.state.quizAnswered === true);
+  host.emit(EVENTS.revealQuiz);
   await waitState(host, (state) => state.phase === 'reveal');
+  host.emit(EVENTS.advanceRound);
 
   console.log('\n== Rounds 5-7: finish the game ==');
   for (const roundNumber of [5, 6, 7]) {
@@ -433,8 +464,9 @@ async function main() {
       const idleDrawerId = host.state.drawerId;
       const idleDrawerBefore = playerIn(host.state, idleDrawerId).score;
       await waitState(host, (state) => state.phase === 'reveal', 15000);
-      check('timeout reveal when nobody guesses', host.state.reveal?.quizResult === 'timeout');
+      check('timeout reveal when nobody guesses', host.state.reveal?.quizResult === 'not_asked');
       check('drawer scores nothing when nobody guesses', playerIn(host.state, idleDrawerId).score === idleDrawerBefore);
+      host.emit(EVENTS.advanceRound);
       continue;
     }
     const answerer = guesserClients().find((client) => !client.state.you?.hasGuessed);
@@ -442,7 +474,10 @@ async function main() {
     await waitState(host, (state) => state.phase === 'quiz');
     quizIndices.push(answerer.state.quiz.correctIndex);
     answerer.emit(EVENTS.submitQuiz, { answer: answerer.state.quiz.correctIndex });
+    await waitFor(() => host.state.quizAnswered === true);
+    host.emit(EVENTS.revealQuiz);
     await waitState(host, (state) => state.phase === 'reveal');
+    host.emit(EVENTS.advanceRound);
     if (roundNumber === 7) {
       await waitState(host, (state) => state.phase === 'finished', 9000);
     }
@@ -472,7 +507,7 @@ async function main() {
   check('word pool refilled after restart', restartDrawer.state.wordChoices?.length === 3);
 
   console.log('\n== Cleanup ==');
-  for (const client of [host, ...players]) await client.disconnect();
+  for (const client of [host, projector, ...players]) await client.disconnect();
 }
 
 main()

@@ -2,7 +2,7 @@ export type Phase = 'lobby' | 'drawing' | 'quiz' | 'reveal' | 'finished';
 
 export type SubPhase = 'choosing' | 'countdown' | 'drawing';
 
-export type QuizResult = 'correct' | 'incorrect' | 'timeout' | 'not_asked';
+export type QuizResult = 'correct' | 'incorrect' | 'not_asked';
 
 export type Player = {
   id: string;
@@ -34,6 +34,8 @@ export type Reveal = {
   explanation: string;
   takeaway: string;
   quizResult?: QuizResult;
+  answer?: string;
+  chosenAnswer?: string;
 };
 
 export type SummaryItem = {
@@ -63,9 +65,9 @@ export type RoomState = {
   maskedWord?: string;
   hintLevel: number;
   quiz?: Quiz;
+  quizAnswered?: boolean;
   reveal?: Reveal;
   summary?: SummaryItem[];
-  recentReactions: Reaction[];
   message?: string;
 };
 
