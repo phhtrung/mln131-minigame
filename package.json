@@ -19,6 +19,7 @@
     "react-dom": "latest",
     "socket.io": "latest",
     "socket.io-client": "latest",
+    "twemoji": "^14.0.2",
     "zod": "latest"
   },
   "devDependencies": {

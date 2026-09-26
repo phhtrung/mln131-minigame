@@ -21,6 +21,7 @@ export type Stroke = {
   points: Point[];
   color: string;
   width: number;
+  tool?: 'fill';
 };
 
 export type Quiz = {
@@ -63,9 +64,9 @@ export type RoomState = {
   firstGuesserId?: string;
   wordChoices?: string[];
   maskedWord?: string;
-  hintLevel: number;
   quiz?: Quiz;
   quizAnswered?: boolean;
+  quizAnswer?: number;
   reveal?: Reveal;
   summary?: SummaryItem[];
   message?: string;
@@ -81,7 +82,6 @@ export type YouInfo = {
 export type ClientState = RoomState & {
   you?: YouInfo;
   privateWord?: string;
-  isHost?: boolean;
 };
 
 export type JoinPayload = {
@@ -95,6 +95,7 @@ export type StrokeChunk = {
   points: Point[];
   color: string;
   width: number;
+  tool?: 'fill';
 };
 
 export type ErasePayload = {
