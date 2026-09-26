@@ -71,10 +71,10 @@ h2 { font-weight: 750; letter-spacing: -.04em; }
 .hero h1 span, .lobby-intro h1 span, .final-copy h2 span { color: var(--blue); }
 .join-form { max-width: 760px; margin: 42px 0 0 auto; padding-top: 18px; border-top: 1px solid var(--line); text-align: left; }
 .join-form label { display: block; font-family: var(--body); font-size: 13px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; margin-bottom: 10px; }
-.input-row, .guess-form { display: flex; gap: 0; }
-input { width: 100%; min-width: 0; min-height: 52px; border: 1px solid var(--line); border-radius: 11px 0 0 11px; background: rgba(255,255,255,.66); color: var(--ink); padding: 13px 15px; font-size: 16px; caret-color: var(--magenta); }
+.input-row, .guess-form { display: flex; gap: 10px; }
+input { width: 100%; min-width: 0; min-height: 52px; border: 1px solid var(--line); border-radius: 11px; background: rgba(255,255,255,.66); color: var(--ink); padding: 13px 15px; font-size: 16px; caret-color: var(--magenta); }
 input::placeholder { color: #696662; opacity: 1; }
-.primary-button { min-height: 52px; border: 0; border-radius: 0 11px 11px 0; background: var(--blue); color: var(--white); font-weight: 800; padding: 13px 22px; white-space: nowrap; transition: background .18s ease, transform .18s ease; }
+.primary-button { min-height: 52px; border: 0; border-radius: 11px; background: var(--blue); color: var(--white); font-weight: 800; padding: 13px 22px; white-space: nowrap; transition: background .18s ease, transform .18s ease; }
 .primary-button:hover:not(:disabled) { background: var(--blue-deep); transform: translateY(-2px); }
 .primary-button:active:not(:disabled) { background: var(--ink); }
 .primary-button:disabled { opacity: .42; }
