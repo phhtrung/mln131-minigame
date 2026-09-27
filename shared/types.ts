@@ -21,7 +21,7 @@ export type Stroke = {
   points: Point[];
   color: string;
   width: number;
-  tool?: 'fill';
+  tool?: 'fill' | 'erase';
 };
 
 export type Quiz = {
@@ -95,7 +95,7 @@ export type StrokeChunk = {
   points: Point[];
   color: string;
   width: number;
-  tool?: 'fill';
+  tool?: 'fill' | 'erase';
 };
 
 export type ErasePayload = {

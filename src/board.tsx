@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent, type ReactNode } from 'react';
-import type { ErasePayload, Point, Stroke, StrokeChunk } from '../shared/types';
+import { DISPLAY_REFERENCE_WIDTH, DRAWING_HEIGHT, DRAWING_WIDTH, MAX_POINTS_PER_STROKE } from '../shared/drawing';
+import type { Point, Stroke, StrokeChunk } from '../shared/types';
 
 export const PALETTE: Array<{ value: string; label: string }> = [
   { value: '#242323', label: 'Mực đen' },
@@ -16,7 +17,6 @@ export const PALETTE: Array<{ value: string; label: string }> = [
   { value: '#b5179e', label: 'Tím hồng' },
 ];
 
-const ERASE_EMIT_INTERVAL_MS = 40;
 const BRUSH_MIN = 2;
 const BRUSH_MAX = 16;
 const ERASER_MIN = 10;
@@ -33,67 +33,81 @@ type DrawingBoardProps = {
   interactive: boolean;
   showTools?: boolean;
   onChunk?: (chunk: StrokeChunk) => void;
-  onErase?: (payload: ErasePayload) => void;
   onUndo?: () => void;
   onClear?: () => void;
   overlay?: ReactNode;
 };
 
-export function DrawingBoard({ strokes, interactive, showTools = false, onChunk, onErase, onUndo, onClear, overlay }: DrawingBoardProps) {
+export function DrawingBoard({ strokes, interactive, showTools = false, onChunk, onUndo, onClear, overlay }: DrawingBoardProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const drawingCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const prevStrokesRef = useRef<Stroke[]>([]);
-  const activeStroke = useRef<{ id: string; points: Point[]; color: string; width: number } | null>(null);
+  const activeStroke = useRef<Stroke | null>(null);
   const sentCountRef = useRef(0);
   const lastEmitRef = useRef(0);
-  const lastEraseRef = useRef(0);
   const [tool, setTool] = useState<'brush' | 'eraser' | 'fill'>('brush');
   const [color, setColor] = useState(PALETTE[0].value);
   const [brushSize, setBrushSize] = useState(5);
   const [eraserSize, setEraserSize] = useState(28);
   const erasing = tool === 'eraser';
 
-  const context2d = () => {
-    const canvas = canvasRef.current;
+  const drawingContext = () => {
+    const canvas = drawingCanvasRef.current;
     return canvas ? canvas.getContext('2d') : null;
   };
 
-  const applyScale = (context: CanvasRenderingContext2D) => {
-    const rect = context.canvas.getBoundingClientRect();
+  const presentDrawing = () => {
+    const canvas = canvasRef.current;
+    const source = drawingCanvasRef.current;
+    if (!canvas || !source) return;
+    const context = canvas.getContext('2d');
+    if (!context) return;
+    const rect = canvas.getBoundingClientRect();
     const ratio = window.devicePixelRatio || 1;
+    const nextWidth = Math.max(1, Math.round(rect.width * ratio));
+    const nextHeight = Math.max(1, Math.round(rect.height * ratio));
+    if (canvas.width !== nextWidth || canvas.height !== nextHeight) {
+      canvas.width = nextWidth;
+      canvas.height = nextHeight;
+    }
     context.setTransform(ratio, 0, 0, ratio, 0, 0);
-    return rect;
+    context.clearRect(0, 0, rect.width, rect.height);
+    context.drawImage(source, 0, 0, rect.width, rect.height);
   };
 
-  const drawSegment = (context: CanvasRenderingContext2D, stroke: { points: Point[]; color: string; width: number }, fromIndex: number) => {
+  const drawSegment = (context: CanvasRenderingContext2D, stroke: { points: Point[]; color: string; width: number; tool?: Stroke['tool'] }, fromIndex: number, shouldPresent = true) => {
     const points = stroke.points;
     if (!points.length) return;
     if ('tool' in stroke && stroke.tool === 'fill') {
       fillRegion(context, points[0], stroke.color);
+      if (shouldPresent) presentDrawing();
       return;
     }
-    const rect = applyScale(context);
     context.lineCap = 'round';
     context.lineJoin = 'round';
-    context.strokeStyle = stroke.color;
+    context.strokeStyle = stroke.tool === 'erase' ? '#ffffff' : stroke.color;
     context.fillStyle = stroke.color;
-    context.lineWidth = stroke.width;
+    context.lineWidth = stroke.width * DRAWING_WIDTH / DISPLAY_REFERENCE_WIDTH;
     if (points.length === 1) {
       context.beginPath();
-      context.arc(points[0].x * rect.width, points[0].y * rect.height, stroke.width / 2, 0, Math.PI * 2);
+      context.arc(points[0].x * DRAWING_WIDTH, points[0].y * DRAWING_HEIGHT, context.lineWidth / 2, 0, Math.PI * 2);
+      context.fillStyle = stroke.tool === 'erase' ? '#ffffff' : stroke.color;
       context.fill();
+      if (shouldPresent) presentDrawing();
       return;
     }
-    const start = Math.max(0, Math.min(fromIndex, points.length - 2));
+    const start = Math.max(0, Math.min(fromIndex - 1, points.length - 2));
     context.beginPath();
-    context.moveTo(points[start].x * rect.width, points[start].y * rect.height);
-    for (const point of points.slice(start + 1)) context.lineTo(point.x * rect.width, point.y * rect.height);
+    context.moveTo(points[start].x * DRAWING_WIDTH, points[start].y * DRAWING_HEIGHT);
+    for (const point of points.slice(start + 1)) context.lineTo(point.x * DRAWING_WIDTH, point.y * DRAWING_HEIGHT);
     context.stroke();
+    if (shouldPresent) presentDrawing();
   };
 
   const fillRegion = (context: CanvasRenderingContext2D, point: Point, color: string) => {
     const canvas = context.canvas;
-    const width = canvas.width;
-    const height = canvas.height;
+    const width = DRAWING_WIDTH;
+    const height = DRAWING_HEIGHT;
     const image = context.getImageData(0, 0, width, height);
     const pixels = image.data;
     const startX = Math.min(width - 1, Math.floor(point.x * width));
@@ -140,15 +154,15 @@ export function DrawingBoard({ strokes, interactive, showTools = false, onChunk,
   };
 
   const redrawAll = (context: CanvasRenderingContext2D, list: Stroke[]) => {
-    const rect = applyScale(context);
-    context.clearRect(0, 0, rect.width, rect.height);
+    context.clearRect(0, 0, DRAWING_WIDTH, DRAWING_HEIGHT);
     context.fillStyle = '#ffffff';
-    context.fillRect(0, 0, rect.width, rect.height);
-    for (const stroke of list) drawSegment(context, stroke, 0);
+    context.fillRect(0, 0, DRAWING_WIDTH, DRAWING_HEIGHT);
+    for (const stroke of list) drawSegment(context, stroke, 0, false);
+    presentDrawing();
   };
 
   useEffect(() => {
-    const context = context2d();
+    const context = drawingContext();
     if (!context) return;
     const prev = prevStrokesRef.current;
     const next = strokes;
@@ -173,15 +187,16 @@ export function DrawingBoard({ strokes, interactive, showTools = false, onChunk,
     const canvas = canvasRef.current;
     if (!canvas) return;
     const resize = () => {
-      const rect = canvas.getBoundingClientRect();
-      const ratio = window.devicePixelRatio || 1;
-      const nextWidth = Math.max(1, Math.round(rect.width * ratio));
-      const nextHeight = Math.max(1, Math.round(rect.height * ratio));
-      if (canvas.width === nextWidth && canvas.height === nextHeight) return;
-      canvas.width = nextWidth;
-      canvas.height = nextHeight;
-      const context = canvas.getContext('2d');
-      if (context) redrawAll(context, prevStrokesRef.current);
+      const drawingCanvas = drawingCanvasRef.current;
+      if (!drawingCanvas) return;
+      if (drawingCanvas.width !== DRAWING_WIDTH || drawingCanvas.height !== DRAWING_HEIGHT) {
+        drawingCanvas.width = DRAWING_WIDTH;
+        drawingCanvas.height = DRAWING_HEIGHT;
+        const context = drawingCanvas.getContext('2d');
+        if (context) redrawAll(context, prevStrokesRef.current);
+      } else {
+        presentDrawing();
+      }
     };
     resize();
     window.addEventListener('resize', resize);
@@ -201,15 +216,21 @@ export function DrawingBoard({ strokes, interactive, showTools = false, onChunk,
     };
   };
 
-  const emitErase = (point: Point, immediate = false) => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const rect = canvas.getBoundingClientRect();
-    if (!rect.width || !rect.height) return;
-    const now = Date.now();
-    if (!immediate && now - lastEraseRef.current < ERASE_EMIT_INTERVAL_MS) return;
-    lastEraseRef.current = now;
-    onErase?.({ x: point.x, y: point.y, radius: eraserSize / rect.width, aspect: rect.height / rect.width });
+  const beginStroke = (point: Point, strokeTool: 'brush' | 'erase') => {
+    const stroke: Stroke = {
+      id: uuid(),
+      points: [point],
+      color,
+      width: strokeTool === 'erase' ? eraserSize : brushSize,
+      ...(strokeTool === 'erase' ? { tool: 'erase' as const } : {}),
+    };
+    activeStroke.current = stroke;
+    sentCountRef.current = 0;
+    lastEmitRef.current = Date.now();
+    onChunk?.(stroke);
+    sentCountRef.current = 1;
+    const context = drawingContext();
+    if (context) drawSegment(context, stroke, 0);
   };
 
   const pointerDown = (event: ReactPointerEvent<HTMLCanvasElement>) => {
@@ -217,43 +238,50 @@ export function DrawingBoard({ strokes, interactive, showTools = false, onChunk,
     event.currentTarget.setPointerCapture(event.pointerId);
     const point = pointFromEvent(event);
     if (tool === 'fill') {
-      const fill = { id: uuid(), points: [point], color, width: 1, tool: 'fill' as const };
+      const fill: Stroke = { id: uuid(), points: [point], color, width: 1, tool: 'fill' };
       onChunk?.(fill);
-      const context = context2d();
+      const context = drawingContext();
       if (context) fillRegion(context, point, color);
+      presentDrawing();
       return;
     }
     if (erasing) {
-      emitErase(point, true);
+      beginStroke(point, 'erase');
       return;
     }
-    const stroke = { id: uuid(), points: [point], color, width: brushSize };
-    activeStroke.current = stroke;
-    sentCountRef.current = 0;
-    lastEmitRef.current = Date.now();
-    onChunk?.({ id: stroke.id, points: [point], color, width: brushSize });
-    sentCountRef.current = 1;
-    const context = context2d();
-    if (context) drawSegment(context, stroke, 0);
+    beginStroke(point, 'brush');
   };
 
   const pointerMove = (event: ReactPointerEvent<HTMLCanvasElement>) => {
     if (!interactive) return;
-    if (erasing) {
-      if (event.currentTarget.hasPointerCapture(event.pointerId)) emitErase(pointFromEvent(event));
-      return;
-    }
     const stroke = activeStroke.current;
     if (!stroke) return;
     const prevLength = stroke.points.length;
-    stroke.points.push(pointFromEvent(event));
-    const context = context2d();
+    const point = pointFromEvent(event);
+    if (prevLength >= MAX_POINTS_PER_STROKE - 1) {
+      const pending = stroke.points.slice(sentCountRef.current);
+      if (pending.length) onChunk?.({ ...stroke, points: pending });
+      const nextStroke: Stroke = {
+        ...stroke,
+        id: uuid(),
+        points: [stroke.points[prevLength - 1], point],
+      };
+      activeStroke.current = nextStroke;
+      sentCountRef.current = 0;
+      onChunk?.(nextStroke);
+      sentCountRef.current = nextStroke.points.length;
+      const context = drawingContext();
+      if (context) drawSegment(context, nextStroke, 0);
+      return;
+    }
+    stroke.points.push(point);
+    const context = drawingContext();
     if (context) drawSegment(context, stroke, prevLength);
     const now = Date.now();
     if (now - lastEmitRef.current >= 45) {
       const pending = stroke.points.slice(sentCountRef.current);
       if (pending.length) {
-        onChunk?.({ id: stroke.id, points: pending, color: stroke.color, width: stroke.width });
+        onChunk?.({ ...stroke, points: pending });
         sentCountRef.current = stroke.points.length;
       }
       lastEmitRef.current = now;
@@ -265,7 +293,7 @@ export function DrawingBoard({ strokes, interactive, showTools = false, onChunk,
     if (!stroke) return;
     if (sentCountRef.current < stroke.points.length) {
       const pending = stroke.points.slice(sentCountRef.current);
-      if (pending.length) onChunk?.({ id: stroke.id, points: pending, color: stroke.color, width: stroke.width });
+      if (pending.length) onChunk?.({ ...stroke, points: pending });
     }
     activeStroke.current = null;
     sentCountRef.current = 0;
@@ -282,6 +310,7 @@ export function DrawingBoard({ strokes, interactive, showTools = false, onChunk,
         onPointerCancel={pointerUp}
         aria-label="Bảng vẽ trực tiếp"
       />
+      <canvas ref={drawingCanvasRef} width={DRAWING_WIDTH} height={DRAWING_HEIGHT} hidden aria-hidden="true" />
       {overlay}
       {showTools && (
         <div className="board-tools">

@@ -219,7 +219,6 @@ export function GameScreen({ state, socket, guessBanner, reactionToast, onStroke
                 interactive={canDraw}
                 showTools={canDraw}
                 onChunk={onStrokeChunk}
-                onErase={(payload) => socket.emit(EVENTS.erase, payload)}
                 onUndo={() => socket.emit(EVENTS.undo)}
                 onClear={() => socket.emit(EVENTS.clearCanvas)}
                 overlay={overlay}

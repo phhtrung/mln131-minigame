@@ -298,6 +298,14 @@ async function main() {
   drawer1.emit(EVENTS.undo);
   await waitFor(() => viewer.undos.at(-1)?.id === 'fill-a');
   check('undo removes the fill action', viewer.undos.at(-1)?.id === 'fill-a');
+  const eraserBefore = viewer.chunks.length;
+  drawer1.emit(EVENTS.strokeChunk, { id: 'erase-a', points: [{ x: 0.45, y: 0.45 }, { x: 0.5, y: 0.5 }], color: '#ffffff', width: 28, tool: 'erase' });
+  await waitFor(() => viewer.chunks.length > eraserBefore);
+  check('eraser is broadcast as an ordered drawing action', viewer.chunks.at(-1)?.id === 'erase-a' && viewer.chunks.at(-1)?.tool === 'erase');
+  await sleep(30);
+  drawer1.emit(EVENTS.undo);
+  await waitFor(() => viewer.undos.at(-1)?.id === 'erase-a');
+  check('undo removes the eraser action', viewer.undos.at(-1)?.id === 'erase-a');
   await sleep(30);
   drawer1.emit(EVENTS.clearCanvas);
   await waitFor(() => viewer.clears.length > 0);
@@ -469,6 +477,12 @@ async function main() {
   const chosenWord3 = choices3[2];
   await waitState(projector, (state) => state.subPhase === 'drawing');
 
+  drawer3.emit(EVENTS.strokeChunk, { id: 'persist-line', points: [{ x: 0.1, y: 0.1 }, { x: 0.2, y: 0.2 }], color: '#242323', width: 5 });
+  drawer3.emit(EVENTS.strokeChunk, { id: 'persist-line', points: [{ x: 0.3, y: 0.3 }], color: '#242323', width: 5 });
+  drawer3.emit(EVENTS.strokeChunk, { id: 'persist-fill', points: [{ x: 0.4, y: 0.4 }], color: '#1769e8', width: 1, tool: 'fill' });
+  drawer3.emit(EVENTS.strokeChunk, { id: 'persist-erase', points: [{ x: 0.5, y: 0.5 }, { x: 0.6, y: 0.5 }], color: '#ffffff', width: 28, tool: 'erase' });
+  await sleep(80);
+
   const victim = guesserClients()[0];
   const victimId = victim.id;
   const victimToken = victim.token;
@@ -482,6 +496,15 @@ async function main() {
   reconnected.emit(EVENTS.joinRoom, { name: victim.label, playerId: victimId, token: victimToken });
   await waitState(projector, (state) => playerIn(state, victimId)?.connected === true);
   check('reconnect reattaches same identity', reconnected.id === victimId && reconnected.token === victimToken);
+  const persistedIds = reconnected.state.strokes.map((stroke) => stroke.id);
+  check(
+    'reconnect restores strokes, fill, and eraser in drawing order',
+    persistedIds.indexOf('persist-line') < persistedIds.indexOf('persist-fill') && persistedIds.indexOf('persist-fill') < persistedIds.indexOf('persist-erase'),
+  );
+  check(
+    'reconnect restores all points across stroke chunks',
+    reconnected.state.strokes.find((stroke) => stroke.id === 'persist-line')?.points.length === 3,
+  );
   check('reconnect preserves score', playerIn(projector.state, victimId).score === victimScore);
   check('reconnect does not duplicate player entry', projector.state.players.length === 5);
   check('reconnect welcomed back', reconnected.toasts.some((message) => message.includes('Kết nối lại thành công')));

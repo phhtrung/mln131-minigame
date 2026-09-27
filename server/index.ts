@@ -6,6 +6,7 @@ import { Server, type Socket } from 'socket.io';
 import { z } from 'zod';
 import { EVENTS, PROJECTOR_PASSWORD_QUERY, PROJECTOR_REJECTED_ERROR } from '../shared/events.js';
 import { PROJECTOR_PASSWORD } from '../shared/projector.js';
+import { MAX_POINTS_PER_STROKE } from '../shared/drawing.js';
 import { ROUND_CONTENT, type RoundContent } from '../shared/content.js';
 import type {
   ClientState,
@@ -31,7 +32,6 @@ const DRAWER_GRACE_MS = Math.round(3000 * TIMER_SCALE);
 const GUESS_COOLDOWN_MS = 400;
 const ERASE_COOLDOWN_MS = 40;
 const WARN_COOLDOWN_MS = 3000;
-const MAX_POINTS_PER_STROKE = 2000;
 
 type ClientSocket = Socket;
 
@@ -126,8 +126,8 @@ const strokeChunkSchema = z.object({
   id: strokeIdSchema,
   points: z.array(pointSchema).min(1).max(64),
   color: z.string().trim().regex(/^#[0-9a-fA-F]{6}$/),
-  width: z.number().min(1).max(40),
-  tool: z.literal('fill').optional(),
+  width: z.number().min(1).max(64),
+  tool: z.enum(['fill', 'erase']).optional(),
 });
 const eraseSchema = z.object({
   x: z.number().min(0).max(1),
