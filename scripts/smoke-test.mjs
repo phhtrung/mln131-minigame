@@ -12,7 +12,7 @@ const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 // Game seconds -> real milliseconds, so timeouts follow the game clock instead of a magic number.
 const gameMs = (seconds) => Math.round(seconds * 1000 * SCALE);
-const DRAW_SECONDS = 45;
+const DRAW_SECONDS = 75;
 
 let checks = 0;
 let failures = 0;
@@ -263,7 +263,7 @@ async function main() {
 
   await waitState(projector, (state) => state.subPhase === 'drawing');
   check('drawing subphase after countdown', projector.state.subPhase === 'drawing');
-  check('drawing timer starts at 45 seconds', projector.state.secondsLeft <= DRAW_SECONDS && projector.state.secondsLeft >= DRAW_SECONDS - 1);
+  check('drawing timer starts at 75 seconds', projector.state.secondsLeft <= DRAW_SECONDS && projector.state.secondsLeft >= DRAW_SECONDS - 1);
 
   console.log('\n== Stroke streaming, undo, clear ==');
   const viewer = guesserClients()[2];

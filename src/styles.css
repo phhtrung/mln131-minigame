@@ -139,6 +139,15 @@ input::placeholder { color: #696662; opacity: 1; }
 .side-stack { display: grid; gap: 16px; border-left: 0; }
 .action-card, .reaction-card, .leaderboard { padding: 22px; border-top: 4px solid var(--ink); background: rgba(255,255,255,.72); box-shadow: 0 10px 26px rgba(36,35,35,.05); }
 .action-card h2 { font-family: var(--body); font-size: 1.55rem; line-height: 1.05; letter-spacing: -.055em; margin: 0 0 16px; text-transform: none; font-weight: 800; }
+.game-modal { width: min(620px, calc(100vw - 32px)); max-height: min(90vh, 760px); padding: 0; border: 0; border-radius: 18px; background: transparent; color: var(--ink); box-shadow: 0 28px 80px rgba(36,35,35,.28); }
+.game-modal::backdrop { background: rgba(20,20,22,.66); backdrop-filter: blur(3px); }
+.game-modal .action-card { padding: clamp(22px, 5vw, 38px); background: var(--paper); }
+.game-modal .action-card h2 { font-size: clamp(1.8rem, 5vw, 2.65rem); line-height: 1.15; }
+.modal-countdown { margin-bottom: 14px; color: var(--blue-deep); font-weight: 700; }
+.modal-note { margin: 16px 0 0; color: var(--muted); font-size: 13px; font-weight: 700; }
+.game-modal .choice-button { min-height: 62px; font-size: 17px; }
+.game-modal .quiz-option { min-height: 56px; font-size: 15px; }
+.game-modal .quiz-card .primary-button { width: 100%; }
 .highlighted-card .eyebrow { color: var(--magenta); }
 .word-choice-list { display: grid; }
 .choice-button { min-height: 48px; display: flex; align-items: center; justify-content: space-between; border: 0; border-bottom: 1px solid var(--hairline); background: transparent; color: var(--ink); padding: 10px 0; text-align: left; font-weight: 750; }

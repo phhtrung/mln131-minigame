@@ -174,6 +174,8 @@ export function GameScreen({ state, socket, guessBanner, reactionToast, onStroke
   const { roundIntro, flashDraw } = useGameEffects(state, false);
   const canDraw = isDrawer && state.phase === 'drawing' && state.subPhase === 'drawing' && Boolean(state.privateWord);
   const canGuess = state.phase === 'drawing' && state.subPhase === 'drawing';
+  const choosingWord = isDrawer && state.phase === 'drawing' && state.subPhase === 'choosing' && Boolean(state.wordChoices);
+  const answeringQuiz = state.phase === 'quiz' && Boolean(state.quiz) && state.firstGuesserId === you?.id;
   const overlay = (
     <>
       <PreDrawCountdown phase={state.phase} subPhase={state.subPhase} secondsLeft={state.secondsLeft} flashDraw={flashDraw} />
@@ -230,10 +232,40 @@ export function GameScreen({ state, socket, guessBanner, reactionToast, onStroke
               <Leaderboard players={state.players} meId={you?.id} compact />
             </aside>
           </div>
+          {choosingWord && (
+            <GameModal titleId="word-choice-title">
+              <div className="action-card highlighted-card word-choice-card">
+                <p className="eyebrow">BẠN LÀ HỌA SĨ · VÒNG {state.round}/{state.totalRounds}</p>
+                <h2 id="word-choice-title">Chọn từ để vẽ</h2>
+                <p className="modal-countdown">Còn <strong>{state.secondsLeft} giây</strong> để chọn</p>
+                <div className="word-choice-list">
+                  {state.wordChoices?.map((word, index) => (
+                    <button className="choice-button" key={word} onClick={() => socket.emit(EVENTS.chooseWord, { index })}>{word}<span>0{index + 1}</span></button>
+                  ))}
+                </div>
+                <p className="modal-note">Hết giờ, từ đầu tiên sẽ được chọn tự động.</p>
+              </div>
+            </GameModal>
+          )}
+          {answeringQuiz && (
+            <GameModal titleId="quiz-title">
+              <QuizCard state={state} socket={socket} />
+            </GameModal>
+          )}
         </>
       )}
     </PageShell>
   );
+}
+
+function GameModal({ titleId, children }: { titleId: string; children: ReactNode }) {
+  const ref = useRef<HTMLDialogElement>(null);
+  useEffect(() => {
+    const dialog = ref.current;
+    dialog?.showModal();
+    return () => dialog?.close();
+  }, []);
+  return <dialog ref={ref} className="game-modal" aria-labelledby={titleId} onCancel={(event) => event.preventDefault()}>{children}</dialog>;
 }
 
 function ActionPanel({ state, socket, isDrawer, hasGuessed, canGuess }: { state: ClientState; socket: Socket; isDrawer: boolean; hasGuessed: boolean; canGuess: boolean }) {
@@ -253,18 +285,7 @@ function ActionPanel({ state, socket, isDrawer, hasGuessed, canGuess }: { state:
     );
   }
   if (state.phase === 'finished') return null;
-  if (isDrawer && state.phase === 'drawing' && state.subPhase === 'choosing' && state.wordChoices) {
-    return (
-      <div className="action-card highlighted-card">
-        <h2>Chọn từ</h2>
-        <div className="word-choice-list">
-          {state.wordChoices.map((word, index) => (
-            <button className="choice-button" key={word} onClick={() => socket.emit(EVENTS.chooseWord, { index })}>{word}<span>0{index + 1}</span></button>
-          ))}
-        </div>
-      </div>
-    );
-  }
+  if (isDrawer && state.phase === 'drawing' && state.subPhase === 'choosing') return null;
   if (isDrawer && state.phase === 'drawing') {
     return (
       <div className="action-card highlighted-card">
@@ -273,9 +294,7 @@ function ActionPanel({ state, socket, isDrawer, hasGuessed, canGuess }: { state:
       </div>
     );
   }
-  if (state.phase === 'quiz' && state.quiz && state.you && state.firstGuesserId === state.you.id) {
-    return <QuizCard state={state} socket={socket} />;
-  }
+  if (state.phase === 'quiz' && state.firstGuesserId === state.you?.id) return null;
   if (canGuess && state.you && !isDrawer) {
     const waitingForQuiz = hasGuessed && state.phase === 'drawing' && state.firstGuesserId === state.you.id;
     return (
@@ -310,7 +329,8 @@ function QuizCard({ state, socket }: { state: ClientState; socket: Socket }) {
   };
   return (
     <div className="action-card quiz-card" key={state.quiz?.prompt}>
-      <h2>{state.quiz?.prompt}</h2>
+      <p className="eyebrow">CÂU HỎI CỦNG CỐ · VÒNG {state.round}/{state.totalRounds}</p>
+      <h2 id="quiz-title">{state.quiz?.prompt}</h2>
       <p className="score-risk">Đúng +400 · Sai −200</p>
       <div className="quiz-options">
         {state.quiz?.options.map((option, index) => (
