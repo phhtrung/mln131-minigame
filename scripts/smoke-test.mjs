@@ -92,7 +92,7 @@ async function waitState(client, predicate, timeoutMs = 10000) {
   return undefined;
 }
 
-// The quiz only opens once the drawing clock runs out, so waiting for it can take a whole round.
+// The quiz opens after all connected guessers answer or the drawing clock expires.
 async function waitForQuiz(client) {
   const state = await waitState(client, (next) => next.phase === 'quiz', gameMs(DRAW_SECONDS) + 12000);
   return state;
@@ -385,8 +385,20 @@ async function main() {
     projector.state.guessedPlayerIds.includes(accentProbe.id) && playerIn(projector.state, accentProbe.id).score > 0,
   );
 
+  const lastGuesser = guesserClients().find((client) => ![g1, g2, accentProbe].includes(client));
+  check(
+    'quiz waits while a connected guesser has not answered',
+    projector.state.phase === 'drawing' && projector.state.guessedPlayerIds.length === 3,
+  );
+  const secondsBeforeLastGuesser = projector.state.secondsLeft;
+  lastGuesser.emit(EVENTS.submitGuess, { guess: aliasFor(chosenWord1) });
+  const quizOpenedBeforeTimeout = secondsBeforeLastGuesser > 3 && await waitFor(() => projector.state.phase === 'quiz', 3000);
+  check('quiz opens before the timer when the last connected guesser is correct', quizOpenedBeforeTimeout);
   await waitForQuiz(g1);
-  check('quiz opens only when the drawing clock runs out', projector.state.phase === 'quiz' && projector.state.secondsLeft === 0);
+  check(
+    'quiz opens as soon as every connected guesser answers correctly',
+    projector.state.phase === 'quiz' && projector.state.secondsLeft === 0 && projector.state.guessedPlayerIds.length === 4,
+  );
 
   const content1 = ROUND_CONTENT.find((item) => item.word === chosenWord1);
   check('first guesser receives quiz', g1.state.quiz?.prompt === content1.quiz.prompt);
@@ -410,7 +422,7 @@ async function main() {
   check('quiz correct awarded +400', Boolean(success1) && playerIn(projector.state, g1.id).score === scoreBefore1 + success1.points + 400);
   check('reveal carries the correct answer', projector.state.reveal?.answer === content1.quiz.options[content1.quiz.correctIndex]);
   check('summary recorded for round 1', projector.state.summary?.length === 1 && projector.state.summary[0].word === chosenWord1);
-  check('drawer awarded 375 for 3 of 4 guessers', projector.state.guessedPlayerIds.length === 3 && playerIn(projector.state, drawer1.id).score === 375);
+  check('drawer awarded 500 when all 4 guessers answer correctly', projector.state.guessedPlayerIds.length === 4 && playerIn(projector.state, drawer1.id).score === 500);
   projector.emit(EVENTS.advanceRound);
 
   console.log('\n== Round 2: word length + wrong quiz ==');
@@ -457,6 +469,11 @@ async function main() {
   check('round 2 first guess earns time-based points', Boolean(r2Success) && r2Success.points >= 150 && r2Success.points <= 500);
   const content2 = ROUND_CONTENT.find((item) => item.word === chosenWord2);
   check('round 2 quiz correct answer preserved', r2Guesser.state.quiz.options[r2Guesser.state.quiz.correctIndex] === content2.quiz.options[content2.quiz.correctIndex]);
+  const guessedBeforeQuiz = projector.state.guessedPlayerIds.length;
+  const notYetGuessed = round2Guessers.find((client) => !projector.state.guessedPlayerIds.includes(client.id));
+  notYetGuessed?.emit(EVENTS.submitGuess, { guess: aliasFor(chosenWord2) });
+  await sleep(80);
+  check('guessing closes when the timeout opens the quiz', projector.state.guessedPlayerIds.length === guessedBeforeQuiz);
   quizIndices.push(r2Guesser.state.quiz.correctIndex);
   r2Guesser.emit(EVENTS.submitQuiz, { answer: (r2Guesser.state.quiz.correctIndex + 1) % 4 });
   await waitFor(() => projector.state.quizAnswered === true);

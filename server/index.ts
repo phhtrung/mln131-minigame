@@ -221,8 +221,7 @@ function scoreForGuess(secondsLeft: number, position: number) {
   return 50 + timePoints + orderBonus;
 }
 
-// The drawing clock never freezes for the quiz: it runs its full course so the rest of the class
-// keeps guessing, and late guessers are charged for the real seconds they have spent waiting.
+// Late guessers are charged for the real seconds they have spent waiting before the round ends.
 function effectiveSecondsLeft() {
   if (room.phase === 'drawing') return room.secondsLeft;
   const elapsed = room.quizStartedAt ? Math.floor((Date.now() - room.quizStartedAt) / 1000) : 0;
@@ -289,6 +288,11 @@ function connectedPlayers(): PlayerEntry[] {
   return [...room.players.values()].filter((player) => player.connected);
 }
 
+function allConnectedGuessersAnswered() {
+  const guessers = connectedPlayers().filter((player) => player.id !== room.drawerId);
+  return guessers.length > 0 && guessers.every((player) => room.guessedPlayerIds.includes(player.id));
+}
+
 function publicState(socket: ClientSocket): ClientState {
   const isProjector = socket.data.isProjector === true;
   const playerId = socket.data.playerId as string | undefined;
@@ -335,7 +339,7 @@ function publicState(socket: ClientSocket): ClientState {
   if (room.phase === 'drawing' && room.subPhase === 'choosing' && !isDrawer) state.message = 'Họa sĩ đang chọn từ khóa…';
   if (room.phase === 'drawing' && room.subPhase === 'countdown') state.message = 'Sẵn sàng…';
   if (room.phase === 'drawing' && room.subPhase === 'drawing' && !isDrawer) state.message = 'Đoán thật nhanh — câu trả lời được gửi riêng.';
-  if (room.phase === 'quiz' && playerId !== room.firstGuesserId) state.message = 'Bạn vẫn có thể đoán; người đầu tiên đang trả lời câu hỏi.';
+  if (room.phase === 'quiz' && playerId !== room.firstGuesserId) state.message = 'Vòng đoán đã kết thúc; người đoán đúng đầu tiên đang trả lời câu hỏi.';
   return state;
 }
 
@@ -521,8 +525,6 @@ function startQuiz(firstGuesserId: string) {
   broadcastState();
 }
 
-// The class keeps drawing and guessing for the full round; the quiz only opens for the first
-// guesser once the drawing clock runs out.
 function onDrawingTimeUp() {
   if (room.firstGuesserId) startQuiz(room.firstGuesserId);
   else finishRound('not_asked');
@@ -684,7 +686,7 @@ io.on('connection', (socket: ClientSocket) => {
   });
 
   socket.on(EVENTS.submitGuess, (payload: { guess?: unknown }) => {
-    const canGuess = room.phase === 'quiz' || (room.phase === 'drawing' && room.wordSelected && room.subPhase === 'drawing');
+    const canGuess = room.phase === 'drawing' && room.wordSelected && room.subPhase === 'drawing';
     if (!canGuess) return;
     const playerId = socket.data.playerId as string | undefined;
     if (!playerId) return toast('Hãy vào phòng trước khi đoán.', socket);
@@ -719,7 +721,8 @@ io.on('connection', (socket: ClientSocket) => {
     }
     io.emit(EVENTS.guessSuccess, { playerId, name: player?.name ?? 'Một bạn', points, position });
     if (position === 0) room.firstGuesserId = playerId;
-    broadcastState();
+    if (room.firstGuesserId && allConnectedGuessersAnswered()) startQuiz(room.firstGuesserId);
+    else broadcastState();
   });
 
   socket.on(EVENTS.submitQuiz, (payload: { answer?: unknown }) => {

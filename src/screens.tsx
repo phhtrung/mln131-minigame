@@ -173,7 +173,7 @@ export function GameScreen({ state, socket, guessBanner, reactionToast, onStroke
   const hasGuessed = Boolean(you?.hasGuessed);
   const { roundIntro, flashDraw } = useGameEffects(state, false);
   const canDraw = isDrawer && state.phase === 'drawing' && state.subPhase === 'drawing' && Boolean(state.privateWord);
-  const canGuess = (state.phase === 'drawing' && state.subPhase === 'drawing') || state.phase === 'quiz';
+  const canGuess = state.phase === 'drawing' && state.subPhase === 'drawing';
   const overlay = (
     <>
       <PreDrawCountdown phase={state.phase} subPhase={state.subPhase} secondsLeft={state.secondsLeft} flashDraw={flashDraw} />
@@ -295,7 +295,7 @@ function ActionPanel({ state, socket, isDrawer, hasGuessed, canGuess }: { state:
           />
           <button className="primary-button" disabled={hasGuessed}>Gửi <span aria-hidden="true">→</span></button>
         </form>
-        {waitingForQuiz && <p className="first-guesser-note">Bạn trả lời đúng đầu tiên — cả lớp vẫn đoán đến hết giờ, rồi bạn trả lời câu hỏi củng cố.</p>}
+        {waitingForQuiz && <p className="first-guesser-note">Bạn trả lời đúng đầu tiên — chờ cả lớp đoán đúng hoặc hết giờ, rồi trả lời câu hỏi củng cố.</p>}
       </div>
     );
   }
@@ -603,7 +603,7 @@ export function ProjectorScreen({ state, socket, guessBanner, reactionToast, mut
           <div className="first-guesser-flag">
             <span className="eyebrow">TRẢ LỜI ĐÚNG ĐẦU TIÊN</span>
             <strong>{firstGuesser.name}</strong>
-            <span>Hết giờ là câu hỏi củng cố.</span>
+            <span>Cả lớp đoán xong hoặc hết giờ sẽ mở câu hỏi.</span>
           </div>
         )}
         {state.phase === 'finished' ? (
