@@ -48,16 +48,17 @@ function tone(freq: number, startDelay: number, duration: number, type: Oscillat
   oscillator.stop(start + duration + 0.05);
 }
 
+function playClip(file: string, volume: number) {
+  if (muted || typeof window === 'undefined') return;
+  const audio = new Audio(`/sounds/${file}`);
+  audio.volume = volume;
+  void audio.play().catch(() => {});
+}
+
 export const sfx = {
   tick: () => tone(1250, 0, 0.05, 'square', 0.05),
-  correct: () => {
-    tone(660, 0, 0.12, 'sine', 0.16);
-    tone(990, 0.09, 0.18, 'sine', 0.16);
-  },
-  roundStart: () => {
-    tone(440, 0, 0.1, 'triangle', 0.14);
-    tone(660, 0.1, 0.14, 'triangle', 0.14);
-  },
+  correct: () => playClip('killConfirmed02.ogg', 0.16),
+  roundStart: () => playClip('KillOW.ogg', 0.14),
   fanfare: () => {
     tone(523, 0, 0.12, 'sine', 0.16);
     tone(659, 0.1, 0.12, 'sine', 0.16);
@@ -76,7 +77,7 @@ export const sfx = {
     tone(784, 0.56, 0.14, 'sine', 0.14);
     tone(1047, 0.68, 0.5, 'sine', 0.18);
   },
-  pop: () => tone(880, 0, 0.06, 'sine', 0.09),
+  pop: () => playClip('zeeqpop2.ogg', 0.09),
 };
 
 export function isMuted() {
