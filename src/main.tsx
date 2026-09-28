@@ -107,14 +107,14 @@ function App() {
           ...current,
           secondsLeft: tick.secondsLeft,
           subPhase: tick.subPhase,
+          quizStage: tick.quizStage ?? current.quizStage,
           maskedWord: tick.maskedWord ?? current.maskedWord,
         };
       });
       if (
         tick.secondsLeft > 0 &&
         tick.secondsLeft <= 5 &&
-        tick.phase === 'drawing' &&
-        tick.subPhase === 'drawing'
+        ((tick.phase === 'drawing' && tick.subPhase === 'drawing') || (tick.phase === 'quiz' && tick.quizStage === 'qualifier'))
       ) {
         sfx.tick();
       }
