@@ -1,0 +1,999 @@
+[
+  {
+    "step": 0,
+    "scrollY": 0,
+    "bodyHeight": 884,
+    "hero": {
+      "top": 124,
+      "bottom": 311,
+      "transform": "matrix(1, 0, 0, 1, 0, 0)",
+      "opacity": "1"
+    },
+    "main": {
+      "top": 311,
+      "bottom": 892,
+      "transform": "matrix(1, 0, 0, 1, 0, 0)",
+      "opacity": "1"
+    },
+    "about": {
+      "top": 892,
+      "bottom": 921,
+      "transform": "matrix(1, 0, 0, 1, 0, 0)",
+      "opacity": "1"
+    },
+    "footer": {
+      "top": 921,
+      "bottom": 1598,
+      "transform": "matrix(1, 0, 0, 1, 0, 0)",
+      "opacity": "1"
+    },
+    "home": {
+      "top": 0,
+      "bottom": 1598,
+      "transform": "none",
+      "opacity": "1"
+    },
+    "footerPhoto": {
+      "opacity": "0",
+      "inlineOpacity": "",
+      "src": "data:image/gif;base64,R0lGODlhAQABAHAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==",
+      "naturalWidth": 1,
+      "naturalHeight": 1,
+      "parentOpacity": "0",
+      "parentInlineOpacity": "0",
+      "visibility": "visible",
+      "display": "block",
+      "top": 1331,
+      "width": 179,
+      "height": 239,
+      "animations": []
+    },
+    "images": [
+      {
+        "src": "b22eaf4f-35d8-4aaf-8f47-1a6f1c4449a7_W_T_01.png?fm=jpg&q=100&fit=crop&w=159&h=198",
+        "opacity": "0",
+        "top": 549
+      },
+      {
+        "src": "362b13a1-0930-40bc-bd93-107fd548f474_W_T_02.png?fm=jpg&q=100&fit=crop&w=159&h=198",
+        "opacity": "0",
+        "top": 549
+      },
+      {
+        "src": "805f316e-c416-46b9-bc55-6fbe2546b7a6_W_T_03.png?fm=jpg&q=100&fit=crop&w=159&h=198",
+        "opacity": "1",
+        "top": 549
+      },
+      {
+        "src": "b28ffbe5-ca1a-49bc-8723-c33f8c24e468_W_B_01.png?fm=jpg&q=100&fit=crop&w=270&h=198",
+        "opacity": "0",
+        "top": 695
+      },
+      {
+        "src": "Zmottpm069VX1smO_Peach.png?fm=jpg&q=100&fit=crop&w=270&h=198",
+        "opacity": "0",
+        "top": 695
+      },
+      {
+        "src": "17f50246-ee0f-4feb-a0f6-9b79b05321a0_W_B_03.png?fm=jpg&q=100&fit=crop&w=270&h=198",
+        "opacity": "1",
+        "top": 695
+      }
+    ],
+    "reveal": []
+  },
+  {
+    "step": 1,
+    "scrollY": 0,
+    "bodyHeight": 884,
+    "hero": {
+      "top": -188,
+      "bottom": -1,
+      "transform": "matrix(1, 0, 0, 1, 0, -312.17)",
+      "opacity": "1"
+    },
+    "main": {
+      "top": -166,
+      "bottom": 414,
+      "transform": "matrix(1, 0, 0, 1, 0, -477.56)",
+      "opacity": "1"
+    },
+    "about": {
+      "top": 414,
+      "bottom": 443,
+      "transform": "matrix(1, 0, 0, 1, 0, -477.56)",
+      "opacity": "1"
+    },
+    "footer": {
+      "top": 443,
+      "bottom": 1121,
+      "transform": "matrix(1, 0, 0, 1, 0, -477.56)",
+      "opacity": "1"
+    },
+    "home": {
+      "top": 0,
+      "bottom": 1598,
+      "transform": "none",
+      "opacity": "1"
+    },
+    "footerPhoto": {
+      "opacity": "0.231645",
+      "inlineOpacity": "",
+      "src": "https://images.prismic.io/waston-2023/aR0VtmGnmrmGqAS9_CliosGroup1.png?fm=jpg&q=100&fit=crop&w=226&h=302",
+      "naturalWidth": 226,
+      "naturalHeight": 302,
+      "parentOpacity": "0.708",
+      "parentInlineOpacity": "0.708",
+      "visibility": "visible",
+      "display": "block",
+      "top": 853,
+      "width": 179,
+      "height": 239,
+      "animations": [
+        "running"
+      ]
+    },
+    "images": [
+      {
+        "src": "b22eaf4f-35d8-4aaf-8f47-1a6f1c4449a7_W_T_01.png?fm=jpg&q=100&fit=crop&w=159&h=198",
+        "opacity": "1",
+        "top": 71
+      },
+      {
+        "src": "362b13a1-0930-40bc-bd93-107fd548f474_W_T_02.png?fm=jpg&q=100&fit=crop&w=159&h=198",
+        "opacity": "0",
+        "top": 71
+      },
+      {
+        "src": "805f316e-c416-46b9-bc55-6fbe2546b7a6_W_T_03.png?fm=jpg&q=100&fit=crop&w=159&h=198",
+        "opacity": "0",
+        "top": 71
+      },
+      {
+        "src": "b28ffbe5-ca1a-49bc-8723-c33f8c24e468_W_B_01.png?fm=jpg&q=100&fit=crop&w=270&h=198",
+        "opacity": "0",
+        "top": 217
+      },
+      {
+        "src": "Zmottpm069VX1smO_Peach.png?fm=jpg&q=100&fit=crop&w=270&h=198",
+        "opacity": "0",
+        "top": 217
+      },
+      {
+        "src": "17f50246-ee0f-4feb-a0f6-9b79b05321a0_W_B_03.png?fm=jpg&q=100&fit=crop&w=270&h=198",
+        "opacity": "1",
+        "top": 217
+      }
+    ],
+    "reveal": []
+  },
+  {
+    "step": 2,
+    "scrollY": 0,
+    "bodyHeight": 884,
+    "hero": {
+      "top": -188,
+      "bottom": -1,
+      "transform": "matrix(1, 0, 0, 1, 0, -312.17)",
+      "opacity": "1"
+    },
+    "main": {
+      "top": -402,
+      "bottom": 179,
+      "transform": "matrix(1, 0, 0, 1, 0, -713.15)",
+      "opacity": "1"
+    },
+    "about": {
+      "top": 179,
+      "bottom": 208,
+      "transform": "matrix(1, 0, 0, 1, 0, -713.15)",
+      "opacity": "1"
+    },
+    "footer": {
+      "top": 208,
+      "bottom": 885,
+      "transform": "matrix(1, 0, 0, 1, 0, -713.15)",
+      "opacity": "1"
+    },
+    "home": {
+      "top": 0,
+      "bottom": 1598,
+      "transform": "none",
+      "opacity": "1"
+    },
+    "footerPhoto": {
+      "opacity": "1",
+      "inlineOpacity": "",
+      "src": "https://images.prismic.io/waston-2023/aR0VtmGnmrmGqAS9_CliosGroup1.png?fm=jpg&q=100&fit=crop&w=226&h=302",
+      "naturalWidth": 226,
+      "naturalHeight": 302,
+      "parentOpacity": "1",
+      "parentInlineOpacity": "1",
+      "visibility": "visible",
+      "display": "block",
+      "top": 617,
+      "width": 179,
+      "height": 239,
+      "animations": []
+    },
+    "images": [
+      {
+        "src": "b22eaf4f-35d8-4aaf-8f47-1a6f1c4449a7_W_T_01.png?fm=jpg&q=100&fit=crop&w=159&h=198",
+        "opacity": "0",
+        "top": -164
+      },
+      {
+        "src": "362b13a1-0930-40bc-bd93-107fd548f474_W_T_02.png?fm=jpg&q=100&fit=crop&w=159&h=198",
+        "opacity": "1",
+        "top": -164
+      },
+      {
+        "src": "805f316e-c416-46b9-bc55-6fbe2546b7a6_W_T_03.png?fm=jpg&q=100&fit=crop&w=159&h=198",
+        "opacity": "0",
+        "top": -164
+      },
+      {
+        "src": "b28ffbe5-ca1a-49bc-8723-c33f8c24e468_W_B_01.png?fm=jpg&q=100&fit=crop&w=270&h=198",
+        "opacity": "1",
+        "top": -18
+      },
+      {
+        "src": "Zmottpm069VX1smO_Peach.png?fm=jpg&q=100&fit=crop&w=270&h=198",
+        "opacity": "0",
+        "top": -18
+      },
+      {
+        "src": "17f50246-ee0f-4feb-a0f6-9b79b05321a0_W_B_03.png?fm=jpg&q=100&fit=crop&w=270&h=198",
+        "opacity": "0",
+        "top": -18
+      }
+    ],
+    "reveal": []
+  },
+  {
+    "step": 3,
+    "scrollY": 0,
+    "bodyHeight": 884,
+    "hero": {
+      "top": -188,
+      "bottom": -1,
+      "transform": "matrix(1, 0, 0, 1, 0, -312.17)",
+      "opacity": "1"
+    },
+    "main": {
+      "top": -403,
+      "bottom": 178,
+      "transform": "matrix(1, 0, 0, 1, 0, -714.26)",
+      "opacity": "1"
+    },
+    "about": {
+      "top": 178,
+      "bottom": 207,
+      "transform": "matrix(1, 0, 0, 1, 0, -714.26)",
+      "opacity": "1"
+    },
+    "footer": {
+      "top": 207,
+      "bottom": 884,
+      "transform": "matrix(1, 0, 0, 1, 0, -714.26)",
+      "opacity": "1"
+    },
+    "home": {
+      "top": 0,
+      "bottom": 1598,
+      "transform": "none",
+      "opacity": "1"
+    },
+    "footerPhoto": {
+      "opacity": "1",
+      "inlineOpacity": "",
+      "src": "https://images.prismic.io/waston-2023/aR0VtmGnmrmGqAS9_CliosGroup1.png?fm=jpg&q=100&fit=crop&w=226&h=302",
+      "naturalWidth": 226,
+      "naturalHeight": 302,
+      "parentOpacity": "1",
+      "parentInlineOpacity": "1",
+      "visibility": "visible",
+      "display": "block",
+      "top": 616,
+      "width": 179,
+      "height": 239,
+      "animations": []
+    },
+    "images": [
+      {
+        "src": "b22eaf4f-35d8-4aaf-8f47-1a6f1c4449a7_W_T_01.png?fm=jpg&q=100&fit=crop&w=159&h=198",
+        "opacity": "0",
+        "top": -166
+      },
+      {
+        "src": "362b13a1-0930-40bc-bd93-107fd548f474_W_T_02.png?fm=jpg&q=100&fit=crop&w=159&h=198",
+        "opacity": "0",
+        "top": -166
+      },
+      {
+        "src": "805f316e-c416-46b9-bc55-6fbe2546b7a6_W_T_03.png?fm=jpg&q=100&fit=crop&w=159&h=198",
+        "opacity": "1",
+        "top": -166
+      },
+      {
+        "src": "b28ffbe5-ca1a-49bc-8723-c33f8c24e468_W_B_01.png?fm=jpg&q=100&fit=crop&w=270&h=198",
+        "opacity": "0",
+        "top": -19
+      },
+      {
+        "src": "Zmottpm069VX1smO_Peach.png?fm=jpg&q=100&fit=crop&w=270&h=198",
+        "opacity": "1",
+        "top": -19
+      },
+      {
+        "src": "17f50246-ee0f-4feb-a0f6-9b79b05321a0_W_B_03.png?fm=jpg&q=100&fit=crop&w=270&h=198",
+        "opacity": "0",
+        "top": -19
+      }
+    ],
+    "reveal": [
+      {
+        "tag": "DIV",
+        "class": "j-u",
+        "id": "",
+        "text": "More (About) Us →",
+        "inlineTransform": "translate3d(0%, 0%, 0px)",
+        "transform": "matrix(1, 0, 0, 1, 0, 0)",
+        "opacity": "1",
+        "top": 178
+      },
+      {
+        "tag": "I",
+        "class": "",
+        "id": "",
+        "text": "(About)",
+        "inlineTransform": "",
+        "transform": "none",
+        "opacity": "1",
+        "top": 179
+      },
+      {
+        "tag": "SPAN",
+        "class": "",
+        "id": "",
+        "text": "",
+        "inlineTransform": "",
+        "transform": "none",
+        "opacity": "1",
+        "top": 0
+      },
+      {
+        "tag": "DIV",
+        "class": "",
+        "id": "",
+        "text": "→",
+        "inlineTransform": "",
+        "transform": "none",
+        "opacity": "1",
+        "top": 178
+      },
+      {
+        "tag": "DIV",
+        "class": "",
+        "id": "",
+        "text": "CURRENTLY CELEBRATING",
+        "inlineTransform": "translate3d(0px, 110%, 0px)",
+        "transform": "none",
+        "opacity": "1",
+        "top": 0
+      },
+      {
+        "tag": "DIV",
+        "class": "",
+        "id": "",
+        "text": "OUR GRAND CLIO AWARD",
+        "inlineTransform": "translate3d(0px, 110%, 0px)",
+        "transform": "none",
+        "opacity": "1",
+        "top": 0
+      },
+      {
+        "tag": "DIV",
+        "class": "",
+        "id": "",
+        "text": "LA",
+        "inlineTransform": "translate3d(0%, 0%, 0px)",
+        "transform": "matrix(1, 0, 0, 1, 0, 0)",
+        "opacity": "1",
+        "top": 294
+      },
+      {
+        "tag": "IMG",
+        "class": "",
+        "id": "",
+        "text": "",
+        "inlineTransform": "",
+        "transform": "none",
+        "opacity": "1",
+        "top": 616
+      },
+      {
+        "tag": "DIV",
+        "class": "",
+        "id": "",
+        "text": "(Recently)",
+        "inlineTransform": "translate3d(0%, 0%, 0px)",
+        "transform": "matrix(1, 0, 0, 1, 0, 0)",
+        "opacity": "1",
+        "top": 294
+      },
+      {
+        "tag": "DIV",
+        "class": "",
+        "id": "",
+        "text": "",
+        "inlineTransform": "translate3d(0%, 0%, 0px)",
+        "transform": "matrix(1, 0, 0, 1, 0, 0)",
+        "opacity": "1",
+        "top": 323
+      },
+      {
+        "tag": "DIV",
+        "class": "",
+        "id": "",
+        "text": "We're looking to expand our",
+        "inlineTransform": "translate3d(0%, 0%, 0px)",
+        "transform": "matrix(1, 0, 0, 1, 0, 0)",
+        "opacity": "1",
+        "top": 352
+      },
+      {
+        "tag": "DIV",
+        "class": "",
+        "id": "",
+        "text": "creative network and capabilities.",
+        "inlineTransform": "translate3d(0%, 0%, 0px)",
+        "transform": "matrix(1, 0, 0, 1, 0, 0)",
+        "opacity": "1",
+        "top": 381
+      },
+      {
+        "tag": "DIV",
+        "class": "",
+        "id": "",
+        "text": "Get in touch or learn more →",
+        "inlineTransform": "translate3d(0%, 0%, 0px)",
+        "transform": "matrix(1, 0, 0, 1, 0, 0)",
+        "opacity": "1",
+        "top": 410
+      },
+      {
+        "tag": "A",
+        "class": "",
+        "id": "",
+        "text": "Get in touch",
+        "inlineTransform": "",
+        "transform": "none",
+        "opacity": "1",
+        "top": 411
+      },
+      {
+        "tag": "A",
+        "class": "",
+        "id": "",
+        "text": "learn more →",
+        "inlineTransform": "",
+        "transform": "none",
+        "opacity": "1",
+        "top": 411
+      },
+      {
+        "tag": "DIV",
+        "class": "",
+        "id": "",
+        "text": "",
+        "inlineTransform": "translate3d(0%, 0%, 0px)",
+        "transform": "matrix(1, 0, 0, 1, 0, 0)",
+        "opacity": "1",
+        "top": 439
+      },
+      {
+        "tag": "DIV",
+        "class": "",
+        "id": "",
+        "text": "Recent campaign work includes",
+        "inlineTransform": "translate3d(0%, 0%, 0px)",
+        "transform": "matrix(1, 0, 0, 1, 0, 0)",
+        "opacity": "1",
+        "top": 468
+      },
+      {
+        "tag": "DIV",
+        "class": "",
+        "id": "",
+        "text": "Christopher Nolan's \"The Odyssey\",",
+        "inlineTransform": "translate3d(0%, 0%, 0px)",
+        "transform": "matrix(1, 0, 0, 1, 0, 0)",
+        "opacity": "1",
+        "top": 497
+      },
+      {
+        "tag": "DIV",
+        "class": "",
+        "id": "",
+        "text": "Tom Cruise and Alejandro G.",
+        "inlineTransform": "translate3d(0%, 0%, 0px)",
+        "transform": "matrix(1, 0, 0, 1, 0, 0)",
+        "opacity": "1",
+        "top": 525
+      },
+      {
+        "tag": "DIV",
+        "class": "",
+        "id": "",
+        "text": "Iñárritu's \"Digger\", and WB's Dune:",
+        "inlineTransform": "translate3d(0%, 0%, 0px)",
+        "transform": "matrix(1, 0, 0, 1, 0, 0)",
+        "opacity": "1",
+        "top": 554
+      },
+      {
+        "tag": "DIV",
+        "class": "",
+        "id": "",
+        "text": "Part Three.",
+        "inlineTransform": "translate3d(0%, 0%, 0px)",
+        "transform": "matrix(1, 0, 0, 1, 0, 0)",
+        "opacity": "1",
+        "top": 583
+      },
+      {
+        "tag": "DIV",
+        "class": "",
+        "id": "",
+        "text": "(Contact)",
+        "inlineTransform": "translate3d(0%, 0%, 0px)",
+        "transform": "matrix(1, 0, 0, 1, 0, 0)",
+        "opacity": "1",
+        "top": 702
+      },
+      {
+        "tag": "DIV",
+        "class": "",
+        "id": "",
+        "text": "New Business:",
+        "inlineTransform": "translate3d(0%, 0%, 0px)",
+        "transform": "matrix(1, 0, 0, 1, 0, 0)",
+        "opacity": "1",
+        "top": 731
+      },
+      {
+        "tag": "DIV",
+        "class": "",
+        "id": "",
+        "text": "newbusiness@watsondg.com",
+        "inlineTransform": "translate3d(0%, 0%, 0px)",
+        "transform": "matrix(1, 0, 0, 1, 0, 0)",
+        "opacity": "1",
+        "top": 745
+      },
+      {
+        "tag": "DIV",
+        "class": "",
+        "id": "",
+        "text": "",
+        "inlineTransform": "",
+        "transform": "none",
+        "opacity": "1",
+        "top": 0
+      },
+      {
+        "tag": "DIV",
+        "class": "",
+        "id": "",
+        "text": "Address:",
+        "inlineTransform": "translate3d(0%, 0%, 0px)",
+        "transform": "matrix(1, 0, 0, 1, 0, 0)",
+        "opacity": "1",
+        "top": 773
+      },
+      {
+        "tag": "DIV",
+        "class": "",
+        "id": "",
+        "text": "5900 Wilshire Blvd, Ste. 2050",
+        "inlineTransform": "translate3d(0%, 0%, 0px)",
+        "transform": "matrix(1, 0, 0, 1, 0, 0)",
+        "opacity": "1",
+        "top": 787
+      },
+      {
+        "tag": "DIV",
+        "class": "",
+        "id": "",
+        "text": "",
+        "inlineTransform": "",
+        "transform": "none",
+        "opacity": "1",
+        "top": 0
+      },
+      {
+        "tag": "DIV",
+        "class": "",
+        "id": "",
+        "text": "Los Angeles, CA 90036",
+        "inlineTransform": "translate3d(0%, 0.11%, 0px)",
+        "transform": "matrix(1, 0, 0, 1, 0, 0.0188891)",
+        "opacity": "1",
+        "top": 800
+      },
+      {
+        "tag": "DIV",
+        "class": "",
+        "id": "",
+        "text": "",
+        "inlineTransform": "",
+        "transform": "none",
+        "opacity": "1",
+        "top": 0
+      },
+      {
+        "tag": "DIV",
+        "class": "",
+        "id": "",
+        "text": "Phone:",
+        "inlineTransform": "translate3d(0%, 0.22%, 0px)",
+        "transform": "matrix(1, 0, 0, 1, 0, 0.0377781)",
+        "opacity": "1",
+        "top": 829
+      },
+      {
+        "tag": "DIV",
+        "class": "",
+        "id": "",
+        "text": "+1 323 465 9225",
+        "inlineTransform": "translate3d(0%, 0.44%, 0px)",
+        "transform": "matrix(1, 0, 0, 1, 0, 0.0755562)",
+        "opacity": "1",
+        "top": 843
+      },
+      {
+        "tag": "DIV",
+        "class": "",
+        "id": "",
+        "text": "",
+        "inlineTransform": "",
+        "transform": "none",
+        "opacity": "1",
+        "top": 0
+      }
+    ]
+  },
+  {
+    "step": 4,
+    "scrollY": 0,
+    "bodyHeight": 884,
+    "hero": {
+      "top": -188,
+      "bottom": -1,
+      "transform": "matrix(1, 0, 0, 1, 0, -312.17)",
+      "opacity": "1"
+    },
+    "main": {
+      "top": -403,
+      "bottom": 178,
+      "transform": "matrix(1, 0, 0, 1, 0, -714.27)",
+      "opacity": "1"
+    },
+    "about": {
+      "top": 178,
+      "bottom": 207,
+      "transform": "matrix(1, 0, 0, 1, 0, -714.27)",
+      "opacity": "1"
+    },
+    "footer": {
+      "top": 207,
+      "bottom": 884,
+      "transform": "matrix(1, 0, 0, 1, 0, -714.27)",
+      "opacity": "1"
+    },
+    "home": {
+      "top": 0,
+      "bottom": 1598,
+      "transform": "none",
+      "opacity": "1"
+    },
+    "footerPhoto": {
+      "opacity": "1",
+      "inlineOpacity": "",
+      "src": "https://images.prismic.io/waston-2023/aR0VtmGnmrmGqAS9_CliosGroup1.png?fm=jpg&q=100&fit=crop&w=226&h=302",
+      "naturalWidth": 226,
+      "naturalHeight": 302,
+      "parentOpacity": "1",
+      "parentInlineOpacity": "1",
+      "visibility": "visible",
+      "display": "block",
+      "top": 616,
+      "width": 179,
+      "height": 239,
+      "animations": []
+    },
+    "images": [
+      {
+        "src": "b22eaf4f-35d8-4aaf-8f47-1a6f1c4449a7_W_T_01.png?fm=jpg&q=100&fit=crop&w=159&h=198",
+        "opacity": "0",
+        "top": -166
+      },
+      {
+        "src": "362b13a1-0930-40bc-bd93-107fd548f474_W_T_02.png?fm=jpg&q=100&fit=crop&w=159&h=198",
+        "opacity": "0",
+        "top": -166
+      },
+      {
+        "src": "805f316e-c416-46b9-bc55-6fbe2546b7a6_W_T_03.png?fm=jpg&q=100&fit=crop&w=159&h=198",
+        "opacity": "1",
+        "top": -166
+      },
+      {
+        "src": "b28ffbe5-ca1a-49bc-8723-c33f8c24e468_W_B_01.png?fm=jpg&q=100&fit=crop&w=270&h=198",
+        "opacity": "0",
+        "top": -19
+      },
+      {
+        "src": "Zmottpm069VX1smO_Peach.png?fm=jpg&q=100&fit=crop&w=270&h=198",
+        "opacity": "0",
+        "top": -19
+      },
+      {
+        "src": "17f50246-ee0f-4feb-a0f6-9b79b05321a0_W_B_03.png?fm=jpg&q=100&fit=crop&w=270&h=198",
+        "opacity": "1",
+        "top": -19
+      }
+    ],
+    "reveal": []
+  },
+  {
+    "step": 5,
+    "scrollY": 0,
+    "bodyHeight": 884,
+    "hero": {
+      "top": -188,
+      "bottom": -1,
+      "transform": "matrix(1, 0, 0, 1, 0, -312.17)",
+      "opacity": "1"
+    },
+    "main": {
+      "top": -403,
+      "bottom": 178,
+      "transform": "matrix(1, 0, 0, 1, 0, -714.27)",
+      "opacity": "1"
+    },
+    "about": {
+      "top": 178,
+      "bottom": 207,
+      "transform": "matrix(1, 0, 0, 1, 0, -714.27)",
+      "opacity": "1"
+    },
+    "footer": {
+      "top": 207,
+      "bottom": 884,
+      "transform": "matrix(1, 0, 0, 1, 0, -714.27)",
+      "opacity": "1"
+    },
+    "home": {
+      "top": 0,
+      "bottom": 1598,
+      "transform": "none",
+      "opacity": "1"
+    },
+    "footerPhoto": {
+      "opacity": "1",
+      "inlineOpacity": "",
+      "src": "https://images.prismic.io/waston-2023/aR0VtmGnmrmGqAS9_CliosGroup1.png?fm=jpg&q=100&fit=crop&w=226&h=302",
+      "naturalWidth": 226,
+      "naturalHeight": 302,
+      "parentOpacity": "1",
+      "parentInlineOpacity": "1",
+      "visibility": "visible",
+      "display": "block",
+      "top": 616,
+      "width": 179,
+      "height": 239,
+      "animations": []
+    },
+    "images": [
+      {
+        "src": "b22eaf4f-35d8-4aaf-8f47-1a6f1c4449a7_W_T_01.png?fm=jpg&q=100&fit=crop&w=159&h=198",
+        "opacity": "1",
+        "top": -166
+      },
+      {
+        "src": "362b13a1-0930-40bc-bd93-107fd548f474_W_T_02.png?fm=jpg&q=100&fit=crop&w=159&h=198",
+        "opacity": "0",
+        "top": -166
+      },
+      {
+        "src": "805f316e-c416-46b9-bc55-6fbe2546b7a6_W_T_03.png?fm=jpg&q=100&fit=crop&w=159&h=198",
+        "opacity": "0",
+        "top": -166
+      },
+      {
+        "src": "b28ffbe5-ca1a-49bc-8723-c33f8c24e468_W_B_01.png?fm=jpg&q=100&fit=crop&w=270&h=198",
+        "opacity": "1",
+        "top": -19
+      },
+      {
+        "src": "Zmottpm069VX1smO_Peach.png?fm=jpg&q=100&fit=crop&w=270&h=198",
+        "opacity": "0",
+        "top": -19
+      },
+      {
+        "src": "17f50246-ee0f-4feb-a0f6-9b79b05321a0_W_B_03.png?fm=jpg&q=100&fit=crop&w=270&h=198",
+        "opacity": "0",
+        "top": -19
+      }
+    ],
+    "reveal": []
+  },
+  {
+    "step": 6,
+    "scrollY": 0,
+    "bodyHeight": 884,
+    "hero": {
+      "top": -188,
+      "bottom": -1,
+      "transform": "matrix(1, 0, 0, 1, 0, -312.17)",
+      "opacity": "1"
+    },
+    "main": {
+      "top": -403,
+      "bottom": 178,
+      "transform": "matrix(1, 0, 0, 1, 0, -714.27)",
+      "opacity": "1"
+    },
+    "about": {
+      "top": 178,
+      "bottom": 207,
+      "transform": "matrix(1, 0, 0, 1, 0, -714.27)",
+      "opacity": "1"
+    },
+    "footer": {
+      "top": 207,
+      "bottom": 884,
+      "transform": "matrix(1, 0, 0, 1, 0, -714.27)",
+      "opacity": "1"
+    },
+    "home": {
+      "top": 0,
+      "bottom": 1598,
+      "transform": "none",
+      "opacity": "1"
+    },
+    "footerPhoto": {
+      "opacity": "1",
+      "inlineOpacity": "",
+      "src": "https://images.prismic.io/waston-2023/aR0VtmGnmrmGqAS9_CliosGroup1.png?fm=jpg&q=100&fit=crop&w=226&h=302",
+      "naturalWidth": 226,
+      "naturalHeight": 302,
+      "parentOpacity": "1",
+      "parentInlineOpacity": "1",
+      "visibility": "visible",
+      "display": "block",
+      "top": 616,
+      "width": 179,
+      "height": 239,
+      "animations": []
+    },
+    "images": [
+      {
+        "src": "b22eaf4f-35d8-4aaf-8f47-1a6f1c4449a7_W_T_01.png?fm=jpg&q=100&fit=crop&w=159&h=198",
+        "opacity": "0",
+        "top": -166
+      },
+      {
+        "src": "362b13a1-0930-40bc-bd93-107fd548f474_W_T_02.png?fm=jpg&q=100&fit=crop&w=159&h=198",
+        "opacity": "1",
+        "top": -166
+      },
+      {
+        "src": "805f316e-c416-46b9-bc55-6fbe2546b7a6_W_T_03.png?fm=jpg&q=100&fit=crop&w=159&h=198",
+        "opacity": "0",
+        "top": -166
+      },
+      {
+        "src": "b28ffbe5-ca1a-49bc-8723-c33f8c24e468_W_B_01.png?fm=jpg&q=100&fit=crop&w=270&h=198",
+        "opacity": "1",
+        "top": -19
+      },
+      {
+        "src": "Zmottpm069VX1smO_Peach.png?fm=jpg&q=100&fit=crop&w=270&h=198",
+        "opacity": "0",
+        "top": -19
+      },
+      {
+        "src": "17f50246-ee0f-4feb-a0f6-9b79b05321a0_W_B_03.png?fm=jpg&q=100&fit=crop&w=270&h=198",
+        "opacity": "0",
+        "top": -19
+      }
+    ],
+    "reveal": []
+  },
+  {
+    "step": 7,
+    "scrollY": 0,
+    "bodyHeight": 884,
+    "hero": {
+      "top": -188,
+      "bottom": -1,
+      "transform": "matrix(1, 0, 0, 1, 0, -312.17)",
+      "opacity": "1"
+    },
+    "main": {
+      "top": -403,
+      "bottom": 178,
+      "transform": "matrix(1, 0, 0, 1, 0, -714.27)",
+      "opacity": "1"
+    },
+    "about": {
+      "top": 178,
+      "bottom": 207,
+      "transform": "matrix(1, 0, 0, 1, 0, -714.27)",
+      "opacity": "1"
+    },
+    "footer": {
+      "top": 207,
+      "bottom": 884,
+      "transform": "matrix(1, 0, 0, 1, 0, -714.27)",
+      "opacity": "1"
+    },
+    "home": {
+      "top": 0,
+      "bottom": 1598,
+      "transform": "none",
+      "opacity": "1"
+    },
+    "footerPhoto": {
+      "opacity": "1",
+      "inlineOpacity": "",
+      "src": "https://images.prismic.io/waston-2023/aR0VtmGnmrmGqAS9_CliosGroup1.png?fm=jpg&q=100&fit=crop&w=226&h=302",
+      "naturalWidth": 226,
+      "naturalHeight": 302,
+      "parentOpacity": "1",
+      "parentInlineOpacity": "1",
+      "visibility": "visible",
+      "display": "block",
+      "top": 616,
+      "width": 179,
+      "height": 239,
+      "animations": []
+    },
+    "images": [
+      {
+        "src": "b22eaf4f-35d8-4aaf-8f47-1a6f1c4449a7_W_T_01.png?fm=jpg&q=100&fit=crop&w=159&h=198",
+        "opacity": "0",
+        "top": -166
+      },
+      {
+        "src": "362b13a1-0930-40bc-bd93-107fd548f474_W_T_02.png?fm=jpg&q=100&fit=crop&w=159&h=198",
+        "opacity": "0",
+        "top": -166
+      },
+      {
+        "src": "805f316e-c416-46b9-bc55-6fbe2546b7a6_W_T_03.png?fm=jpg&q=100&fit=crop&w=159&h=198",
+        "opacity": "1",
+        "top": -166
+      },
+      {
+        "src": "b28ffbe5-ca1a-49bc-8723-c33f8c24e468_W_B_01.png?fm=jpg&q=100&fit=crop&w=270&h=198",
+        "opacity": "0",
+        "top": -19
+      },
+      {
+        "src": "Zmottpm069VX1smO_Peach.png?fm=jpg&q=100&fit=crop&w=270&h=198",
+        "opacity": "1",
+        "top": -19
+      },
+      {
+        "src": "17f50246-ee0f-4feb-a0f6-9b79b05321a0_W_B_03.png?fm=jpg&q=100&fit=crop&w=270&h=198",
+        "opacity": "0",
+        "top": -19
+      }
+    ],
+    "reveal": []
+  }
+]

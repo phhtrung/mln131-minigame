@@ -1,0 +1,124 @@
+{
+  "name": "watson",
+  "url": "https://watson.la/",
+  "width": 1728,
+  "createdAt": "2026-10-04T17:03:36.225Z",
+  "phaseOrder": [
+    "target",
+    "assets",
+    "measure",
+    "build",
+    "visual",
+    "coverage",
+    "strict",
+    "behavior",
+    "review",
+    "done"
+  ],
+  "phases": {
+    "target": {
+      "status": "pass",
+      "kind": "machine",
+      "runId": "482605064c",
+      "sha256": "3ea0cd4fd3427f9c",
+      "evidence": null,
+      "ts": "2026-10-04T17:03:41.767Z",
+      "forced": false,
+      "blocked": false,
+      "overrode": []
+    },
+    "assets": {
+      "status": "pass",
+      "kind": "attested",
+      "runId": "1e39c6144f",
+      "sha256": "2528819672b4d461",
+      "evidence": "Original page DOM includes captured logo and inline SVG symbols; six original image assets were saved locally",
+      "ts": "2026-10-04T17:06:27.287Z",
+      "forced": false,
+      "blocked": false,
+      "overrode": []
+    },
+    "measure": {
+      "status": "pass",
+      "kind": "machine",
+      "runId": "1ddde14e61",
+      "sha256": "dcad94333e3197ef",
+      "evidence": null,
+      "ts": "2026-10-04T17:06:27.348Z",
+      "forced": false,
+      "blocked": false,
+      "overrode": []
+    },
+    "build": {
+      "status": "pass",
+      "kind": "machine",
+      "runId": "8a1d17a81e",
+      "sha256": "5557ad74e7533fce",
+      "evidence": null,
+      "ts": "2026-10-04T17:06:59.655Z",
+      "forced": false,
+      "blocked": false,
+      "overrode": []
+    },
+    "visual": {
+      "status": "pass",
+      "kind": "machine",
+      "runId": "04bf487696",
+      "sha256": "8a046ca39dee79e2",
+      "evidence": null,
+      "ts": "2026-10-04T17:49:38.448Z",
+      "forced": false,
+      "blocked": false,
+      "overrode": []
+    },
+    "coverage": {
+      "status": "pass",
+      "kind": "machine",
+      "runId": "fbeb640fa8",
+      "sha256": "5ed2261ad1cef471",
+      "evidence": null,
+      "ts": "2026-10-04T17:49:43.361Z",
+      "forced": false,
+      "blocked": false,
+      "overrode": []
+    },
+    "strict": {
+      "status": "pass",
+      "kind": "machine",
+      "runId": "4527a7a321",
+      "sha256": "8a046ca39dee79e2",
+      "evidence": null,
+      "ts": "2026-10-04T17:49:43.656Z",
+      "forced": false,
+      "blocked": false,
+      "overrode": []
+    },
+    "behavior": {
+      "status": "pending",
+      "kind": "machine",
+      "runId": null,
+      "sha256": null,
+      "evidence": null,
+      "ts": null,
+      "forced": false
+    },
+    "review": {
+      "status": "pending",
+      "kind": "machine",
+      "runId": null,
+      "sha256": null,
+      "evidence": null,
+      "ts": null,
+      "forced": false
+    },
+    "done": {
+      "status": "pending",
+      "kind": "machine",
+      "runId": null,
+      "sha256": null,
+      "evidence": null,
+      "ts": null,
+      "forced": false
+    }
+  }
+}

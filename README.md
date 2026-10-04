@@ -4,13 +4,18 @@ MVP web game tương tác dùng ở phần cuối bài thuyết trình MLN131. �
 
 ## Chạy local
 
-```bash
+```powershell
 npm install
+$env:PROJECTOR_PASSWORD = "replace-this-with-a-random-secret-of-32-characters"
 npm run dev
 ```
 
+Thay giá trị mẫu bằng chuỗi ngẫu nhiên của bạn. `PROJECTOR_PASSWORD` là bí mật chỉ đặt trên máy chủ; không dùng lại mật khẩu cá nhân. Máy chủ từ chối khởi động nếu biến này chưa được đặt hoặc ngắn hơn 16 ký tự.
+
 - Người chơi: http://localhost:5173/
-- Màn hình máy chiếu: http://localhost:5173/?projector=1 — màn hình này hỏi mật khẩu trước khi vào (mật khẩu hardcode trong `shared/projector.ts`); server cũng từ chối kết nối máy chiếu sai mật khẩu, nên máy chiếu chưa xác thực sẽ không thấy quiz/reveal và không bấm được "Bắt đầu"/"Mở đáp án".
+- Màn hình máy chiếu: http://localhost:5173/?projector=1 — màn hình hỏi `PROJECTOR_PASSWORD`; máy chủ cũng từ chối kết nối sai mật khẩu, nên máy chiếu chưa xác thực sẽ không thấy quiz/reveal và không bấm được "Bắt đầu"/"Mở đáp án".
+- Phòng chứa tối đa 60 người. Người mất kết nối giữ chỗ để vào lại trong 60 giây, sau đó tự bị xóa khỏi phòng; máy chiếu có thể loại người chơi ở sảnh hoặc trong ván.
+- Mỗi người chơi gửi tối đa một phản ứng mỗi giây.
 
 Nếu muốn chạy giống production:
 
@@ -56,7 +61,8 @@ npm run test:smoke
    - Start: `npm start`
    - Health check: `/healthz`
 4. Sau khi deploy, kiểm tra `https://<ten-service>.onrender.com/healthz` trả về `{"ok":true}`.
-5. Gửi link gốc cho người chơi và thêm `?projector=1` cho máy chiếu (nhớ mật khẩu máy chiếu để mở màn hình).
+5. Trong Render đặt `PROJECTOR_PASSWORD` thành một chuỗi ngẫu nhiên ít nhất 16 ký tự. `render.yaml` đánh dấu biến này là bí mật và Render sẽ yêu cầu bạn nhập khi tạo dịch vụ.
+6. Gửi link gốc cho người chơi và thêm `?projector=1` cho máy chiếu (nhớ mật khẩu máy chiếu để mở màn hình).
 
 > Free Render service phù hợp để thử nghiệm nhưng có thể sleep khi không có traffic. Trước giờ thuyết trình nên mở link, chạy thử một vòng và cân nhắc nâng lên instance nhỏ trả phí để tránh cold start.
 

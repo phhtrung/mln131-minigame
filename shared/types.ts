@@ -52,6 +52,7 @@ export type Reaction = { id: string; name: string; reaction: string };
 
 export type RoomState = {
   code: string;
+  maxPlayers: number;
   phase: Phase;
   subPhase: SubPhase;
   round: number;

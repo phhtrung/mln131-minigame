@@ -138,7 +138,7 @@ export function LobbyScreen({ state, muted, onToggleMuted }: ShellProps & { stat
         </div>
         <div className="player-card surface-card">
           <div className="card-heading">
-            <h2>{state.players.length} người chơi <span>/60</span></h2>
+            <h2>{state.players.length} người chơi <span>/{state.maxPlayers}</span></h2>
             <span className="live-tag">LIVE</span>
           </div>
           <div className="player-list">
@@ -619,6 +619,12 @@ export function ProjectorScreen({ state, socket, guessBanner, reactionToast, mut
             <div className="projector-timer">{state.secondsLeft}<span>s</span></div>
           )}
         </div>
+        {state.phase !== 'lobby' && (
+          <details className="projector-moderation">
+            <summary>Quản lý người chơi · {state.players.length}/{state.maxPlayers}</summary>
+            <ProjectorPlayerList players={state.players} maxPlayers={state.maxPlayers} socket={socket} />
+          </details>
+        )}
         {waitingForClock && firstGuesser && (
           <div className="first-guesser-flag">
             <span className="eyebrow">TRẢ LỜI ĐÚNG ĐẦU TIÊN</span>
@@ -636,9 +642,10 @@ export function ProjectorScreen({ state, socket, guessBanner, reactionToast, mut
         ) : state.phase === 'lobby' ? (
           <>
             <div className="projector-controls">
-              <p className="projector-waiting">{state.players.length} người chơi đã vào phòng — đợi cả lớp rồi bắt đầu.</p>
+              <p className="projector-waiting">{state.players.length}/{state.maxPlayers} người chơi đã vào phòng — đợi cả lớp rồi bắt đầu.</p>
               <button className="primary-button large" onClick={() => socket.emit(EVENTS.startGame)}>Bắt đầu trò chơi <span aria-hidden="true">→</span></button>
             </div>
+            <ProjectorPlayerList players={state.players} maxPlayers={state.maxPlayers} socket={socket} />
             <Leaderboard players={state.players} />
           </>
         ) : state.phase === 'quiz' ? (
@@ -669,6 +676,40 @@ export function ProjectorScreen({ state, socket, guessBanner, reactionToast, mut
         )}
       </section>
     </PageShell>
+  );
+}
+
+function ProjectorPlayerList({ players, maxPlayers, socket }: { players: Player[]; maxPlayers: number; socket: Socket }) {
+  return (
+    <section className="player-card surface-card projector-player-card">
+      <div className="card-heading">
+        <h2>Người chơi <span>{players.length}/{maxPlayers}</span></h2>
+        <span className="quiet-label">SẢNH</span>
+      </div>
+      <div className="player-list">
+        {players.length === 0
+          ? <p className="empty-copy">Chưa có người chơi trong phòng.</p>
+          : players.map((player) => (
+            <div className={player.connected ? 'player-row' : 'player-row offline'} key={player.id}>
+              <span className="avatar">{player.name.slice(0, 1).toUpperCase()}</span>
+              <span className="projector-player-name">{player.name}</span>
+              <span className={`connected-dot${player.connected ? '' : ' offline'}`} title={player.connected ? 'Đang trực tuyến' : 'Đã ngắt kết nối'} />
+              <button
+                type="button"
+                className="kick-button"
+                aria-label={`Loại ${player.name} khỏi phòng`}
+                onClick={() => {
+                  if (window.confirm(`Loại ${player.name} khỏi ván chơi?`)) {
+                    socket.emit(EVENTS.kickPlayer, { playerId: player.id });
+                  }
+                }}
+              >
+                Loại
+              </button>
+            </div>
+          ))}
+      </div>
+    </section>
   );
 }
 

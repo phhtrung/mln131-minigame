@@ -1,0 +1,926 @@
+{
+  "url": "http://127.0.0.1:1969/",
+  "viewport": {
+    "width": 1728,
+    "height": 982,
+    "dpr": 2
+  },
+  "mode": "CSS1Compat",
+  "discovery": {
+    "startedAt": "2026-10-04T17:47:06.115Z",
+    "endedAt": "2026-10-04T17:47:08.327Z",
+    "durationMs": 2212.1,
+    "documentHidden": false,
+    "scrollSweep": {
+      "from": 0,
+      "to": 0,
+      "steps": 6,
+      "positions": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    "observeMs": 8000,
+    "elementsScanned": 233,
+    "staticCandidateCount": 74,
+    "keyframesFound": [
+      "n-d-l-pe",
+      "cta-wait-spin",
+      "cta-wait-dot"
+    ],
+    "hoverTriggersProbed": [],
+    "marqueeSelectorsProbed": [],
+    "earlyMotionRecorder": {
+      "ran": true,
+      "durationMs": 9733.4,
+      "rowsObserved": 0,
+      "strongRows": 0
+    },
+    "runner": {
+      "kitVersion": "0.18.0",
+      "mode": "cdp-launched",
+      "chromeVersion": "Chrome/154.0.8037.97",
+      "headless": true,
+      "profile": "temp",
+      "viewport": {
+        "width": 1728,
+        "height": 982,
+        "dpr": 2,
+        "sources": {
+          "width": "target.json",
+          "height": "live.json",
+          "dpr": "live.json"
+        }
+      },
+      "rafProbe": {
+        "frames": 211,
+        "ms": 701,
+        "hz": 422,
+        "attempts": 1
+      },
+      "animProbe": {
+        "expectedPxPerSec": 100,
+        "measuredPxPerSec": 98.45
+      }
+    }
+  },
+  "behaviors": {},
+  "declared": {
+    "declared:div.b": {
+      "hints": [
+        "will-change:transform"
+      ],
+      "startState": {
+        "opacity": 1,
+        "transform": "none",
+        "filter": "none",
+        "visibility": "visible",
+        "display": "block"
+      },
+      "text": null
+    },
+    "declared:home": {
+      "hints": [
+        "will-change:transform"
+      ],
+      "startState": {
+        "opacity": 1,
+        "transform": "none",
+        "filter": "none",
+        "visibility": "visible",
+        "display": "block"
+      },
+      "text": "Watson(1) Partnerships, (2) Capabilities, (3) Conversations("
+    },
+    "declared:div>nav>a>div[0][0][0]": {
+      "hints": [
+        "will-change:transform"
+      ],
+      "startState": {
+        "opacity": 1,
+        "transform": "matrix(1, 0, 0, 1, 0, 0)",
+        "filter": "none",
+        "visibility": "visible",
+        "display": "block"
+      },
+      "text": "Watson"
+    },
+    "declared:div>a>div>div[0][0][0]": {
+      "hints": [
+        "will-change:transform"
+      ],
+      "startState": {
+        "opacity": 1,
+        "transform": "matrix(1, 0, 0, 1, 0, 0)",
+        "filter": "none",
+        "visibility": "visible",
+        "display": "block"
+      },
+      "text": "(1)"
+    },
+    "declared:div>a>div>div[0][1][0]": {
+      "hints": [
+        "will-change:transform"
+      ],
+      "startState": {
+        "opacity": 1,
+        "transform": "matrix(1, 0, 0, 1, 0, 0)",
+        "filter": "none",
+        "visibility": "visible",
+        "display": "block"
+      },
+      "text": "Partnerships,"
+    },
+    "declared:div>a>div>div[0][0][2]": {
+      "hints": [
+        "will-change:transform"
+      ],
+      "startState": {
+        "opacity": 1,
+        "transform": "matrix(1, 0, 0, 1, 0, 0)",
+        "filter": "none",
+        "visibility": "visible",
+        "display": "block"
+      },
+      "text": "(2)"
+    },
+    "declared:div>a>div>div[0][1][2]": {
+      "hints": [
+        "will-change:transform"
+      ],
+      "startState": {
+        "opacity": 1,
+        "transform": "matrix(1, 0, 0, 1, 0, 0)",
+        "filter": "none",
+        "visibility": "visible",
+        "display": "block"
+      },
+      "text": "Capabilities,"
+    },
+    "declared:div>a>div>div[0][0][4]": {
+      "hints": [
+        "will-change:transform"
+      ],
+      "startState": {
+        "opacity": 1,
+        "transform": "matrix(1, 0, 0, 1, 0, 0)",
+        "filter": "none",
+        "visibility": "visible",
+        "display": "block"
+      },
+      "text": "(3)"
+    },
+    "declared:div>a>div>div[0][1][4]": {
+      "hints": [
+        "will-change:transform"
+      ],
+      "startState": {
+        "opacity": 1,
+        "transform": "matrix(1, 0, 0, 1, 0, 0)",
+        "filter": "none",
+        "visibility": "visible",
+        "display": "block"
+      },
+      "text": "Conversations"
+    },
+    "declared:div>nav>a>div[0][3][0]": {
+      "hints": [
+        "will-change:transform"
+      ],
+      "startState": {
+        "opacity": 1,
+        "transform": "matrix(1, 0, 0, 1, 0, 0)",
+        "filter": "none",
+        "visibility": "visible",
+        "display": "block"
+      },
+      "text": "About"
+    },
+    "declared:home-hero": {
+      "hints": [
+        "will-change:transform"
+      ],
+      "startState": {
+        "opacity": 1,
+        "transform": "matrix(1, 0, 0, 1, 0, 0)",
+        "filter": "none",
+        "visibility": "visible",
+        "display": "flex"
+      },
+      "text": "LAWATSON"
+    },
+    "declared:header>div>div>div[0][0][0]": {
+      "hints": [
+        "will-change:transform"
+      ],
+      "startState": {
+        "opacity": 1,
+        "transform": "matrix(1, 0, 0, 1, 0, 0)",
+        "filter": "none",
+        "visibility": "visible",
+        "display": "block"
+      },
+      "text": "LA"
+    },
+    "declared:home-hero-t": {
+      "hints": [
+        "will-change:transform"
+      ],
+      "startState": {
+        "opacity": 1,
+        "transform": "none",
+        "filter": "none",
+        "visibility": "visible",
+        "display": "flex"
+      },
+      "text": "WATSON"
+    },
+    "declared:header>h1>span>span[0][0][1]": {
+      "hints": [
+        "will-change:transform"
+      ],
+      "startState": {
+        "opacity": 1,
+        "transform": "matrix(1, 0, 0, 1, 0, 0)",
+        "filter": "none",
+        "visibility": "visible",
+        "display": "block"
+      },
+      "text": "W"
+    },
+    "declared:header>h1>span>span[0][1][1]": {
+      "hints": [
+        "will-change:transform"
+      ],
+      "startState": {
+        "opacity": 1,
+        "transform": "matrix(1, 0, 0, 1, 0, 0)",
+        "filter": "none",
+        "visibility": "visible",
+        "display": "block"
+      },
+      "text": "A"
+    },
+    "declared:header>h1>span>span[0][2][1]": {
+      "hints": [
+        "will-change:transform"
+      ],
+      "startState": {
+        "opacity": 1,
+        "transform": "matrix(1, 0, 0, 1, 0, 0)",
+        "filter": "none",
+        "visibility": "visible",
+        "display": "block"
+      },
+      "text": "T"
+    },
+    "declared:header>h1>span>span[0][3][1]": {
+      "hints": [
+        "will-change:transform"
+      ],
+      "startState": {
+        "opacity": 1,
+        "transform": "matrix(1, 0, 0, 1, 0, 0)",
+        "filter": "none",
+        "visibility": "visible",
+        "display": "block"
+      },
+      "text": "S"
+    },
+    "declared:header>h1>span>span[0][4][1]": {
+      "hints": [
+        "will-change:transform"
+      ],
+      "startState": {
+        "opacity": 1,
+        "transform": "matrix(1, 0, 0, 1, 0, 0)",
+        "filter": "none",
+        "visibility": "visible",
+        "display": "block"
+      },
+      "text": "O"
+    },
+    "declared:header>h1>span>span[0][5][1]": {
+      "hints": [
+        "will-change:transform"
+      ],
+      "startState": {
+        "opacity": 1,
+        "transform": "matrix(1, 0, 0, 1, 0, 0)",
+        "filter": "none",
+        "visibility": "visible",
+        "display": "block"
+      },
+      "text": "N"
+    },
+    "declared:home-main": {
+      "hints": [
+        "will-change:transform"
+      ],
+      "startState": {
+        "opacity": 1,
+        "transform": "matrix(1, 0, 0, 1, 0, 0)",
+        "filter": "none",
+        "visibility": "visible",
+        "display": "table"
+      },
+      "text": "(Los Angeles) is abrand &entertainment  (1)creative studio,l"
+    },
+    "declared:div>div>div>div[0][0][2]": {
+      "hints": [
+        "will-change:transform"
+      ],
+      "startState": {
+        "opacity": 1,
+        "transform": "matrix(1, 0, 0, 1, 0, 0)",
+        "filter": "none",
+        "visibility": "visible",
+        "display": "block"
+      },
+      "text": "(Los Angeles) is a"
+    },
+    "declared:div>a>div>div[0][0][1]": {
+      "hints": [
+        "will-change:transform"
+      ],
+      "startState": {
+        "opacity": 1,
+        "transform": "matrix(1, 0, 0, 1, 0, 0)",
+        "filter": "none",
+        "visibility": "visible",
+        "display": "block"
+      },
+      "text": "brand &"
+    },
+    "declared:div>a>div>div[0][1][1]": {
+      "hints": [
+        "will-change:transform"
+      ],
+      "startState": {
+        "opacity": 1,
+        "transform": "matrix(1, 0, 0, 1, 0, 0)",
+        "filter": "none",
+        "visibility": "visible",
+        "display": "block"
+      },
+      "text": "entertainment  (1)"
+    },
+    "declared:home-main-0": {
+      "hints": [
+        "will-change:transform"
+      ],
+      "startState": {
+        "opacity": 1,
+        "transform": "matrix(1, 0, 0, 1, 0, 0)",
+        "filter": "none",
+        "visibility": "visible",
+        "display": "flex"
+      },
+      "text": "creative studio,"
+    },
+    "declared:div>div>div>div[0][3][2]": {
+      "hints": [
+        "will-change:transform"
+      ],
+      "startState": {
+        "opacity": 1,
+        "transform": "matrix(1, 0, 0, 1, 0, 0)",
+        "filter": "none",
+        "visibility": "visible",
+        "display": "block"
+      },
+      "text": "led by craft  (2) —"
+    },
+    "declared:home-main-1": {
+      "hints": [
+        "will-change:transform"
+      ],
+      "startState": {
+        "opacity": 1,
+        "transform": "matrix(1, 0, 0, 1, 0, 0)",
+        "filter": "none",
+        "visibility": "visible",
+        "display": "flex"
+      },
+      "text": "insearch of"
+    },
+    "declared:div>a>div>div[0][0][5]": {
+      "hints": [
+        "will-change:transform"
+      ],
+      "startState": {
+        "opacity": 1,
+        "transform": "matrix(1, 0, 0, 1, 0, 0)",
+        "filter": "none",
+        "visibility": "visible",
+        "display": "block"
+      },
+      "text": "conversation  (3)"
+    },
+    "declared:home-main-i-0": {
+      "hints": [
+        "will-change:transform"
+      ],
+      "startState": {
+        "opacity": 1,
+        "transform": "matrix(1, 0, 0, 1, 0, 0)",
+        "filter": "none",
+        "visibility": "visible",
+        "display": "block"
+      },
+      "text": null
+    },
+    "declared:home-main-i-1": {
+      "hints": [
+        "will-change:transform"
+      ],
+      "startState": {
+        "opacity": 1,
+        "transform": "matrix(1, 0, 0, 1, 0, 0)",
+        "filter": "none",
+        "visibility": "visible",
+        "display": "block"
+      },
+      "text": null
+    },
+    "declared:home-about": {
+      "hints": [
+        "will-change:transform"
+      ],
+      "startState": {
+        "opacity": 1,
+        "transform": "matrix(1, 0, 0, 1, 0, 0)",
+        "filter": "none",
+        "visibility": "visible",
+        "display": "block"
+      },
+      "text": "More (About) Us →"
+    },
+    "declared:div.j-u": {
+      "hints": [
+        "will-change:transform"
+      ],
+      "startState": {
+        "opacity": 1,
+        "transform": "matrix(1, 0, 0, 1, 0, 31.625)",
+        "filter": "none",
+        "visibility": "visible",
+        "display": "flex"
+      },
+      "text": "More (About) Us →"
+    },
+    "declared:home-footer": {
+      "hints": [
+        "will-change:transform"
+      ],
+      "startState": {
+        "opacity": 1,
+        "transform": "matrix(1, 0, 0, 1, 0, 0)",
+        "filter": "none",
+        "visibility": "visible",
+        "display": "flex"
+      },
+      "text": "CURRENTLY CELEBRATINGOUR GRAND CLIO AWARDLA(Recently) We're "
+    },
+    "declared:div>div>div>div[0][0][0]": {
+      "hints": [
+        "will-change:transform"
+      ],
+      "startState": {
+        "opacity": 1,
+        "transform": "matrix(1, 0, 0, 1, 0, 14.8328)",
+        "filter": "none",
+        "visibility": "visible",
+        "display": "block"
+      },
+      "text": "CURRENTLY CELEBRATING"
+    },
+    "declared:div>div>div>div[0][1][0]": {
+      "hints": [
+        "will-change:transform"
+      ],
+      "startState": {
+        "opacity": 1,
+        "transform": "matrix(1, 0, 0, 1, 0, 14.8328)",
+        "filter": "none",
+        "visibility": "visible",
+        "display": "block"
+      },
+      "text": "OUR GRAND CLIO AWARD"
+    },
+    "declared:div>div>div>div[0][0][1]": {
+      "hints": [
+        "will-change:transform"
+      ],
+      "startState": {
+        "opacity": 1,
+        "transform": "none",
+        "filter": "none",
+        "visibility": "visible",
+        "display": "block"
+      },
+      "text": "LA"
+    },
+    "declared:footer>div>div>img[0][2][0]": {
+      "hints": [
+        "transition-from-start-state"
+      ],
+      "temporal": {
+        "candidate": "weak",
+        "mechanism": "css-transition",
+        "durationMs": 1000,
+        "delayMs": 0,
+        "easing": "cubic-bezier(0.45, 0, 0.55, 1)",
+        "signals": [
+          "transition-from-start-state"
+        ]
+      },
+      "startState": {
+        "opacity": 0,
+        "transform": "none",
+        "filter": "none",
+        "visibility": "visible",
+        "display": "block"
+      },
+      "text": null
+    },
+    "declared:div>p>div>div[0][0][0]": {
+      "hints": [
+        "will-change:transform"
+      ],
+      "startState": {
+        "opacity": 1,
+        "transform": "matrix(1, 0, 0, 1, 0, 31.625)",
+        "filter": "none",
+        "visibility": "visible",
+        "display": "block"
+      },
+      "text": "(Recently)"
+    },
+    "declared:div>p>div>div[0][1][0]": {
+      "hints": [
+        "will-change:transform"
+      ],
+      "startState": {
+        "opacity": 1,
+        "transform": "matrix(1, 0, 0, 1, 0, 31.625)",
+        "filter": "none",
+        "visibility": "visible",
+        "display": "block"
+      },
+      "text": null
+    },
+    "declared:div>p>div>div[0][2][0]": {
+      "hints": [
+        "will-change:transform"
+      ],
+      "startState": {
+        "opacity": 1,
+        "transform": "matrix(1, 0, 0, 1, 0, 31.625)",
+        "filter": "none",
+        "visibility": "visible",
+        "display": "block"
+      },
+      "text": "We're looking to expand our creative"
+    },
+    "declared:div>p>div>div[0][3][0]": {
+      "hints": [
+        "will-change:transform"
+      ],
+      "startState": {
+        "opacity": 1,
+        "transform": "matrix(1, 0, 0, 1, 0, 31.625)",
+        "filter": "none",
+        "visibility": "visible",
+        "display": "block"
+      },
+      "text": "network and capabilities. Get in"
+    },
+    "declared:div>p>div>div[0][4][0]": {
+      "hints": [
+        "will-change:transform"
+      ],
+      "startState": {
+        "opacity": 1,
+        "transform": "matrix(1, 0, 0, 1, 0, 31.625)",
+        "filter": "none",
+        "visibility": "visible",
+        "display": "block"
+      },
+      "text": "touch or learn more →"
+    },
+    "declared:div>p>div>div[0][5][0]": {
+      "hints": [
+        "will-change:transform"
+      ],
+      "startState": {
+        "opacity": 1,
+        "transform": "matrix(1, 0, 0, 1, 0, 31.625)",
+        "filter": "none",
+        "visibility": "visible",
+        "display": "block"
+      },
+      "text": null
+    },
+    "declared:div>p>div>div[0][6][0]": {
+      "hints": [
+        "will-change:transform"
+      ],
+      "startState": {
+        "opacity": 1,
+        "transform": "matrix(1, 0, 0, 1, 0, 31.625)",
+        "filter": "none",
+        "visibility": "visible",
+        "display": "block"
+      },
+      "text": "Recent campaign work includes"
+    },
+    "declared:div>p>div>div[0][7][0]": {
+      "hints": [
+        "will-change:transform"
+      ],
+      "startState": {
+        "opacity": 1,
+        "transform": "matrix(1, 0, 0, 1, 0, 31.625)",
+        "filter": "none",
+        "visibility": "visible",
+        "display": "block"
+      },
+      "text": "Christopher Nolan's \"The Odyssey\","
+    },
+    "declared:div>p>div>div[0][8][0]": {
+      "hints": [
+        "will-change:transform"
+      ],
+      "startState": {
+        "opacity": 1,
+        "transform": "matrix(1, 0, 0, 1, 0, 31.625)",
+        "filter": "none",
+        "visibility": "visible",
+        "display": "block"
+      },
+      "text": "Tom Cruise and Alejandro G."
+    },
+    "declared:div>p>div>div[0][9][0]": {
+      "hints": [
+        "will-change:transform"
+      ],
+      "startState": {
+        "opacity": 1,
+        "transform": "matrix(1, 0, 0, 1, 0, 31.625)",
+        "filter": "none",
+        "visibility": "visible",
+        "display": "block"
+      },
+      "text": "Iñárritu's \"Digger\", and WB's Dune:"
+    },
+    "declared:div>p>div>div[0][10][0]": {
+      "hints": [
+        "will-change:transform"
+      ],
+      "startState": {
+        "opacity": 1,
+        "transform": "matrix(1, 0, 0, 1, 0, 31.625)",
+        "filter": "none",
+        "visibility": "visible",
+        "display": "block"
+      },
+      "text": "Part Three."
+    },
+    "declared:div>a>div>div[0][2][2]": {
+      "hints": [
+        "will-change:transform"
+      ],
+      "startState": {
+        "opacity": 1,
+        "transform": "matrix(1, 0, 0, 1, 0, 31.625)",
+        "filter": "none",
+        "visibility": "visible",
+        "display": "table"
+      },
+      "text": "Los Angeles, CA 90036"
+    },
+    "declared:div>a>div>div[0][0][3]": {
+      "hints": [
+        "will-change:transform"
+      ],
+      "startState": {
+        "opacity": 1,
+        "transform": "matrix(1, 0, 0, 1, 0, 31.625)",
+        "filter": "none",
+        "visibility": "visible",
+        "display": "table"
+      },
+      "text": "Phone:"
+    },
+    "declared:div>a>div>div[0][1][3]": {
+      "hints": [
+        "will-change:transform"
+      ],
+      "startState": {
+        "opacity": 1,
+        "transform": "matrix(1, 0, 0, 1, 0, 31.625)",
+        "filter": "none",
+        "visibility": "visible",
+        "display": "table"
+      },
+      "text": "+1 323 465 9225"
+    },
+    "declared:div.c": {
+      "hints": [
+        "will-change:opacity"
+      ],
+      "startState": {
+        "opacity": 0,
+        "transform": "none",
+        "filter": "none",
+        "visibility": "visible",
+        "display": "block"
+      },
+      "text": null
+    },
+    "declared:hold": {
+      "hints": [
+        "will-change:transform"
+      ],
+      "startState": {
+        "opacity": 1,
+        "transform": "none",
+        "filter": "none",
+        "visibility": "visible",
+        "display": "block"
+      },
+      "text": null
+    },
+    "declared:html>body>div>div[0][2][1]": {
+      "hints": [
+        "will-change:transform"
+      ],
+      "startState": {
+        "opacity": 1,
+        "transform": "matrix(1, 0, 0, 1, -1900.8, 0)",
+        "filter": "none",
+        "visibility": "visible",
+        "display": "block"
+      },
+      "text": null
+    },
+    "declared:cover-bg": {
+      "hints": [
+        "will-change:opacity"
+      ],
+      "startState": {
+        "opacity": 0,
+        "transform": "none",
+        "filter": "none",
+        "visibility": "visible",
+        "display": "block"
+      },
+      "text": null
+    },
+    "declared:cover-no": {
+      "hints": [
+        "will-change:opacity"
+      ],
+      "startState": {
+        "opacity": 0,
+        "transform": "none",
+        "filter": "none",
+        "visibility": "visible",
+        "display": "block"
+      },
+      "text": null
+    },
+    "declared:loader-bg": {
+      "hints": [
+        "will-change:opacity"
+      ],
+      "startState": {
+        "opacity": 0,
+        "transform": "none",
+        "filter": "none",
+        "visibility": "visible",
+        "display": "block"
+      },
+      "text": null
+    },
+    "declared:body>div>div>div[0][1][5]": {
+      "hints": [
+        "will-change:transform"
+      ],
+      "startState": {
+        "opacity": 1,
+        "transform": "matrix(1, 0, 0, 1, 0, -29.325)",
+        "filter": "none",
+        "visibility": "visible",
+        "display": "block"
+      },
+      "text": "100"
+    },
+    "declared:html>body>div>div[0][6][1]": {
+      "hints": [
+        "will-change:transform",
+        "transition-from-start-state"
+      ],
+      "temporal": {
+        "candidate": "weak",
+        "mechanism": "css-transition",
+        "durationMs": 1000,
+        "delayMs": 0,
+        "easing": "cubic-bezier(0.76, 0, 0.2, 1)",
+        "signals": [
+          "transition-from-start-state"
+        ]
+      },
+      "startState": {
+        "opacity": 1,
+        "transform": "matrix(1, 0, 0, 1, 1729.73, 0)",
+        "filter": "none",
+        "visibility": "visible",
+        "display": "block"
+      },
+      "text": null
+    },
+    "declared:div.#fefefe": {
+      "hints": [
+        "will-change:transform",
+        "transition-from-start-state"
+      ],
+      "temporal": {
+        "candidate": "weak",
+        "mechanism": "css-transition",
+        "durationMs": 3500,
+        "delayMs": 0,
+        "easing": "cubic-bezier(0.16, 1, 0.3, 1)",
+        "signals": [
+          "transition-from-start-state"
+        ]
+      },
+      "startState": {
+        "opacity": 1,
+        "transform": "matrix(1, 0, 0, 1, -745.194, 0)",
+        "filter": "none",
+        "visibility": "visible",
+        "display": "block"
+      },
+      "text": null
+    },
+    "declared:html>body>div>div[1][6][1]": {
+      "hints": [
+        "will-change:transform"
+      ],
+      "startState": {
+        "opacity": 1,
+        "transform": "matrix(1, 0, 0, 1, -1900.8, 0)",
+        "filter": "none",
+        "visibility": "visible",
+        "display": "block"
+      },
+      "text": null
+    },
+    "declared:body>div>div>div[0][1][6]": {
+      "hints": [
+        "will-change:transform"
+      ],
+      "startState": {
+        "opacity": 1,
+        "transform": "none",
+        "filter": "none",
+        "visibility": "visible",
+        "display": "block"
+      },
+      "text": null
+    },
+    "declared:html>body>div>div[2][6][1]": {
+      "hints": [
+        "will-change:transform"
+      ],
+      "startState": {
+        "opacity": 1,
+        "transform": "matrix(1, 0, 0, 1, -1900.8, 0)",
+        "filter": "none",
+        "visibility": "visible",
+        "display": "block"
+      },
+      "text": null
+    },
+    "declared:body>div>div>div[0][2][6]": {
+      "hints": [
+        "will-change:transform"
+      ],
+      "startState": {
+        "opacity": 1,
+        "transform": "none",
+        "filter": "none",
+        "visibility": "visible",
+        "display": "block"
+      },
+      "text": null
+    }
+  }
+}

@@ -1,0 +1,1007 @@
+[
+  {
+    "step": 0,
+    "scrollY": 0,
+    "bodyHeight": 982,
+    "hero": {
+      "top": 0,
+      "bottom": 580,
+      "transform": "matrix(1, 0, 0, 1, 0, 0)",
+      "opacity": "1"
+    },
+    "main": {
+      "top": 580,
+      "bottom": 1363,
+      "transform": "matrix(1, 0, 0, 1, 0, 0)",
+      "opacity": "1"
+    },
+    "about": {
+      "top": 1363,
+      "bottom": 1541,
+      "transform": "matrix(1, 0, 0, 1, 0, 0)",
+      "opacity": "1"
+    },
+    "footer": {
+      "top": 1541,
+      "bottom": 1953,
+      "transform": "matrix(1, 0, 0, 1, 0, 0)",
+      "opacity": "1"
+    },
+    "home": {
+      "top": 0,
+      "bottom": 1953,
+      "transform": "none",
+      "opacity": "1"
+    },
+    "footerPhoto": {
+      "opacity": "0",
+      "inlineOpacity": "",
+      "src": "data:image/gif;base64,R0lGODlhAQABAHAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==",
+      "naturalWidth": 1,
+      "naturalHeight": 1,
+      "parentOpacity": "0",
+      "parentInlineOpacity": "0",
+      "visibility": "visible",
+      "display": "block",
+      "top": 1575,
+      "width": 251,
+      "height": 334,
+      "animations": []
+    },
+    "images": [
+      {
+        "src": "b22eaf4f-35d8-4aaf-8f47-1a6f1c4449a7_W_T_01.png?fm=jpg&q=100&fit=crop&w=159&h=198",
+        "opacity": "0",
+        "top": 926
+      },
+      {
+        "src": "362b13a1-0930-40bc-bd93-107fd548f474_W_T_02.png?fm=jpg&q=100&fit=crop&w=159&h=198",
+        "opacity": "0",
+        "top": 926
+      },
+      {
+        "src": "805f316e-c416-46b9-bc55-6fbe2546b7a6_W_T_03.png?fm=jpg&q=100&fit=crop&w=159&h=198",
+        "opacity": "1",
+        "top": 926
+      },
+      {
+        "src": "b28ffbe5-ca1a-49bc-8723-c33f8c24e468_W_B_01.png?fm=jpg&q=100&fit=crop&w=270&h=198",
+        "opacity": "0",
+        "top": 1144
+      },
+      {
+        "src": "Zmottpm069VX1smO_Peach.png?fm=jpg&q=100&fit=crop&w=270&h=198",
+        "opacity": "0",
+        "top": 1144
+      },
+      {
+        "src": "17f50246-ee0f-4feb-a0f6-9b79b05321a0_W_B_03.png?fm=jpg&q=100&fit=crop&w=270&h=198",
+        "opacity": "1",
+        "top": 1144
+      }
+    ],
+    "reveal": []
+  },
+  {
+    "step": 1,
+    "scrollY": 0,
+    "bodyHeight": 982,
+    "hero": {
+      "top": 0,
+      "bottom": 580,
+      "transform": "matrix(1, 0, 0, 1, 0, 0)",
+      "opacity": "1"
+    },
+    "main": {
+      "top": 580,
+      "bottom": 1363,
+      "transform": "matrix(1, 0, 0, 1, 0, 0)",
+      "opacity": "1"
+    },
+    "about": {
+      "top": 1363,
+      "bottom": 1541,
+      "transform": "matrix(1, 0, 0, 1, 0, 0)",
+      "opacity": "1"
+    },
+    "footer": {
+      "top": 1541,
+      "bottom": 1953,
+      "transform": "matrix(1, 0, 0, 1, 0, 0)",
+      "opacity": "1"
+    },
+    "home": {
+      "top": 0,
+      "bottom": 1953,
+      "transform": "none",
+      "opacity": "1"
+    },
+    "footerPhoto": {
+      "opacity": "0",
+      "inlineOpacity": "",
+      "src": "data:image/gif;base64,R0lGODlhAQABAHAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==",
+      "naturalWidth": 1,
+      "naturalHeight": 1,
+      "parentOpacity": "0",
+      "parentInlineOpacity": "0",
+      "visibility": "visible",
+      "display": "block",
+      "top": 1575,
+      "width": 251,
+      "height": 334,
+      "animations": []
+    },
+    "images": [
+      {
+        "src": "b22eaf4f-35d8-4aaf-8f47-1a6f1c4449a7_W_T_01.png?fm=jpg&q=100&fit=crop&w=159&h=198",
+        "opacity": "1",
+        "top": 926
+      },
+      {
+        "src": "362b13a1-0930-40bc-bd93-107fd548f474_W_T_02.png?fm=jpg&q=100&fit=crop&w=159&h=198",
+        "opacity": "0",
+        "top": 926
+      },
+      {
+        "src": "805f316e-c416-46b9-bc55-6fbe2546b7a6_W_T_03.png?fm=jpg&q=100&fit=crop&w=159&h=198",
+        "opacity": "0",
+        "top": 926
+      },
+      {
+        "src": "b28ffbe5-ca1a-49bc-8723-c33f8c24e468_W_B_01.png?fm=jpg&q=100&fit=crop&w=270&h=198",
+        "opacity": "1",
+        "top": 1144
+      },
+      {
+        "src": "Zmottpm069VX1smO_Peach.png?fm=jpg&q=100&fit=crop&w=270&h=198",
+        "opacity": "0",
+        "top": 1144
+      },
+      {
+        "src": "17f50246-ee0f-4feb-a0f6-9b79b05321a0_W_B_03.png?fm=jpg&q=100&fit=crop&w=270&h=198",
+        "opacity": "0",
+        "top": 1144
+      }
+    ],
+    "reveal": []
+  },
+  {
+    "step": 2,
+    "scrollY": 0,
+    "bodyHeight": 982,
+    "hero": {
+      "top": 0,
+      "bottom": 580,
+      "transform": "matrix(1, 0, 0, 1, 0, 0)",
+      "opacity": "1"
+    },
+    "main": {
+      "top": 580,
+      "bottom": 1363,
+      "transform": "matrix(1, 0, 0, 1, 0, 0)",
+      "opacity": "1"
+    },
+    "about": {
+      "top": 1363,
+      "bottom": 1541,
+      "transform": "matrix(1, 0, 0, 1, 0, 0)",
+      "opacity": "1"
+    },
+    "footer": {
+      "top": 1541,
+      "bottom": 1953,
+      "transform": "matrix(1, 0, 0, 1, 0, 0)",
+      "opacity": "1"
+    },
+    "home": {
+      "top": 0,
+      "bottom": 1953,
+      "transform": "none",
+      "opacity": "1"
+    },
+    "footerPhoto": {
+      "opacity": "0",
+      "inlineOpacity": "",
+      "src": "data:image/gif;base64,R0lGODlhAQABAHAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==",
+      "naturalWidth": 1,
+      "naturalHeight": 1,
+      "parentOpacity": "0",
+      "parentInlineOpacity": "0",
+      "visibility": "visible",
+      "display": "block",
+      "top": 1575,
+      "width": 251,
+      "height": 334,
+      "animations": []
+    },
+    "images": [
+      {
+        "src": "b22eaf4f-35d8-4aaf-8f47-1a6f1c4449a7_W_T_01.png?fm=jpg&q=100&fit=crop&w=159&h=198",
+        "opacity": "0",
+        "top": 926
+      },
+      {
+        "src": "362b13a1-0930-40bc-bd93-107fd548f474_W_T_02.png?fm=jpg&q=100&fit=crop&w=159&h=198",
+        "opacity": "1",
+        "top": 926
+      },
+      {
+        "src": "805f316e-c416-46b9-bc55-6fbe2546b7a6_W_T_03.png?fm=jpg&q=100&fit=crop&w=159&h=198",
+        "opacity": "0",
+        "top": 926
+      },
+      {
+        "src": "b28ffbe5-ca1a-49bc-8723-c33f8c24e468_W_B_01.png?fm=jpg&q=100&fit=crop&w=270&h=198",
+        "opacity": "1",
+        "top": 1144
+      },
+      {
+        "src": "Zmottpm069VX1smO_Peach.png?fm=jpg&q=100&fit=crop&w=270&h=198",
+        "opacity": "0",
+        "top": 1144
+      },
+      {
+        "src": "17f50246-ee0f-4feb-a0f6-9b79b05321a0_W_B_03.png?fm=jpg&q=100&fit=crop&w=270&h=198",
+        "opacity": "0",
+        "top": 1144
+      }
+    ],
+    "reveal": []
+  },
+  {
+    "step": 3,
+    "scrollY": 0,
+    "bodyHeight": 982,
+    "hero": {
+      "top": 0,
+      "bottom": 580,
+      "transform": "matrix(1, 0, 0, 1, 0, 0)",
+      "opacity": "1"
+    },
+    "main": {
+      "top": 580,
+      "bottom": 1363,
+      "transform": "matrix(1, 0, 0, 1, 0, 0)",
+      "opacity": "1"
+    },
+    "about": {
+      "top": 1363,
+      "bottom": 1541,
+      "transform": "matrix(1, 0, 0, 1, 0, 0)",
+      "opacity": "1"
+    },
+    "footer": {
+      "top": 1541,
+      "bottom": 1953,
+      "transform": "matrix(1, 0, 0, 1, 0, 0)",
+      "opacity": "1"
+    },
+    "home": {
+      "top": 0,
+      "bottom": 1953,
+      "transform": "none",
+      "opacity": "1"
+    },
+    "footerPhoto": {
+      "opacity": "0",
+      "inlineOpacity": "",
+      "src": "data:image/gif;base64,R0lGODlhAQABAHAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==",
+      "naturalWidth": 1,
+      "naturalHeight": 1,
+      "parentOpacity": "0",
+      "parentInlineOpacity": "0",
+      "visibility": "visible",
+      "display": "block",
+      "top": 1575,
+      "width": 251,
+      "height": 334,
+      "animations": []
+    },
+    "images": [
+      {
+        "src": "b22eaf4f-35d8-4aaf-8f47-1a6f1c4449a7_W_T_01.png?fm=jpg&q=100&fit=crop&w=159&h=198",
+        "opacity": "0",
+        "top": 926
+      },
+      {
+        "src": "362b13a1-0930-40bc-bd93-107fd548f474_W_T_02.png?fm=jpg&q=100&fit=crop&w=159&h=198",
+        "opacity": "0",
+        "top": 926
+      },
+      {
+        "src": "805f316e-c416-46b9-bc55-6fbe2546b7a6_W_T_03.png?fm=jpg&q=100&fit=crop&w=159&h=198",
+        "opacity": "1",
+        "top": 926
+      },
+      {
+        "src": "b28ffbe5-ca1a-49bc-8723-c33f8c24e468_W_B_01.png?fm=jpg&q=100&fit=crop&w=270&h=198",
+        "opacity": "0",
+        "top": 1144
+      },
+      {
+        "src": "Zmottpm069VX1smO_Peach.png?fm=jpg&q=100&fit=crop&w=270&h=198",
+        "opacity": "1",
+        "top": 1144
+      },
+      {
+        "src": "17f50246-ee0f-4feb-a0f6-9b79b05321a0_W_B_03.png?fm=jpg&q=100&fit=crop&w=270&h=198",
+        "opacity": "0",
+        "top": 1144
+      }
+    ],
+    "reveal": [
+      {
+        "tag": "DIV",
+        "class": "j-u",
+        "id": "",
+        "text": "More (About) Us →",
+        "inlineTransform": "translate3d(0px, 110%, 0px)",
+        "transform": "matrix(1, 0, 0, 1, 0, 31.625)",
+        "opacity": "1",
+        "top": 1434
+      },
+      {
+        "tag": "I",
+        "class": "",
+        "id": "",
+        "text": "(About)",
+        "inlineTransform": "",
+        "transform": "none",
+        "opacity": "1",
+        "top": 1436
+      },
+      {
+        "tag": "SPAN",
+        "class": "",
+        "id": "",
+        "text": "",
+        "inlineTransform": "",
+        "transform": "none",
+        "opacity": "1",
+        "top": 1434
+      },
+      {
+        "tag": "DIV",
+        "class": "",
+        "id": "",
+        "text": "→",
+        "inlineTransform": "",
+        "transform": "none",
+        "opacity": "1",
+        "top": 1434
+      },
+      {
+        "tag": "DIV",
+        "class": "",
+        "id": "",
+        "text": "CURRENTLY CELEBRATING",
+        "inlineTransform": "translate3d(0px, 110%, 0px)",
+        "transform": "matrix(1, 0, 0, 1, 0, 14.8328)",
+        "opacity": "1",
+        "top": 1556
+      },
+      {
+        "tag": "DIV",
+        "class": "",
+        "id": "",
+        "text": "OUR GRAND CLIO AWARD",
+        "inlineTransform": "translate3d(0px, 110%, 0px)",
+        "transform": "matrix(1, 0, 0, 1, 0, 14.8328)",
+        "opacity": "1",
+        "top": 1569
+      },
+      {
+        "tag": "DIV",
+        "class": "",
+        "id": "",
+        "text": "LA",
+        "inlineTransform": "translate3d(0px, 110%, 0px)",
+        "transform": "none",
+        "opacity": "1",
+        "top": 0
+      },
+      {
+        "tag": "IMG",
+        "class": "",
+        "id": "",
+        "text": "",
+        "inlineTransform": "",
+        "transform": "none",
+        "opacity": "0",
+        "top": 1575
+      },
+      {
+        "tag": "DIV",
+        "class": "",
+        "id": "",
+        "text": "(Recently)",
+        "inlineTransform": "translate3d(0px, 110%, 0px)",
+        "transform": "matrix(1, 0, 0, 1, 0, 31.625)",
+        "opacity": "1",
+        "top": 1633
+      },
+      {
+        "tag": "DIV",
+        "class": "",
+        "id": "",
+        "text": "",
+        "inlineTransform": "translate3d(0px, 110%, 0px)",
+        "transform": "matrix(1, 0, 0, 1, 0, 31.625)",
+        "opacity": "1",
+        "top": 1662
+      },
+      {
+        "tag": "DIV",
+        "class": "",
+        "id": "",
+        "text": "We're looking to expand our creative",
+        "inlineTransform": "translate3d(0px, 110%, 0px)",
+        "transform": "matrix(1, 0, 0, 1, 0, 31.625)",
+        "opacity": "1",
+        "top": 1690
+      },
+      {
+        "tag": "DIV",
+        "class": "",
+        "id": "",
+        "text": "network and capabilities. Get in",
+        "inlineTransform": "translate3d(0px, 110%, 0px)",
+        "transform": "matrix(1, 0, 0, 1, 0, 31.625)",
+        "opacity": "1",
+        "top": 1719
+      },
+      {
+        "tag": "A",
+        "class": "",
+        "id": "",
+        "text": "Get in",
+        "inlineTransform": "",
+        "transform": "none",
+        "opacity": "1",
+        "top": 1721
+      },
+      {
+        "tag": "DIV",
+        "class": "",
+        "id": "",
+        "text": "touch or learn more →",
+        "inlineTransform": "translate3d(0px, 110%, 0px)",
+        "transform": "matrix(1, 0, 0, 1, 0, 31.625)",
+        "opacity": "1",
+        "top": 1748
+      },
+      {
+        "tag": "A",
+        "class": "",
+        "id": "",
+        "text": "touch",
+        "inlineTransform": "",
+        "transform": "none",
+        "opacity": "1",
+        "top": 1750
+      },
+      {
+        "tag": "A",
+        "class": "",
+        "id": "",
+        "text": "learn more →",
+        "inlineTransform": "",
+        "transform": "none",
+        "opacity": "1",
+        "top": 1750
+      },
+      {
+        "tag": "DIV",
+        "class": "",
+        "id": "",
+        "text": "",
+        "inlineTransform": "translate3d(0px, 110%, 0px)",
+        "transform": "matrix(1, 0, 0, 1, 0, 31.625)",
+        "opacity": "1",
+        "top": 1777
+      },
+      {
+        "tag": "DIV",
+        "class": "",
+        "id": "",
+        "text": "Recent campaign work includes",
+        "inlineTransform": "translate3d(0px, 110%, 0px)",
+        "transform": "matrix(1, 0, 0, 1, 0, 31.625)",
+        "opacity": "1",
+        "top": 1805
+      },
+      {
+        "tag": "DIV",
+        "class": "",
+        "id": "",
+        "text": "Christopher Nolan's \"The Odyssey\",",
+        "inlineTransform": "translate3d(0px, 110%, 0px)",
+        "transform": "matrix(1, 0, 0, 1, 0, 31.625)",
+        "opacity": "1",
+        "top": 1834
+      },
+      {
+        "tag": "DIV",
+        "class": "",
+        "id": "",
+        "text": "Tom Cruise and Alejandro G.",
+        "inlineTransform": "translate3d(0px, 110%, 0px)",
+        "transform": "matrix(1, 0, 0, 1, 0, 31.625)",
+        "opacity": "1",
+        "top": 1863
+      },
+      {
+        "tag": "DIV",
+        "class": "",
+        "id": "",
+        "text": "Iñárritu's \"Digger\", and WB's Dune:",
+        "inlineTransform": "translate3d(0px, 110%, 0px)",
+        "transform": "matrix(1, 0, 0, 1, 0, 31.625)",
+        "opacity": "1",
+        "top": 1892
+      },
+      {
+        "tag": "DIV",
+        "class": "",
+        "id": "",
+        "text": "Part Three.",
+        "inlineTransform": "translate3d(0px, 110%, 0px)",
+        "transform": "matrix(1, 0, 0, 1, 0, 31.625)",
+        "opacity": "1",
+        "top": 1920
+      },
+      {
+        "tag": "DIV",
+        "class": "",
+        "id": "",
+        "text": "(Contact)",
+        "inlineTransform": "translate3d(0px, 110%, 0px)",
+        "transform": "matrix(1, 0, 0, 1, 0, 31.625)",
+        "opacity": "1",
+        "top": 1633
+      },
+      {
+        "tag": "DIV",
+        "class": "",
+        "id": "",
+        "text": "New Business:",
+        "inlineTransform": "translate3d(0px, 110%, 0px)",
+        "transform": "matrix(1, 0, 0, 1, 0, 31.625)",
+        "opacity": "1",
+        "top": 1690
+      },
+      {
+        "tag": "DIV",
+        "class": "",
+        "id": "",
+        "text": "newbusiness@watsondg.com",
+        "inlineTransform": "translate3d(0px, 110%, 0px)",
+        "transform": "matrix(1, 0, 0, 1, 0, 31.625)",
+        "opacity": "1",
+        "top": 1719
+      },
+      {
+        "tag": "DIV",
+        "class": "",
+        "id": "",
+        "text": "",
+        "inlineTransform": "",
+        "transform": "none",
+        "opacity": "1",
+        "top": 1719
+      },
+      {
+        "tag": "DIV",
+        "class": "",
+        "id": "",
+        "text": "Address:",
+        "inlineTransform": "translate3d(0px, 110%, 0px)",
+        "transform": "matrix(1, 0, 0, 1, 0, 31.625)",
+        "opacity": "1",
+        "top": 1777
+      },
+      {
+        "tag": "DIV",
+        "class": "",
+        "id": "",
+        "text": "5900 Wilshire Blvd, Ste. 2050",
+        "inlineTransform": "translate3d(0px, 110%, 0px)",
+        "transform": "matrix(1, 0, 0, 1, 0, 31.625)",
+        "opacity": "1",
+        "top": 1805
+      },
+      {
+        "tag": "DIV",
+        "class": "",
+        "id": "",
+        "text": "",
+        "inlineTransform": "",
+        "transform": "none",
+        "opacity": "1",
+        "top": 1805
+      },
+      {
+        "tag": "DIV",
+        "class": "",
+        "id": "",
+        "text": "Los Angeles, CA 90036",
+        "inlineTransform": "translate3d(0px, 110%, 0px)",
+        "transform": "matrix(1, 0, 0, 1, 0, 31.625)",
+        "opacity": "1",
+        "top": 1834
+      },
+      {
+        "tag": "DIV",
+        "class": "",
+        "id": "",
+        "text": "",
+        "inlineTransform": "",
+        "transform": "none",
+        "opacity": "1",
+        "top": 1834
+      },
+      {
+        "tag": "DIV",
+        "class": "",
+        "id": "",
+        "text": "Phone:",
+        "inlineTransform": "translate3d(0px, 110%, 0px)",
+        "transform": "matrix(1, 0, 0, 1, 0, 31.625)",
+        "opacity": "1",
+        "top": 1892
+      },
+      {
+        "tag": "DIV",
+        "class": "",
+        "id": "",
+        "text": "+1 323 465 9225",
+        "inlineTransform": "translate3d(0px, 110%, 0px)",
+        "transform": "matrix(1, 0, 0, 1, 0, 31.625)",
+        "opacity": "1",
+        "top": 1920
+      },
+      {
+        "tag": "DIV",
+        "class": "",
+        "id": "",
+        "text": "",
+        "inlineTransform": "",
+        "transform": "none",
+        "opacity": "1",
+        "top": 1920
+      }
+    ]
+  },
+  {
+    "step": 4,
+    "scrollY": 0,
+    "bodyHeight": 982,
+    "hero": {
+      "top": 0,
+      "bottom": 580,
+      "transform": "matrix(1, 0, 0, 1, 0, 0)",
+      "opacity": "1"
+    },
+    "main": {
+      "top": 580,
+      "bottom": 1363,
+      "transform": "matrix(1, 0, 0, 1, 0, 0)",
+      "opacity": "1"
+    },
+    "about": {
+      "top": 1363,
+      "bottom": 1541,
+      "transform": "matrix(1, 0, 0, 1, 0, 0)",
+      "opacity": "1"
+    },
+    "footer": {
+      "top": 1541,
+      "bottom": 1953,
+      "transform": "matrix(1, 0, 0, 1, 0, 0)",
+      "opacity": "1"
+    },
+    "home": {
+      "top": 0,
+      "bottom": 1953,
+      "transform": "none",
+      "opacity": "1"
+    },
+    "footerPhoto": {
+      "opacity": "0",
+      "inlineOpacity": "",
+      "src": "data:image/gif;base64,R0lGODlhAQABAHAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==",
+      "naturalWidth": 1,
+      "naturalHeight": 1,
+      "parentOpacity": "0",
+      "parentInlineOpacity": "0",
+      "visibility": "visible",
+      "display": "block",
+      "top": 1575,
+      "width": 251,
+      "height": 334,
+      "animations": []
+    },
+    "images": [
+      {
+        "src": "b22eaf4f-35d8-4aaf-8f47-1a6f1c4449a7_W_T_01.png?fm=jpg&q=100&fit=crop&w=159&h=198",
+        "opacity": "0",
+        "top": 926
+      },
+      {
+        "src": "362b13a1-0930-40bc-bd93-107fd548f474_W_T_02.png?fm=jpg&q=100&fit=crop&w=159&h=198",
+        "opacity": "0",
+        "top": 926
+      },
+      {
+        "src": "805f316e-c416-46b9-bc55-6fbe2546b7a6_W_T_03.png?fm=jpg&q=100&fit=crop&w=159&h=198",
+        "opacity": "1",
+        "top": 926
+      },
+      {
+        "src": "b28ffbe5-ca1a-49bc-8723-c33f8c24e468_W_B_01.png?fm=jpg&q=100&fit=crop&w=270&h=198",
+        "opacity": "0",
+        "top": 1144
+      },
+      {
+        "src": "Zmottpm069VX1smO_Peach.png?fm=jpg&q=100&fit=crop&w=270&h=198",
+        "opacity": "0",
+        "top": 1144
+      },
+      {
+        "src": "17f50246-ee0f-4feb-a0f6-9b79b05321a0_W_B_03.png?fm=jpg&q=100&fit=crop&w=270&h=198",
+        "opacity": "1",
+        "top": 1144
+      }
+    ],
+    "reveal": []
+  },
+  {
+    "step": 5,
+    "scrollY": 0,
+    "bodyHeight": 982,
+    "hero": {
+      "top": 0,
+      "bottom": 580,
+      "transform": "matrix(1, 0, 0, 1, 0, 0)",
+      "opacity": "1"
+    },
+    "main": {
+      "top": 580,
+      "bottom": 1363,
+      "transform": "matrix(1, 0, 0, 1, 0, 0)",
+      "opacity": "1"
+    },
+    "about": {
+      "top": 1363,
+      "bottom": 1541,
+      "transform": "matrix(1, 0, 0, 1, 0, 0)",
+      "opacity": "1"
+    },
+    "footer": {
+      "top": 1541,
+      "bottom": 1953,
+      "transform": "matrix(1, 0, 0, 1, 0, 0)",
+      "opacity": "1"
+    },
+    "home": {
+      "top": 0,
+      "bottom": 1953,
+      "transform": "none",
+      "opacity": "1"
+    },
+    "footerPhoto": {
+      "opacity": "0",
+      "inlineOpacity": "",
+      "src": "data:image/gif;base64,R0lGODlhAQABAHAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==",
+      "naturalWidth": 1,
+      "naturalHeight": 1,
+      "parentOpacity": "0",
+      "parentInlineOpacity": "0",
+      "visibility": "visible",
+      "display": "block",
+      "top": 1575,
+      "width": 251,
+      "height": 334,
+      "animations": []
+    },
+    "images": [
+      {
+        "src": "b22eaf4f-35d8-4aaf-8f47-1a6f1c4449a7_W_T_01.png?fm=jpg&q=100&fit=crop&w=159&h=198",
+        "opacity": "1",
+        "top": 926
+      },
+      {
+        "src": "362b13a1-0930-40bc-bd93-107fd548f474_W_T_02.png?fm=jpg&q=100&fit=crop&w=159&h=198",
+        "opacity": "0",
+        "top": 926
+      },
+      {
+        "src": "805f316e-c416-46b9-bc55-6fbe2546b7a6_W_T_03.png?fm=jpg&q=100&fit=crop&w=159&h=198",
+        "opacity": "0",
+        "top": 926
+      },
+      {
+        "src": "b28ffbe5-ca1a-49bc-8723-c33f8c24e468_W_B_01.png?fm=jpg&q=100&fit=crop&w=270&h=198",
+        "opacity": "1",
+        "top": 1144
+      },
+      {
+        "src": "Zmottpm069VX1smO_Peach.png?fm=jpg&q=100&fit=crop&w=270&h=198",
+        "opacity": "0",
+        "top": 1144
+      },
+      {
+        "src": "17f50246-ee0f-4feb-a0f6-9b79b05321a0_W_B_03.png?fm=jpg&q=100&fit=crop&w=270&h=198",
+        "opacity": "0",
+        "top": 1144
+      }
+    ],
+    "reveal": []
+  },
+  {
+    "step": 6,
+    "scrollY": 0,
+    "bodyHeight": 982,
+    "hero": {
+      "top": 0,
+      "bottom": 580,
+      "transform": "matrix(1, 0, 0, 1, 0, 0)",
+      "opacity": "1"
+    },
+    "main": {
+      "top": 580,
+      "bottom": 1363,
+      "transform": "matrix(1, 0, 0, 1, 0, 0)",
+      "opacity": "1"
+    },
+    "about": {
+      "top": 1363,
+      "bottom": 1541,
+      "transform": "matrix(1, 0, 0, 1, 0, 0)",
+      "opacity": "1"
+    },
+    "footer": {
+      "top": 1541,
+      "bottom": 1953,
+      "transform": "matrix(1, 0, 0, 1, 0, 0)",
+      "opacity": "1"
+    },
+    "home": {
+      "top": 0,
+      "bottom": 1953,
+      "transform": "none",
+      "opacity": "1"
+    },
+    "footerPhoto": {
+      "opacity": "0",
+      "inlineOpacity": "",
+      "src": "data:image/gif;base64,R0lGODlhAQABAHAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==",
+      "naturalWidth": 1,
+      "naturalHeight": 1,
+      "parentOpacity": "0",
+      "parentInlineOpacity": "0",
+      "visibility": "visible",
+      "display": "block",
+      "top": 1575,
+      "width": 251,
+      "height": 334,
+      "animations": []
+    },
+    "images": [
+      {
+        "src": "b22eaf4f-35d8-4aaf-8f47-1a6f1c4449a7_W_T_01.png?fm=jpg&q=100&fit=crop&w=159&h=198",
+        "opacity": "0",
+        "top": 926
+      },
+      {
+        "src": "362b13a1-0930-40bc-bd93-107fd548f474_W_T_02.png?fm=jpg&q=100&fit=crop&w=159&h=198",
+        "opacity": "1",
+        "top": 926
+      },
+      {
+        "src": "805f316e-c416-46b9-bc55-6fbe2546b7a6_W_T_03.png?fm=jpg&q=100&fit=crop&w=159&h=198",
+        "opacity": "0",
+        "top": 926
+      },
+      {
+        "src": "b28ffbe5-ca1a-49bc-8723-c33f8c24e468_W_B_01.png?fm=jpg&q=100&fit=crop&w=270&h=198",
+        "opacity": "1",
+        "top": 1144
+      },
+      {
+        "src": "Zmottpm069VX1smO_Peach.png?fm=jpg&q=100&fit=crop&w=270&h=198",
+        "opacity": "0",
+        "top": 1144
+      },
+      {
+        "src": "17f50246-ee0f-4feb-a0f6-9b79b05321a0_W_B_03.png?fm=jpg&q=100&fit=crop&w=270&h=198",
+        "opacity": "0",
+        "top": 1144
+      }
+    ],
+    "reveal": []
+  },
+  {
+    "step": 7,
+    "scrollY": 0,
+    "bodyHeight": 982,
+    "hero": {
+      "top": 0,
+      "bottom": 580,
+      "transform": "matrix(1, 0, 0, 1, 0, 0)",
+      "opacity": "1"
+    },
+    "main": {
+      "top": 580,
+      "bottom": 1363,
+      "transform": "matrix(1, 0, 0, 1, 0, 0)",
+      "opacity": "1"
+    },
+    "about": {
+      "top": 1363,
+      "bottom": 1541,
+      "transform": "matrix(1, 0, 0, 1, 0, 0)",
+      "opacity": "1"
+    },
+    "footer": {
+      "top": 1541,
+      "bottom": 1953,
+      "transform": "matrix(1, 0, 0, 1, 0, 0)",
+      "opacity": "1"
+    },
+    "home": {
+      "top": 0,
+      "bottom": 1953,
+      "transform": "none",
+      "opacity": "1"
+    },
+    "footerPhoto": {
+      "opacity": "0",
+      "inlineOpacity": "",
+      "src": "data:image/gif;base64,R0lGODlhAQABAHAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==",
+      "naturalWidth": 1,
+      "naturalHeight": 1,
+      "parentOpacity": "0",
+      "parentInlineOpacity": "0",
+      "visibility": "visible",
+      "display": "block",
+      "top": 1575,
+      "width": 251,
+      "height": 334,
+      "animations": []
+    },
+    "images": [
+      {
+        "src": "b22eaf4f-35d8-4aaf-8f47-1a6f1c4449a7_W_T_01.png?fm=jpg&q=100&fit=crop&w=159&h=198",
+        "opacity": "0",
+        "top": 926
+      },
+      {
+        "src": "362b13a1-0930-40bc-bd93-107fd548f474_W_T_02.png?fm=jpg&q=100&fit=crop&w=159&h=198",
+        "opacity": "0",
+        "top": 926
+      },
+      {
+        "src": "805f316e-c416-46b9-bc55-6fbe2546b7a6_W_T_03.png?fm=jpg&q=100&fit=crop&w=159&h=198",
+        "opacity": "1",
+        "top": 926
+      },
+      {
+        "src": "b28ffbe5-ca1a-49bc-8723-c33f8c24e468_W_B_01.png?fm=jpg&q=100&fit=crop&w=270&h=198",
+        "opacity": "0",
+        "top": 1144
+      },
+      {
+        "src": "Zmottpm069VX1smO_Peach.png?fm=jpg&q=100&fit=crop&w=270&h=198",
+        "opacity": "1",
+        "top": 1144
+      },
+      {
+        "src": "17f50246-ee0f-4feb-a0f6-9b79b05321a0_W_B_03.png?fm=jpg&q=100&fit=crop&w=270&h=198",
+        "opacity": "0",
+        "top": 1144
+      }
+    ],
+    "reveal": []
+  }
+]

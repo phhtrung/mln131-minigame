@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import { createRoot } from 'react-dom/client';
 import { io, type Socket } from 'socket.io-client';
-import { EVENTS, PROJECTOR_PASSWORD_QUERY, PROJECTOR_REJECTED_ERROR } from '../shared/events';
+import { EVENTS, PROJECTOR_PASSWORD_AUTH, PROJECTOR_REJECTED_ERROR } from '../shared/events';
 import type { ClientState, GuessSuccessPayload, Reaction, Stroke, StrokeChunk, TickPayload } from '../shared/types';
 import { isMuted, setMuted, sfx } from './audio';
 import { burstConfetti } from './effects';
@@ -64,8 +64,9 @@ function App() {
     const projectorPassword = isProjector ? readProjectorPassword() : null;
     const nextSocket = io(window.location.origin, {
       query: isProjector
-        ? { projector: '1', [PROJECTOR_PASSWORD_QUERY]: projectorPassword ?? '' }
+        ? { projector: '1' }
         : { projector: '0' },
+      auth: isProjector ? { [PROJECTOR_PASSWORD_AUTH]: projectorPassword ?? '' } : undefined,
     });
     setSocket(nextSocket);
 

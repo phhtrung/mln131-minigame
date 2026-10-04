@@ -1,6 +1,7 @@
 export const EVENTS = {
   roomState: 'room_state',
   joinRoom: 'join_room',
+  kickPlayer: 'kick_player',
   startGame: 'start_game',
   chooseWord: 'choose_word',
   strokeChunk: 'stroke_chunk',
@@ -18,6 +19,6 @@ export const EVENTS = {
   toast: 'toast',
 } as const;
 
-export const PROJECTOR_PASSWORD_QUERY = 'projectorPassword';
+export const PROJECTOR_PASSWORD_AUTH = 'projectorPassword';
 
 export const PROJECTOR_REJECTED_ERROR = 'projector_password_required';

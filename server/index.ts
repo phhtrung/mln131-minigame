@@ -4,8 +4,7 @@ import path from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { Server, type Socket } from 'socket.io';
 import { z } from 'zod';
-import { EVENTS, PROJECTOR_PASSWORD_QUERY, PROJECTOR_REJECTED_ERROR } from '../shared/events.js';
-import { PROJECTOR_PASSWORD } from '../shared/projector.js';
+import { EVENTS, PROJECTOR_PASSWORD_AUTH, PROJECTOR_REJECTED_ERROR } from '../shared/events.js';
 import { MAX_POINTS_PER_STROKE } from '../shared/drawing.js';
 import { ROUND_CONTENT, type RoundContent } from '../shared/content.js';
 import type {
@@ -23,7 +22,12 @@ import type {
 
 const PORT = Number(process.env.PORT ?? 3000);
 const TIMER_SCALE = Math.min(1, Math.max(0.02, Number(process.env.TIMER_SCALE ?? 1) || 1));
+const PROJECTOR_PASSWORD = process.env.PROJECTOR_PASSWORD?.trim();
+if (!PROJECTOR_PASSWORD || PROJECTOR_PASSWORD.length < 16) {
+  throw new Error('PROJECTOR_PASSWORD must be configured with at least 16 characters.');
+}
 const ROOM_CODE = 'MLN131';
+const MAX_PLAYERS = 60;
 const TOTAL_ROUNDS = 10;
 const WORD_CHOICE_SECONDS = 15;
 const PRE_DRAW_SECONDS = 3;
@@ -32,10 +36,12 @@ const DRAWER_GRACE_MS = Math.round(3000 * TIMER_SCALE);
 const GUESS_COOLDOWN_MS = 400;
 const ERASE_COOLDOWN_MS = 40;
 const WARN_COOLDOWN_MS = 3000;
+const REACTION_COOLDOWN_MS = 1000;
+const PLAYER_RECONNECT_GRACE_MS = 60_000;
 
 type ClientSocket = Socket;
 
-type PlayerEntry = Player & { socketId?: string };
+type PlayerEntry = Player & { socketId?: string; lastReactionAt?: number };
 
 type RateState = { guess?: number; erase?: number; warn?: number };
 
@@ -79,6 +85,7 @@ const room: Room = {
   guessedPlayerIds: [],
   summary: [],
 };
+const disconnectedPlayerTimers = new Map<string, ReturnType<typeof setTimeout>>();
 
 const app = express();
 const httpServer = http.createServer(app);
@@ -89,8 +96,7 @@ const io = new Server(httpServer, {
 
 io.use((socket, next) => {
   const wantsProjector = socket.handshake.query.projector === '1';
-  const password = socket.handshake.query[PROJECTOR_PASSWORD_QUERY];
-  const given = Array.isArray(password) ? password[0] : password;
+  const given = socket.handshake.auth?.[PROJECTOR_PASSWORD_AUTH];
   if (wantsProjector && given !== PROJECTOR_PASSWORD) return next(new Error(PROJECTOR_REJECTED_ERROR));
   socket.data.isProjector = wantsProjector;
   next();
@@ -116,6 +122,7 @@ app.get(/.*/, (_request, response) => {
 });
 
 const nameSchema = z.string().trim().min(1).max(24);
+const playerIdSchema = z.string().uuid();
 const wordIndexSchema = z.number().int().min(0).max(2);
 const guessSchema = z.string().trim().min(1).max(80);
 const reactionSchema = z.enum(['😭', '🥀', '❓', '💀', '😮‍💨', '🙏', '🥶', '😓']);
@@ -300,6 +307,7 @@ function publicState(socket: ClientSocket): ClientState {
   const isDrawer = Boolean(playerId && playerId === room.drawerId);
   const state: ClientState = {
     code: ROOM_CODE,
+    maxPlayers: MAX_PLAYERS,
     phase: room.phase,
     subPhase: room.subPhase,
     round: room.round,
@@ -569,6 +577,44 @@ function replaceDrawer(): boolean {
   return true;
 }
 
+function removePlayer(playerId: string) {
+  const player = room.players.get(playerId);
+  if (!player) return false;
+  const timer = disconnectedPlayerTimers.get(playerId);
+  if (timer) clearTimeout(timer);
+  disconnectedPlayerTimers.delete(playerId);
+  room.players.delete(playerId);
+  room.tokens.delete(playerId);
+  room.drawerHistory = room.drawerHistory.filter((id) => id !== playerId);
+  room.guessedPlayerIds = room.guessedPlayerIds.filter((id) => id !== playerId);
+  if (room.firstGuesserId === playerId) room.firstGuesserId = room.guessedPlayerIds[0];
+
+  if (player.socketId) io.sockets.sockets.get(player.socketId)?.disconnect(true);
+
+  if (room.phase === 'drawing' && room.drawerId === playerId) {
+    if (room.drawerGraceTimer) clearTimeout(room.drawerGraceTimer);
+    room.drawerGraceTimer = undefined;
+    if (!replaceDrawer()) bailToLobby('Họa sĩ đã bị loại và không đủ người thay thế — ván chơi tạm dừng.');
+  } else if (room.phase === 'drawing' && room.firstGuesserId && allConnectedGuessersAnswered()) {
+    startQuiz(room.firstGuesserId);
+  }
+
+  return true;
+}
+
+function schedulePlayerRemoval(playerId: string) {
+  const previous = disconnectedPlayerTimers.get(playerId);
+  if (previous) clearTimeout(previous);
+  const timer = setTimeout(() => {
+    disconnectedPlayerTimers.delete(playerId);
+    if (!room.players.get(playerId)?.connected) {
+      removePlayer(playerId);
+      broadcastState();
+    }
+  }, PLAYER_RECONNECT_GRACE_MS);
+  disconnectedPlayerTimers.set(playerId, timer);
+}
+
 function joinPlayer(socket: ClientSocket, payload: { name?: unknown; playerId?: unknown; token?: unknown }) {
   const parsedName = nameSchema.safeParse(payload?.name);
   if (!parsedName.success) return toast('Tên cần từ 1 đến 24 ký tự.', socket);
@@ -578,11 +624,18 @@ function joinPlayer(socket: ClientSocket, payload: { name?: unknown; playerId?: 
   if (playerId && token && room.tokens.get(playerId) === token) {
     const existing = room.players.get(playerId);
     if (existing) {
+      const disconnectedTimer = disconnectedPlayerTimers.get(playerId);
+      if (disconnectedTimer) clearTimeout(disconnectedTimer);
+      disconnectedPlayerTimers.delete(playerId);
+      const previousSocketId = existing.socketId;
       existing.connected = true;
       existing.name = parsedName.data;
       existing.socketId = socket.id;
       socket.data.playerId = playerId;
       socket.data.rate = {};
+      if (previousSocketId && previousSocketId !== socket.id) {
+        io.sockets.sockets.get(previousSocketId)?.disconnect(true);
+      }
       if (room.drawerGraceTimer && room.drawerId === playerId) {
         clearTimeout(room.drawerGraceTimer);
         room.drawerGraceTimer = undefined;
@@ -594,6 +647,14 @@ function joinPlayer(socket: ClientSocket, payload: { name?: unknown; playerId?: 
   }
 
   if (room.phase !== 'lobby') return toast('Ván chơi đang diễn ra; hãy tham gia ở ván sau.', socket);
+  const currentPlayerId = socket.data.playerId as string | undefined;
+  const currentPlayer = currentPlayerId ? room.players.get(currentPlayerId) : undefined;
+  if (currentPlayer?.socketId === socket.id) {
+    currentPlayer.name = parsedName.data;
+    broadcastState();
+    return;
+  }
+  if (room.players.size >= MAX_PLAYERS) return toast(`Phòng đã đủ ${MAX_PLAYERS} người chơi.`, socket);
   const id = randomUUID();
   socket.data.playerId = id;
   socket.data.rate = {};
@@ -617,6 +678,17 @@ io.on('connection', (socket: ClientSocket) => {
   socket.emit(EVENTS.roomState, publicState(socket));
 
   socket.on(EVENTS.joinRoom, (payload: { name?: unknown; playerId?: unknown; token?: unknown }) => joinPlayer(socket, payload ?? {}));
+
+  socket.on(EVENTS.kickPlayer, (payload: { playerId?: unknown }) => {
+    if (!socket.data.isProjector) return toast('Chỉ máy chiếu mới có thể loại người chơi.', socket);
+    const parsed = playerIdSchema.safeParse(payload?.playerId);
+    if (!parsed.success) return;
+    const player = room.players.get(parsed.data);
+    if (!player) return;
+    removePlayer(parsed.data);
+    toast(`${player.name} đã bị loại khỏi phòng.`);
+    broadcastState();
+  });
 
   socket.on(EVENTS.startGame, () => {
     if (!socket.data.isProjector) return toast('Chỉ máy chiếu mới có thể bắt đầu.', socket);
@@ -767,8 +839,13 @@ io.on('connection', (socket: ClientSocket) => {
   socket.on(EVENTS.reaction, (rawReaction: unknown) => {
     const parsed = reactionSchema.safeParse(rawReaction);
     if (!parsed.success) return;
-    const player = room.players.get(socket.data.playerId as string);
-    io.emit(EVENTS.reaction, { id: randomUUID(), name: player?.name ?? 'Bạn', reaction: parsed.data });
+    const playerId = socket.data.playerId as string | undefined;
+    const player = playerId ? room.players.get(playerId) : undefined;
+    if (!player || !player.connected || player.socketId !== socket.id) return;
+    const now = Date.now();
+    if (player.lastReactionAt && now - player.lastReactionAt < REACTION_COOLDOWN_MS) return;
+    player.lastReactionAt = now;
+    io.emit(EVENTS.reaction, { id: randomUUID(), name: player.name, reaction: parsed.data });
   });
 
   socket.on('disconnect', () => {
@@ -778,6 +855,7 @@ io.on('connection', (socket: ClientSocket) => {
     if (!player || player.socketId !== socket.id) return;
     player.connected = false;
     player.socketId = undefined;
+    schedulePlayerRemoval(playerId);
     if (room.phase === 'drawing' && playerId === room.drawerId) {
       scheduleDrawerReplacement(playerId);
       broadcastState();

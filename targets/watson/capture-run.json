@@ -1,0 +1,195 @@
+{
+  "kitVersion": "0.18.0",
+  "at": "2026-10-04T18:23:18.404Z",
+  "mode": "cdp-launched",
+  "chromeVersion": "Chrome/154.0.8037.97",
+  "headless": true,
+  "profile": "temp",
+  "viewport": {
+    "width": 1728,
+    "height": 982,
+    "dpr": 2,
+    "sources": {
+      "width": "target.json",
+      "height": "live.json",
+      "dpr": "live.json"
+    }
+  },
+  "sides": [
+    {
+      "side": "clone",
+      "url": "http://127.0.0.1:32193/",
+      "leaves": 67,
+      "byKind": {
+        "painted-box": 3,
+        "text": 55,
+        "media": 8,
+        "painted-container": 1
+      },
+      "settle": {
+        "stable": true,
+        "scrolledTo": 982,
+        "imagesPending": 0
+      },
+      "files": [
+        {
+          "file": "clone.json",
+          "bytes": 51228
+        }
+      ],
+      "tookMs": 6352,
+      "viewportRead": {
+        "iw": 1728,
+        "cw": 1728,
+        "ih": 982,
+        "dpr": 2
+      },
+      "probe": {
+        "rafHz": 352,
+        "anim": {
+          "expectedPxPerSec": 100,
+          "measuredPxPerSec": 98.13
+        },
+        "attempts": 1
+      },
+      "paint": {
+        "stat": {
+          "width": 3456,
+          "height": 1964,
+          "sampled": 212112,
+          "nonUniformRatio": 0.1154,
+          "lumaMean": 225.9,
+          "lumaStdev": 79,
+          "nearBlank": false
+        }
+      },
+      "freeze": {
+        "supported": true,
+        "frozen": 0,
+        "ids": [],
+        "players": [],
+        "alreadyPaused": 0,
+        "skipped": {
+          "finished": 29,
+          "scrollLinked": 0,
+          "agentDom": 0,
+          "kitPlayer": 0,
+          "failed": 0
+        },
+        "unfreezable": [],
+        "stillMoving": [],
+        "watch": {
+          "ran": true,
+          "intervals": 2,
+          "intervalMs": 180,
+          "tracked": 61,
+          "writes": 0,
+          "truncated": false
+        },
+        "excludedMarkCount": 0
+      }
+    },
+    {
+      "side": "live",
+      "url": "https://watson.la/",
+      "leaves": 67,
+      "byKind": {
+        "painted-box": 3,
+        "text": 55,
+        "media": 8,
+        "painted-container": 1
+      },
+      "settle": {
+        "stable": true,
+        "scrolledTo": 982,
+        "imagesPending": 0
+      },
+      "files": [
+        {
+          "file": "live.json",
+          "bytes": 51222
+        },
+        {
+          "file": "coverage.json",
+          "bytes": 1027
+        },
+        {
+          "file": "dom.html",
+          "bytes": 26562
+        }
+      ],
+      "tookMs": 7862,
+      "viewportRead": {
+        "iw": 1728,
+        "cw": 1728,
+        "ih": 982,
+        "dpr": 2
+      },
+      "probe": {
+        "rafHz": 294,
+        "anim": {
+          "expectedPxPerSec": 100,
+          "measuredPxPerSec": 99.68
+        },
+        "attempts": 1
+      },
+      "paint": {
+        "stat": {
+          "width": 3456,
+          "height": 1964,
+          "sampled": 212112,
+          "nonUniformRatio": 0.1154,
+          "lumaMean": 225.9,
+          "lumaStdev": 79,
+          "nearBlank": false
+        }
+      },
+      "canvas": {
+        "schema": "pingfusi/canvas-dominant@1",
+        "viewport": {
+          "w": 1728,
+          "h": 982
+        },
+        "canvases": 1,
+        "bestCoverage": 1,
+        "marksInFront": 29,
+        "dominant": false
+      },
+      "freeze": {
+        "supported": true,
+        "frozen": 0,
+        "ids": [],
+        "players": [],
+        "alreadyPaused": 0,
+        "skipped": {
+          "finished": 0,
+          "scrollLinked": 0,
+          "agentDom": 0,
+          "kitPlayer": 0,
+          "failed": 0
+        },
+        "unfreezable": [],
+        "stillMoving": [],
+        "watch": {
+          "ran": true,
+          "intervals": 2,
+          "intervalMs": 180,
+          "tracked": 61,
+          "writes": 0,
+          "truncated": false
+        },
+        "excludedMarkCount": 0
+      },
+      "motion": {
+        "warnings": [],
+        "sampled": {
+          "detected": 0,
+          "depthsProbed": 1
+        },
+        "file": "motion-doc.json",
+        "tracks": 0,
+        "assets": 0
+      }
+    }
+  ]
+}

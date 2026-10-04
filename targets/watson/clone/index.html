@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f0f0f0">
+  <title>Đoán chữ — Gia đình Việt Nam thời kỳ quá độ</title>
+  <link rel="stylesheet" href="game.css">
+  <script src="rounds.js" defer></script>
+  <script src="game.js" defer></script>
+</head>
+<body>
+  <main>
+    <div class="heading-mask"><h1 id="heading"><span class="title-mask"><span class="title-line">ĐOÁN CHỮ</span></span></h1></div>
+    <section class="round" id="round" aria-label="Vòng chơi">
+      <span class="rule" aria-hidden="true"></span>
+      <div class="round-inner">
+        <div class="picture-mask">
+          <img id="picture" src="assets/rounds/01.png" alt="Hình gợi ý cho vòng 1">
+        </div>
+        <div class="content">
+          <p class="hint" id="hint"></p>
+        </div>
+      </div>
+      <div class="answer-block" id="answer-block" hidden>
+        <span class="rule" aria-hidden="true"></span>
+        <h2 id="answer"></h2>
+      </div>
+      <div class="actions">
+        <span class="rule" aria-hidden="true"></span>
+        <button type="button" id="reveal">Hiện đáp án <span aria-hidden="true">↗</span></button>
+        <button type="button" id="next" hidden>Vòng tiếp theo <span aria-hidden="true">→</span></button>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

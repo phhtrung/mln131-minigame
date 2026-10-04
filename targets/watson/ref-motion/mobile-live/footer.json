@@ -1,0 +1,36 @@
+{
+  "right": {
+    "top": 293.60498046875,
+    "height": 564.4375,
+    "width": 386.390625,
+    "marginTop": "0px",
+    "fontSize": "24.7538px",
+    "lineHeight": "28.9801px"
+  },
+  "left": {
+    "top": 293.60498046875,
+    "height": 564.4375,
+    "width": 178.703125,
+    "marginTop": "0px",
+    "fontSize": "24.7538px",
+    "lineHeight": "28.9801px"
+  },
+  "label": {
+    "top": 293.60498046875,
+    "height": 28.984375,
+    "width": 178.703125,
+    "marginTop": "0px",
+    "fontSize": "24.7538px",
+    "lineHeight": "28.9801px"
+  },
+  "photo": {
+    "top": 616.22998046875,
+    "height": 238.796875,
+    "width": 178.703125,
+    "marginTop": "0px",
+    "fontSize": "24.7538px",
+    "lineHeight": "28.9801px"
+  },
+  "rightHtml": "<div><p class=\"mask-stack\"><div class=\"mask-txt mask-y\"><div style=\"white-space: nowrap; transform: translate3d(0%, 0%, 0px);\">(Recently)</div></div><div class=\"mask-txt mask-y\"><div style=\"white-space: nowrap; transform: translate3d(0%, 0%, 0px);\">&nbsp;</div></div><div class=\"mask-txt mask-y\"><div style=\"white-space: nowrap; transform: translate3d(0%, 0%, 0px);\">We're looking to expand our</div></div><div class=\"mask-txt mask-y\"><div style=\"white-space: nowrap; transform: translate3d(0%, 0%, 0px);\">creative network and capabilities.</div></div><div class=\"mask-txt mask-y\"><div style=\"white-space: nowrap; transform: translate3d(0%, 0%, 0px);\"><a href=\"mailto:jobs@watsondg.com\" rel=\"noopener\" target=\"_blank\">Get in touch</a> or <a href=\"/jobs\">learn more →</a></div></div><div class=\"mask-txt mask-y\"><div style=\"white-space: nowrap; transform: translate3d(0%, 0%, 0px);\">&nbsp;</div></div><div class=\"mask-txt mask-y\"><div style=\"white-space: nowrap; transform: translate3d(0%, 0%, 0px);\">Recent campaign work includes</div></div><div class=\"mask-txt mask-y\"><div style=\"white-space: nowrap; transform: translate3d(0%, 0%, 0px);\">Christopher Nolan's \"The Odyssey\",</div></div><div class=\"mask-txt mask-y\"><div style=\"white-space: nowrap; transform: translate3d(0%, 0%, 0px);\">Tom Cruise and Alejandro G.</div></div><div class=\"mask-txt mask-y\"><div style=\"white-space: nowrap; transform: translate3d(0%, 0%, 0px);\">Iñárritu's \"Digger\", and WB's Dune:</div></div><div class=\"mask-txt mask-y\"><div style=\"white-space: nowrap; transform: translate3d(0%, 0%, 0px);\">Part Three.</div></div></p><div id=\"home-footer-r-c\"><div class=\"mask-txt mask-y\"><div style=\"transform: translate3d(0%, 0%, 0px);\">(Contact)</div></div><a href=\"mailto:newbusiness@watsondg.com\" s-uline=\"reveal\"><div class=\"mask-txt mask-y\"><div style=\"transform: translate3d(0%, 0%, 0px);\">New Business:</div></div><div class=\"mask-txt mask-y\"><div style=\"transform: translate3d(0%, 0%, 0px);\">newbusiness@watsondg.com<div s-uline-item=\"\"></div></div></div></a><a href=\"https://www.google.com/maps/place/5900+Wilshire,+Los+Angeles,+CA+90036/@34.0636713,-118.3591073,19z/\" rel=\"noopener\" s-uline=\"reveal\" target=\"_blank\"><div class=\"mask-txt mask-y\"><div style=\"transform: translate3d(0%, 0%, 0px);\">Address:</div></div><div class=\"mask-txt mask-y\"><div style=\"transform: translate3d(0%, 0%, 0px);\">5900 Wilshire Blvd, Ste. 2050<div s-uline-item=\"\"></div></div></div><div class=\"mask-txt mask-y\"><div style=\"transform: translate3d(0%, 0%, 0px);\">Los Angeles, CA&nbsp;90036<div s-uline-item=\"\"></div></div></div></a><a href=\"tel:+1 323 465 9225\" s-uline=\"reveal\"><div class=\"mask-txt mask-y\"><div style=\"transform: translate3d(0%, 0%, 0px);\">Phone:</div></div><div class=\"mask-txt mask-y\"><div style=\"transform: translate3d(0%, 0%, 0px);\">+1 323 465 9225<div s-uline-item=\"\"></div></div></div></a></div></div>",
+  "labelHtml": "<div class=\"j-a mask-txt mask-y\"><div style=\"transform: translate3d(0%, 0%, 0px);\">LA</div></div>"
+}

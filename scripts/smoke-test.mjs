@@ -1,12 +1,13 @@
 import { spawn } from 'node:child_process';
+import { randomBytes } from 'node:crypto';
 import { io } from 'socket.io-client';
-import { EVENTS, PROJECTOR_PASSWORD_QUERY, PROJECTOR_REJECTED_ERROR } from '../dist-server/shared/events.js';
-import { PROJECTOR_PASSWORD } from '../dist-server/shared/projector.js';
+import { EVENTS, PROJECTOR_PASSWORD_AUTH, PROJECTOR_REJECTED_ERROR } from '../dist-server/shared/events.js';
 import { ROUND_CONTENT } from '../dist-server/shared/content.js';
 
 const PORT = Number(process.env.TEST_PORT ?? 4123);
 const URL = `http://localhost:${PORT}`;
 const SCALE = Number(process.env.TIMER_SCALE ?? 0.4);
+const PROJECTOR_PASSWORD = randomBytes(32).toString('hex');
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -31,8 +32,9 @@ class Client {
     this.label = label;
     this.socket = io(URL, {
       query: projector
-        ? { projector: '1', [PROJECTOR_PASSWORD_QUERY]: PROJECTOR_PASSWORD }
+        ? { projector: '1' }
         : { projector: '0' },
+      auth: projector ? { [PROJECTOR_PASSWORD_AUTH]: PROJECTOR_PASSWORD } : undefined,
       transports: ['websocket'],
     });
     this.states = [];
@@ -137,7 +139,7 @@ function aliasFor(word) {
 }
 
 const server = spawn(process.execPath, ['dist-server/server/index.js'], {
-  env: { ...process.env, PORT: String(PORT), TIMER_SCALE: String(SCALE) },
+  env: { ...process.env, PORT: String(PORT), TIMER_SCALE: String(SCALE), PROJECTOR_PASSWORD },
   stdio: ['ignore', 'pipe', 'pipe'],
 });
 server.stdout.on('data', (data) => process.stdout.write(`[server] ${data}`));
@@ -161,7 +163,8 @@ async function main() {
 
   console.log('\n== Projector password gate ==');
   const lockedSocket = io(URL, {
-    query: { projector: '1', [PROJECTOR_PASSWORD_QUERY]: 'sai-mat-khau' },
+    query: { projector: '1' },
+    auth: { [PROJECTOR_PASSWORD_AUTH]: 'sai-mat-khau' },
     transports: ['websocket'],
     reconnection: false,
   });
@@ -211,18 +214,21 @@ async function main() {
   check('question bank has at least 30 unique family words', ROUND_CONTENT.length >= 30 && new Set(ROUND_CONTENT.map((item) => item.word)).size === ROUND_CONTENT.length);
   check('every word has a complete ABCD quiz', ROUND_CONTENT.every((item) => item.quiz.prompt && item.quiz.options.length === 4 && new Set(item.quiz.options).size === 4 && item.quiz.correctIndex >= 0 && item.quiz.correctIndex < 4));
 
-  console.log('\n== Reactions have no rate limit ==');
+  console.log('\n== Reaction rate limit ==');
   const reactionsBefore = projector.reactions.length;
   for (let i = 0; i < 6; i += 1) players[4].emit(EVENTS.reaction, '😭');
-  await waitFor(() => projector.reactions.length >= reactionsBefore + 6);
-  check('reaction spam is not rate limited', projector.reactions.length >= reactionsBefore + 6);
-  check('reaction payload carries the emoji', projector.reactions.slice(-6).every((item) => item.reaction === '😭' && typeof item.id === 'string'));
+  await waitFor(() => projector.reactions.length >= reactionsBefore + 1);
+  await sleep(100);
+  check('reaction burst is limited to one event', projector.reactions.length === reactionsBefore + 1);
+  check('reaction payload carries the emoji', projector.reactions.at(-1)?.reaction === '😭' && typeof projector.reactions.at(-1)?.id === 'string');
+  await sleep(1000);
   players[4].emit(EVENTS.reaction, '');
   await sleep(300);
-  check('empty reaction is dropped', projector.reactions.length === reactionsBefore + 6);
+  check('empty reaction is dropped', projector.reactions.length === reactionsBefore + 1);
+  await sleep(1000);
   players[4].emit(EVENTS.reaction, '⛄');
   await sleep(300);
-  check('unsupported reaction is dropped', projector.reactions.length === reactionsBefore + 6);
+  check('unsupported reaction is dropped', projector.reactions.length === reactionsBefore + 1);
 
   console.log('\n== Round 1: full happy path ==');
   projector.emit(EVENTS.startGame);

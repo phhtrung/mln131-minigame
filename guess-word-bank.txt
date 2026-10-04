@@ -1,0 +1,39 @@
+GUESS WORD BANK
+36 drawing prompts
+
+1. Bố mẹ và con
+2. Bố mẹ cùng nấu ăn
+3. Gọi video cho ông bà
+4. Gia đình ở chung cư
+5. Ông bà, bố mẹ và con
+6. Đám cưới
+7. Cả nhà ôm nhau
+8. Anh chị em
+9. Mẹ cho bé ăn
+10. Khu phố
+11. Ngôi nhà
+12. Đưa con đi học
+13. Em bé chào đời
+14. Bố dạy con học
+15. Bố mẹ đi làm
+16. Đi siêu thị
+17. Cháu dìu bà
+18. Cả nhà dọn nhà
+19. Cầu hôn
+20. Nhẫn cưới
+21. Bố mẹ trò chuyện
+22. Bữa cơm gia đình
+23. Tết Nguyên đán
+24. Hai nhà cạnh nhau
+25. Bé dùng máy tính
+26. Tin nhắn
+27. Mẹ chăm bà và bé
+28. Con gái đá bóng
+29. Cảnh sát
+30. Chụp ảnh cưới
+31. Nhà trẻ
+32. Bố đi làm xa
+33. Quầy hàng gia đình
+34. Giấy khen
+35. Hàng xóm giúp nhau
+36. Mẹ đọc sách cho con

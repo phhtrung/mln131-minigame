@@ -12,8 +12,8 @@ export type RoundContent = {
 
 export const ROUND_CONTENT: RoundContent[] = [
   {
-    word: 'Gia đình hạt nhân',
-    aliases: ['gia đình hạt nhân', 'hạt nhân'],
+    word: 'Bố mẹ và con',
+    aliases: ['bố mẹ và con', 'cha mẹ và con'],
     explanation: 'Gia đình hạt nhân gồm vợ chồng và con cái, thường phù hợp hơn với nhịp sống đô thị và tính cơ động của lao động hiện đại.',
     takeaway: 'Cơ hội: riêng tư và tự chủ hơn. Thách thức: ít người chia sẻ việc chăm sóc, dễ cô lập khi gặp khủng hoảng.',
     quiz: {
@@ -23,8 +23,8 @@ export const ROUND_CONTENT: RoundContent[] = [
     },
   },
   {
-    word: 'Bình đẳng giới',
-    aliases: ['bình đẳng giới', 'bình đẳng', 'đẳng giới'],
+    word: 'Bố mẹ cùng nấu ăn',
+    aliases: ['bố mẹ cùng nấu ăn', 'cha mẹ cùng nấu ăn'],
     explanation: 'Bình đẳng giới trong gia đình là cùng chia sẻ quyền quyết định, thu nhập, việc nhà và chăm sóc; không đồng nghĩa với chia đôi máy móc mọi việc.',
     takeaway: 'Cơ hội: quan hệ tôn trọng và bền vững hơn. Thách thức: định kiến cũ vẫn làm việc nhà và gánh nặng cảm xúc phân bổ lệch.',
     quiz: {
@@ -34,8 +34,8 @@ export const ROUND_CONTENT: RoundContent[] = [
     },
   },
   {
-    word: 'Mạng xã hội',
-    aliases: ['mạng xã hội', 'social media', 'mạng'],
+    word: 'Gọi video cho ông bà',
+    aliases: ['gọi video cho ông bà', 'gọi điện video cho ông bà'],
     explanation: 'Mạng xã hội giúp các thành viên xa nhau giữ liên lạc, nhưng cũng có thể tạo so sánh, xao nhãng và xung đột nếu thiếu ranh giới số.',
     takeaway: 'Cơ hội: kết nối và hỗ trợ nhanh. Thách thức: cần quy ước sử dụng thiết bị, tôn trọng riêng tư và kiểm chứng thông tin.',
     quiz: {
@@ -45,8 +45,8 @@ export const ROUND_CONTENT: RoundContent[] = [
     },
   },
   {
-    word: 'Lối sống đô thị',
-    aliases: ['lối sống đô thị', 'đô thị', 'sống đô thị'],
+    word: 'Gia đình ở chung cư',
+    aliases: ['gia đình ở chung cư', 'cả nhà ở chung cư'],
     explanation: 'Lối sống đô thị có nhịp độ nhanh, không gian sống nhỏ và lịch làm việc dài; gia đình cần thiết kế thời gian chất lượng thay vì chỉ ở cạnh nhau.',
     takeaway: 'Cơ hội: tiếp cận dịch vụ, giáo dục và việc làm. Thách thức: áp lực thời gian, chi phí và khoảng cách thế hệ.',
     quiz: {
@@ -56,8 +56,8 @@ export const ROUND_CONTENT: RoundContent[] = [
     },
   },
   {
-    word: 'Gia đình nhiều thế hệ',
-    aliases: ['gia đình nhiều thế hệ', 'nhiều thế hệ', 'đa thế hệ'],
+    word: 'Ông bà, bố mẹ và con',
+    aliases: ['ông bà bố mẹ và con', 'ông bà cha mẹ và con'],
     explanation: 'Gia đình nhiều thế hệ có ông bà, cha mẹ và con cháu cùng hoặc gần nhau; mạng lưới hỗ trợ rộng nhưng cần thương lượng không gian và quyền riêng tư.',
     takeaway: 'Cơ hội: chia sẻ chăm sóc và kinh nghiệm. Thách thức: khác biệt chuẩn mực, quyền quyết định và cách nuôi dạy.',
     quiz: {
@@ -67,8 +67,8 @@ export const ROUND_CONTENT: RoundContent[] = [
     },
   },
   {
-    word: 'Hôn nhân tiến bộ',
-    aliases: ['hôn nhân tiến bộ', 'hôn nhân', 'tiến bộ'],
+    word: 'Đám cưới',
+    aliases: ['đám cưới', 'lễ cưới'],
     explanation: 'Hôn nhân tiến bộ dựa trên tự nguyện, bình đẳng, tôn trọng và trách nhiệm; tình yêu cần đi cùng năng lực đối thoại và giải quyết xung đột.',
     takeaway: 'Cơ hội: mỗi người được phát triển. Thách thức: kỳ vọng thay đổi nhanh và kỹ năng giao tiếp chưa theo kịp.',
     quiz: {
@@ -78,8 +78,8 @@ export const ROUND_CONTENT: RoundContent[] = [
     },
   },
   {
-    word: 'Gia đình hạnh phúc',
-    aliases: ['gia đình hạnh phúc', 'hạnh phúc'],
+    word: 'Cả nhà ôm nhau',
+    aliases: ['cả nhà ôm nhau', 'gia đình ôm nhau'],
     explanation: 'Gia đình hạnh phúc không phải là không có mâu thuẫn; đó là khả năng chăm sóc, đối thoại, bảo vệ thành viên và cùng vượt qua biến đổi.',
     takeaway: 'Mục tiêu là ấm no, tiến bộ, hạnh phúc; cần cả điều kiện vật chất lẫn văn hóa ứng xử và chính sách xã hội hỗ trợ.',
     quiz: {
@@ -89,8 +89,8 @@ export const ROUND_CONTENT: RoundContent[] = [
     },
   },
   {
-    word: 'Quan hệ huyết thống',
-    aliases: ['quan hệ huyết thống', 'huyết thống'],
+    word: 'Anh chị em',
+    aliases: ['anh chị em', 'chị em', 'anh em'],
     explanation: 'Quan hệ huyết thống gắn những người có quan hệ tự nhiên như cha mẹ, con cái, anh chị em và ông bà, cháu.',
     takeaway: 'Đây là một trong ba mối quan hệ cấu thành gia đình, cùng với hôn nhân và nuôi dưỡng.',
     quiz: {
@@ -100,8 +100,8 @@ export const ROUND_CONTENT: RoundContent[] = [
     },
   },
   {
-    word: 'Quan hệ nuôi dưỡng',
-    aliases: ['quan hệ nuôi dưỡng', 'nuôi dưỡng'],
+    word: 'Mẹ cho bé ăn',
+    aliases: ['mẹ cho bé ăn', 'mẹ cho con ăn'],
     explanation: 'Quan hệ nuôi dưỡng hình thành từ sự chăm sóc về vật chất và tinh thần; quan hệ cha mẹ nuôi, con nuôi được pháp luật công nhận.',
     takeaway: 'Nuôi dưỡng vừa là trách nhiệm, vừa là quyền lợi thiêng liêng; xã hội có thể chia sẻ nhưng không thay thế hoàn toàn.',
     quiz: {
@@ -111,8 +111,8 @@ export const ROUND_CONTENT: RoundContent[] = [
     },
   },
   {
-    word: 'Gia đình là tế bào xã hội',
-    aliases: ['tế bào xã hội', 'gia đình là tế bào xã hội'],
+    word: 'Khu phố',
+    aliases: ['khu phố', 'khu dân cư'],
     explanation: 'Gia đình là đơn vị cơ sở góp phần tạo nên xã hội; sự tồn tại của gia đình gắn với sản xuất và tái sản xuất đời sống.',
     takeaway: 'Gia đình và xã hội tác động qua lại: gia đình tốt góp phần làm xã hội tốt, còn xã hội tạo điều kiện cho gia đình phát triển.',
     quiz: {
@@ -122,8 +122,8 @@ export const ROUND_CONTENT: RoundContent[] = [
     },
   },
   {
-    word: 'Gia đình là tổ ấm',
-    aliases: ['gia đình là tổ ấm', 'tổ ấm gia đình', 'tổ ấm'],
+    word: 'Ngôi nhà',
+    aliases: ['ngôi nhà', 'căn nhà'],
     explanation: 'Gia đình là môi trường để mỗi người được yêu thương, nuôi dưỡng, chăm sóc, trưởng thành và phát triển.',
     takeaway: 'Sự yên ổn trong gia đình góp phần hình thành nhân cách, thể lực và trí lực của mỗi thành viên.',
     quiz: {
@@ -133,8 +133,8 @@ export const ROUND_CONTENT: RoundContent[] = [
     },
   },
   {
-    word: 'Cầu nối cá nhân với xã hội',
-    aliases: ['cầu nối cá nhân với xã hội', 'cầu nối xã hội'],
+    word: 'Đưa con đi học',
+    aliases: ['đưa con đi học', 'bố mẹ đưa con đi học'],
     explanation: 'Gia đình là cộng đồng xã hội đầu tiên, nơi mỗi người học và thực hiện các quan hệ xã hội; các tác động xã hội cũng đi vào đời sống qua gia đình.',
     takeaway: 'Gia đình có thể lọc bớt hoặc khuếch đại những ảnh hưởng tích cực và tiêu cực từ xã hội.',
     quiz: {
@@ -144,8 +144,8 @@ export const ROUND_CONTENT: RoundContent[] = [
     },
   },
   {
-    word: 'Tái sản xuất con người',
-    aliases: ['tái sản xuất con người', 'sinh con'],
+    word: 'Em bé chào đời',
+    aliases: ['em bé chào đời', 'bé chào đời'],
     explanation: 'Tái sản xuất con người đáp ứng nhu cầu duy trì nòi giống và cung cấp sức lao động cho xã hội.',
     takeaway: 'Đây là chức năng đặc thù của gia đình, nhưng việc thực hiện còn liên quan đến nhu cầu và chính sách xã hội.',
     quiz: {
@@ -155,8 +155,8 @@ export const ROUND_CONTENT: RoundContent[] = [
     },
   },
   {
-    word: 'Nuôi dưỡng và giáo dục',
-    aliases: ['nuôi dưỡng và giáo dục', 'giáo dục gia đình'],
+    word: 'Bố dạy con học',
+    aliases: ['bố dạy con học', 'cha dạy con học'],
     explanation: 'Gia đình đem lại những hiểu biết đầu tiên và có ảnh hưởng bền vững; nhà trường và xã hội cùng giáo dục nhưng không thể thay thế hoàn toàn gia đình.',
     takeaway: 'Giáo dục gia đình cần gắn kết với giáo dục ở nhà trường và xã hội.',
     quiz: {
@@ -166,8 +166,8 @@ export const ROUND_CONTENT: RoundContent[] = [
     },
   },
   {
-    word: 'Kinh tế gia đình',
-    aliases: ['kinh tế gia đình', 'kinh tế hộ gia đình'],
+    word: 'Bố mẹ đi làm',
+    aliases: ['bố mẹ đi làm', 'cha mẹ đi làm'],
     explanation: 'Gia đình tham gia sản xuất, tái sản xuất sức lao động và tổ chức đời sống vật chất cho các thành viên.',
     takeaway: 'Điều kiện kinh tế có liên hệ với đời sống vật chất, tinh thần và khả năng chăm sóc trong gia đình.',
     quiz: {
@@ -177,8 +177,8 @@ export const ROUND_CONTENT: RoundContent[] = [
     },
   },
   {
-    word: 'Tổ chức tiêu dùng',
-    aliases: ['tổ chức tiêu dùng', 'tiêu dùng gia đình'],
+    word: 'Đi siêu thị',
+    aliases: ['đi siêu thị', 'mua sắm ở siêu thị'],
     explanation: 'Gia đình sử dụng thu nhập và quỹ thời gian để đáp ứng nhu cầu thành viên, đồng thời tạo môi trường sống lành mạnh.',
     takeaway: 'Tiêu dùng hợp lý gắn với cả nguồn lực vật chất lẫn thời gian của gia đình.',
     quiz: {
@@ -188,8 +188,8 @@ export const ROUND_CONTENT: RoundContent[] = [
     },
   },
   {
-    word: 'Chăm sóc người cao tuổi',
-    aliases: ['chăm sóc người cao tuổi', 'chăm sóc người già', 'người cao tuổi'],
+    word: 'Cháu dìu bà',
+    aliases: ['cháu dìu bà', 'cháu dìu ông bà'],
     explanation: 'Chức năng tình cảm của gia đình bao gồm chăm sóc người già, người ốm và trẻ em, cả về vật chất lẫn tinh thần.',
     takeaway: 'Dịch vụ cộng đồng có thể hỗ trợ gia đình, nhất là khi dân số già hóa và gia đình ít thế hệ cùng sống.',
     quiz: {
@@ -199,8 +199,8 @@ export const ROUND_CONTENT: RoundContent[] = [
     },
   },
   {
-    word: 'Chia sẻ việc nhà',
-    aliases: ['chia sẻ việc nhà', 'việc nhà'],
+    word: 'Cả nhà dọn nhà',
+    aliases: ['cả nhà dọn nhà', 'gia đình dọn nhà'],
     explanation: 'Chia sẻ việc nhà và chăm sóc giúp giảm sự phân bổ bất bình đẳng về thời gian và trách nhiệm giữa các thành viên.',
     takeaway: 'Bình đẳng không phải chia đôi máy móc mọi việc, mà là cùng thương lượng và chia sẻ trách nhiệm phù hợp.',
     quiz: {
@@ -210,8 +210,8 @@ export const ROUND_CONTENT: RoundContent[] = [
     },
   },
   {
-    word: 'Hôn nhân tự nguyện',
-    aliases: ['hôn nhân tự nguyện', 'tự nguyện kết hôn'],
+    word: 'Cầu hôn',
+    aliases: ['cầu hôn', 'lời cầu hôn'],
     explanation: 'Hôn nhân tiến bộ xuất phát từ tình yêu và sự tự nguyện; quyền tự do kết hôn đi cùng trách nhiệm với nhau.',
     takeaway: 'Hôn nhân không nên bị quyết định bởi ép buộc, tính toán kinh tế hay địa vị xã hội.',
     quiz: {
@@ -221,8 +221,8 @@ export const ROUND_CONTENT: RoundContent[] = [
     },
   },
   {
-    word: 'Hôn nhân một vợ một chồng',
-    aliases: ['hôn nhân một vợ một chồng', 'một vợ một chồng'],
+    word: 'Nhẫn cưới',
+    aliases: ['nhẫn cưới', 'cặp nhẫn cưới'],
     explanation: 'Hôn nhân tiến bộ dựa trên nguyên tắc một vợ một chồng, vợ chồng bình đẳng và tôn trọng lẫn nhau.',
     takeaway: 'Các nguyên tắc này được nêu trong Hiến pháp và Luật Hôn nhân và gia đình.',
     quiz: {
@@ -232,8 +232,8 @@ export const ROUND_CONTENT: RoundContent[] = [
     },
   },
   {
-    word: 'Tôn trọng lẫn nhau',
-    aliases: ['tôn trọng lẫn nhau', 'tôn trọng'],
+    word: 'Bố mẹ trò chuyện',
+    aliases: ['bố mẹ trò chuyện', 'cha mẹ trò chuyện'],
     explanation: 'Tôn trọng lẫn nhau là nguyên tắc trong quan hệ vợ chồng và là nền tảng để các thành viên đối thoại, cùng giải quyết bất đồng.',
     takeaway: 'Tôn trọng quyền riêng tư và lựa chọn của nhau giúp gia đình thích ứng với biến đổi.',
     quiz: {
@@ -265,8 +265,8 @@ export const ROUND_CONTENT: RoundContent[] = [
     },
   },
   {
-    word: 'Ở riêng nhưng ở gần',
-    aliases: ['ở riêng nhưng ở gần', 'sống riêng nhưng ở gần'],
+    word: 'Hai nhà cạnh nhau',
+    aliases: ['hai nhà cạnh nhau', 'hai ngôi nhà cạnh nhau'],
     explanation: 'Gia đình mở rộng biến thể có thể sống riêng nhưng vẫn ở gần, duy trì quan hệ hỗ trợ giữa các thế hệ.',
     takeaway: 'Cách sống này có thể kết hợp quyền riêng tư với sự chăm sóc và kết nối gia đình.',
     quiz: {
@@ -276,8 +276,8 @@ export const ROUND_CONTENT: RoundContent[] = [
     },
   },
   {
-    word: 'An toàn số cho trẻ',
-    aliases: ['an toàn số cho trẻ', 'an toàn mạng cho trẻ', 'trẻ em an toàn trên mạng'],
+    word: 'Bé dùng máy tính',
+    aliases: ['bé dùng máy tính', 'trẻ dùng máy tính'],
     explanation: 'Trẻ sử dụng internet và mạng xã hội cần được cha mẹ hướng dẫn để nhận diện rủi ro, bắt nạt và xâm hại trực tuyến.',
     takeaway: 'Đồng hành số cần kỹ năng, đối thoại và tôn trọng trẻ; chỉ cấm thiết bị không giải quyết hết rủi ro.',
     quiz: {
@@ -287,8 +287,8 @@ export const ROUND_CONTENT: RoundContent[] = [
     },
   },
   {
-    word: 'Tin giả',
-    aliases: ['tin giả', 'tin sai sự thật'],
+    word: 'Tin nhắn',
+    aliases: ['tin nhắn', 'tin nhắn điện thoại'],
     explanation: 'Thông tin xã hội, bao gồm tin giả và lừa đảo trực tuyến, có thể đi vào gia đình qua các kênh kết nối số.',
     takeaway: 'Gia đình nên kiểm chứng thông tin và hướng dẫn người thân nhận diện lừa đảo trước khi chia sẻ.',
     quiz: {
@@ -298,8 +298,8 @@ export const ROUND_CONTENT: RoundContent[] = [
     },
   },
   {
-    word: 'Thế hệ kẹp giữa',
-    aliases: ['thế hệ kẹp giữa', 'người thuộc thế hệ kẹp giữa'],
+    word: 'Mẹ chăm bà và bé',
+    aliases: ['mẹ chăm bà và bé', 'mẹ chăm bà và con'],
     explanation: 'Người ở độ tuổi trung niên có thể vừa chăm sóc cha mẹ già, vừa nuôi con nhỏ và đi làm.',
     takeaway: 'Dịch vụ chăm sóc cộng đồng và sự chia sẻ trách nhiệm giúp giảm gánh nặng dồn lên một thành viên.',
     quiz: {
@@ -309,8 +309,8 @@ export const ROUND_CONTENT: RoundContent[] = [
     },
   },
   {
-    word: 'Định kiến giới',
-    aliases: ['định kiến giới', 'trọng nam khinh nữ'],
+    word: 'Con gái đá bóng',
+    aliases: ['con gái đá bóng', 'bé gái đá bóng'],
     explanation: 'Định kiến giới như tư tưởng trọng nam khinh nữ có thể tạo bất bình đẳng trong chăm sóc, việc nhà và cơ hội của thành viên.',
     takeaway: 'Thay đổi luật pháp cần đi cùng thay đổi văn hóa và cách phân chia trách nhiệm trong đời sống hằng ngày.',
     quiz: {
@@ -320,8 +320,8 @@ export const ROUND_CONTENT: RoundContent[] = [
     },
   },
   {
-    word: 'Bạo lực gia đình',
-    aliases: ['bạo lực gia đình', 'phòng chống bạo lực gia đình'],
+    word: 'Cảnh sát',
+    aliases: ['cảnh sát', 'công an'],
     explanation: 'Bạo lực gia đình có thể bị che giấu; pháp luật quy định việc phòng ngừa, bảo vệ và hỗ trợ người bị bạo lực.',
     takeaway: 'Cần tăng khả năng tiếp cận trợ giúp và dịch vụ hỗ trợ an toàn cho người bị bạo lực.',
     quiz: {
@@ -331,8 +331,8 @@ export const ROUND_CONTENT: RoundContent[] = [
     },
   },
   {
-    word: 'Tư vấn tiền hôn nhân',
-    aliases: ['tư vấn tiền hôn nhân', 'tư vấn trước hôn nhân'],
+    word: 'Chụp ảnh cưới',
+    aliases: ['chụp ảnh cưới', 'chụp hình cưới'],
     explanation: 'Chuẩn bị trước hôn nhân có thể trang bị kỹ năng giao tiếp, quản lý tài chính và hiểu biết pháp luật cho các cặp đôi.',
     takeaway: 'Tài liệu nêu mục tiêu giáo dục, tư vấn trước hôn nhân cho nam nữ thanh niên.',
     quiz: {
@@ -353,8 +353,8 @@ export const ROUND_CONTENT: RoundContent[] = [
     },
   },
   {
-    word: 'Di cư lao động',
-    aliases: ['di cư lao động', 'lao động di cư'],
+    word: 'Bố đi làm xa',
+    aliases: ['bố đi làm xa', 'cha đi làm xa'],
     explanation: 'Di cư lao động và đô thị hóa làm thay đổi nơi ở, thời gian và cách các thành viên duy trì quan hệ gia đình.',
     takeaway: 'Gia đình có thể duy trì kết nối qua hỗ trợ từ xa, đồng thời cần dịch vụ xã hội ở nơi người lao động sinh sống.',
     quiz: {
@@ -364,8 +364,8 @@ export const ROUND_CONTENT: RoundContent[] = [
     },
   },
   {
-    word: 'Kinh tế hộ',
-    aliases: ['kinh tế hộ', 'hộ kinh doanh', 'kinh tế hộ gia đình'],
+    word: 'Quầy hàng gia đình',
+    aliases: ['quầy hàng gia đình', 'gia đình bán hàng'],
     explanation: 'Kinh tế hộ, hộ kinh doanh cá thể và kinh tế trang trại là những biểu hiện cụ thể của chức năng kinh tế gia đình.',
     takeaway: 'Gia đình vừa tham gia sản xuất, vừa tổ chức tiêu dùng và tái sản xuất sức lao động.',
     quiz: {
@@ -375,8 +375,8 @@ export const ROUND_CONTENT: RoundContent[] = [
     },
   },
   {
-    word: 'Gia đình văn hóa',
-    aliases: ['gia đình văn hóa', 'xây dựng gia đình văn hóa'],
+    word: 'Giấy khen',
+    aliases: ['giấy khen', 'bằng khen'],
     explanation: 'Phong trào xây dựng gia đình văn hóa hướng tới gia đình no ấm, tiến bộ, hạnh phúc; việc bình xét cần thực chất.',
     takeaway: 'Tiêu chí nên thiết thực, dân chủ và tránh chạy theo thành tích hình thức.',
     quiz: {
@@ -386,8 +386,8 @@ export const ROUND_CONTENT: RoundContent[] = [
     },
   },
   {
-    word: 'Chăm sóc cộng đồng',
-    aliases: ['chăm sóc cộng đồng', 'dịch vụ chăm sóc cộng đồng'],
+    word: 'Hàng xóm giúp nhau',
+    aliases: ['hàng xóm giúp nhau', 'hàng xóm giúp đỡ nhau'],
     explanation: 'Dịch vụ chăm sóc dựa vào cộng đồng có thể hỗ trợ gia đình khi chăm sóc người cao tuổi và các thành viên cần trợ giúp.',
     takeaway: 'Trách nhiệm gia đình và dịch vụ xã hội cần bổ trợ nhau, nhất là khi gia đình hạt nhân phổ biến hơn.',
     quiz: {
@@ -397,8 +397,8 @@ export const ROUND_CONTENT: RoundContent[] = [
     },
   },
   {
-    word: 'Giáo dục gia đình',
-    aliases: ['giáo dục gia đình', 'dạy con trong gia đình'],
+    word: 'Mẹ đọc sách cho con',
+    aliases: ['mẹ đọc sách cho con', 'mẹ đọc sách cho bé'],
     explanation: 'Những hiểu biết đầu tiên từ gia đình thường để lại dấu ấn sâu đậm; cha mẹ cần có kiến thức và phương pháp giáo dục phù hợp.',
     takeaway: 'Giáo dục gia đình hiệu quả khi phối hợp với nhà trường và xã hội, không phủ nhận vai trò của nhau.',
     quiz: {
