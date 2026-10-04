@@ -14,6 +14,7 @@ import type {
   Player,
   Point,
   Quiz,
+  QuizStage,
   Reveal,
   Stroke,
   SubPhase,
@@ -32,6 +33,11 @@ const TOTAL_ROUNDS = 10;
 const WORD_CHOICE_SECONDS = 15;
 const PRE_DRAW_SECONDS = 3;
 const DRAW_SECONDS = 75;
+const QUALIFIER_QUIZ_SECONDS = 15;
+const QUALIFIER_CORRECT_POINTS = 50;
+const FINALIST_CORRECT_POINTS = 150;
+const FINALIST_WRONG_POINTS = 50;
+const FASTEST_TIE_WINDOW_MS = 250;
 const DRAWER_GRACE_MS = Math.round(3000 * TIMER_SCALE);
 const GUESS_COOLDOWN_MS = 400;
 const ERASE_COOLDOWN_MS = 40;
@@ -44,6 +50,8 @@ type ClientSocket = Socket;
 type PlayerEntry = Player & { socketId?: string; lastReactionAt?: number };
 
 type RateState = { guess?: number; erase?: number; warn?: number };
+
+type QuizSubmission = { answer: number; submittedAt: number };
 
 type Room = {
   phase: Phase;
@@ -62,9 +70,12 @@ type Room = {
   guessedPlayerIds: string[];
   firstGuesserId?: string;
   quiz?: Quiz;
+  quizStage?: QuizStage;
+  quizEligiblePlayerIds: string[];
+  quizSubmissions: Map<string, QuizSubmission>;
+  quizFinalistId?: string;
+  qualifierAnswer?: string;
   quizAnswer?: number;
-  quizDrawSeconds?: number;
-  quizStartedAt?: number;
   reveal?: Reveal;
   summary: SummaryItem[];
   timer?: ReturnType<typeof setInterval>;
@@ -83,6 +94,8 @@ const room: Room = {
   usedWords: [],
   strokes: [],
   guessedPlayerIds: [],
+  quizEligiblePlayerIds: [],
+  quizSubmissions: new Map(),
   summary: [],
 };
 const disconnectedPlayerTimers = new Map<string, ReturnType<typeof setTimeout>>();
@@ -224,15 +237,12 @@ function folded(value: string) {
 function scoreForGuess(secondsLeft: number, position: number) {
   const safeSeconds = Math.min(DRAW_SECONDS, Math.max(0, secondsLeft));
   const timePoints = Math.round((safeSeconds / DRAW_SECONDS) * 350);
-  const orderBonus = position === 0 ? 100 : position === 1 ? 50 : position === 2 ? 25 : 0;
+  const orderBonus = position === 0 ? 50 : position === 1 ? 35 : position === 2 ? 15 : 0;
   return 50 + timePoints + orderBonus;
 }
 
-// Late guessers are charged for the real seconds they have spent waiting before the round ends.
 function effectiveSecondsLeft() {
-  if (room.phase === 'drawing') return room.secondsLeft;
-  const elapsed = room.quizStartedAt ? Math.floor((Date.now() - room.quizStartedAt) / 1000) : 0;
-  return Math.max(0, (room.quizDrawSeconds ?? 0) - elapsed);
+  return room.phase === 'drawing' ? room.secondsLeft : 0;
 }
 
 function shuffle<T>(items: T[]): T[] {
@@ -261,6 +271,20 @@ function buildShuffledQuiz(content: RoundContent): Quiz {
     prompt: content.quiz.prompt,
     options: shuffled.map((option) => option.text),
     correctIndex: shuffled.findIndex((option) => option.correct),
+  };
+}
+
+function buildFinalistQuiz(content: RoundContent): Quiz {
+  const distractors = shuffle(ROUND_CONTENT.filter((item) => item.word !== content.word)).slice(0, 3);
+  const options = shuffle([
+    { text: content.word, correct: true },
+    ...distractors.map((item) => ({ text: item.word, correct: false })),
+  ]);
+  return {
+    prompt: 'Ý chính này thuộc chủ đề nào?',
+    context: content.takeaway,
+    options: options.map((option) => option.text),
+    correctIndex: options.findIndex((option) => option.correct),
   };
 }
 
@@ -318,6 +342,10 @@ function publicState(socket: ClientSocket): ClientState {
     strokes: room.strokes,
     guessedPlayerIds: room.guessedPlayerIds,
     firstGuesserId: room.firstGuesserId,
+    quizStage: room.quizStage,
+    quizFinalistId: room.quizFinalistId,
+    quizEligibleCount: room.quizEligiblePlayerIds.length,
+    quizAnsweredCount: room.quizSubmissions.size,
   };
 
   if (player) {
@@ -336,9 +364,18 @@ function publicState(socket: ClientSocket): ClientState {
     const masked = currentMaskedWord();
     if (masked) state.maskedWord = masked;
   }
-  if ((isProjector || playerId === room.firstGuesserId) && room.quiz) state.quiz = room.quiz;
-  if (room.phase === 'quiz' && room.quiz) state.quizAnswered = room.quizAnswer !== undefined;
-  if ((isProjector || playerId === room.firstGuesserId) && room.quiz && room.quizAnswer !== undefined) state.quizAnswer = room.quizAnswer;
+  const isQualifierPlayer = Boolean(playerId && room.quizEligiblePlayerIds.includes(playerId));
+  const isFinalist = Boolean(playerId && playerId === room.quizFinalistId);
+  const canSeeQuiz = isProjector
+    || (room.quizStage === 'qualifier' && isQualifierPlayer)
+    || (room.quizStage === 'finalist' && isFinalist);
+  if (canSeeQuiz && room.quiz) state.quiz = room.quiz;
+  if (room.phase === 'quiz' && room.quiz) {
+    state.quizAnswered = room.quizStage === 'qualifier'
+      ? Boolean(playerId && room.quizSubmissions.has(playerId))
+      : room.quizAnswer !== undefined;
+  }
+  if ((isProjector || isFinalist) && room.quizStage === 'finalist' && room.quizAnswer !== undefined) state.quizAnswer = room.quizAnswer;
   if (isProjector || room.phase === 'reveal' || room.phase === 'finished') state.reveal = room.reveal;
   if (isProjector || room.phase === 'finished') state.summary = room.summary;
 
@@ -347,7 +384,13 @@ function publicState(socket: ClientSocket): ClientState {
   if (room.phase === 'drawing' && room.subPhase === 'choosing' && !isDrawer) state.message = 'Họa sĩ đang chọn từ khóa…';
   if (room.phase === 'drawing' && room.subPhase === 'countdown') state.message = 'Sẵn sàng…';
   if (room.phase === 'drawing' && room.subPhase === 'drawing' && !isDrawer) state.message = 'Đoán thật nhanh — câu trả lời được gửi riêng.';
-  if (room.phase === 'quiz' && playerId !== room.firstGuesserId) state.message = 'Vòng đoán đã kết thúc; người đoán đúng đầu tiên đang trả lời câu hỏi.';
+  if (room.phase === 'quiz' && room.quizStage === 'qualifier' && !isQualifierPlayer) {
+    state.message = 'Những bạn đoán đúng đang làm câu hỏi nhanh 15 giây.';
+  }
+  if (room.phase === 'quiz' && room.quizStage === 'finalist' && !isFinalist) {
+    const finalist = room.players.get(room.quizFinalistId ?? '');
+    state.message = `${finalist?.name ?? 'Bạn nhanh nhất'} đang trả lời câu hỏi quyết định.`;
+  }
   return state;
 }
 
@@ -360,6 +403,7 @@ function broadcastTick() {
     phase: room.phase,
     subPhase: room.subPhase,
     secondsLeft: room.secondsLeft,
+    quizStage: room.quizStage,
     maskedWord: currentMaskedWord(),
   });
 }
@@ -419,9 +463,12 @@ function resetRoundState() {
   room.guessedPlayerIds = [];
   room.firstGuesserId = undefined;
   room.quiz = undefined;
+  room.quizStage = undefined;
+  room.quizEligiblePlayerIds = [];
+  room.quizSubmissions.clear();
+  room.quizFinalistId = undefined;
+  room.qualifierAnswer = undefined;
   room.quizAnswer = undefined;
-  room.quizDrawSeconds = undefined;
-  room.quizStartedAt = undefined;
   room.reveal = undefined;
 }
 
@@ -510,8 +557,10 @@ function finishRound(result: Reveal['quizResult']) {
     explanation: content?.explanation ?? '',
     takeaway: content?.takeaway ?? '',
     quizResult: result,
+    qualifierAnswer: room.qualifierAnswer,
+    qualifierWinnerName: room.players.get(room.quizFinalistId ?? '')?.name,
   };
-  if (room.quiz) {
+  if (room.quizStage === 'finalist' && room.quiz) {
     room.reveal.answer = room.quiz.options[room.quiz.correctIndex];
     if (room.quizAnswer !== undefined) room.reveal.chosenAnswer = room.quiz.options[room.quizAnswer];
   }
@@ -519,22 +568,55 @@ function finishRound(result: Reveal['quizResult']) {
   broadcastState();
 }
 
-function startQuiz(firstGuesserId: string) {
+function startQualifierQuiz() {
   const content = room.currentContent;
   if (!content) return;
+  const eligible = room.guessedPlayerIds.filter((playerId) => room.players.get(playerId)?.connected);
+  if (eligible.length === 0) return finishRound('not_asked');
   clearTimers();
   room.phase = 'quiz';
-  room.firstGuesserId = firstGuesserId;
+  room.quizStage = 'qualifier';
+  room.quizEligiblePlayerIds = eligible;
+  room.quizSubmissions.clear();
+  room.quizFinalistId = undefined;
   room.quiz = buildShuffledQuiz(content);
-  room.quizDrawSeconds = room.secondsLeft;
-  room.quizStartedAt = Date.now();
-  room.secondsLeft = 0;
+  room.qualifierAnswer = room.quiz.options[room.quiz.correctIndex];
   room.quizAnswer = undefined;
+  startCountdown(QUALIFIER_QUIZ_SECONDS, finishQualifierQuiz);
+}
+
+function allEligiblePlayersAnswered() {
+  const activeEligible = room.quizEligiblePlayerIds.filter((playerId) => room.players.get(playerId)?.connected);
+  return activeEligible.length > 0 && activeEligible.every((playerId) => room.quizSubmissions.has(playerId));
+}
+
+function finishQualifierQuiz() {
+  if (room.phase !== 'quiz' || room.quizStage !== 'qualifier' || !room.quiz || !room.currentContent) return;
+  clearTimers();
+  const correct = [...room.quizSubmissions.entries()]
+    .filter(([, submission]) => submission.answer === room.quiz?.correctIndex)
+    .sort((a, b) => a[1].submittedAt - b[1].submittedAt);
+  if (correct.length === 0) {
+    toast('Chưa có đáp án đúng ở câu hỏi nhanh — cùng xem lại kiến thức nhé!');
+    finishRound('not_asked');
+    return;
+  }
+  const fastestAt = correct[0][1].submittedAt;
+  const tiedFastest = correct.filter(([, submission]) => submission.submittedAt - fastestAt <= FASTEST_TIE_WINDOW_MS);
+  const finalistEntry = tiedFastest[Math.floor(Math.random() * tiedFastest.length)];
+  const finalistId = finalistEntry[0];
+  room.quizStage = 'finalist';
+  room.quizFinalistId = finalistId;
+  room.quiz = buildFinalistQuiz(room.currentContent);
+  room.quizAnswer = undefined;
+  room.secondsLeft = 0;
+  const finalist = room.players.get(finalistId);
+  toast(`${finalist?.name ?? 'Bạn nhanh nhất'} vào câu hỏi quyết định!`);
   broadcastState();
 }
 
 function onDrawingTimeUp() {
-  if (room.firstGuesserId) startQuiz(room.firstGuesserId);
+  if (room.guessedPlayerIds.length > 0) startQualifierQuiz();
   else finishRound('not_asked');
 }
 
@@ -793,15 +875,31 @@ io.on('connection', (socket: ClientSocket) => {
     }
     io.emit(EVENTS.guessSuccess, { playerId, name: player?.name ?? 'Một bạn', points, position });
     if (position === 0) room.firstGuesserId = playerId;
-    if (room.firstGuesserId && allConnectedGuessersAnswered()) startQuiz(room.firstGuesserId);
+    if (room.firstGuesserId && allConnectedGuessersAnswered()) startQualifierQuiz();
     else broadcastState();
   });
 
   socket.on(EVENTS.submitQuiz, (payload: { answer?: unknown }) => {
-    if (room.phase !== 'quiz' || socket.data.playerId !== room.firstGuesserId || !room.quiz) return;
-    if (room.quizAnswer !== undefined) return;
+    if (room.phase !== 'quiz' || !room.quiz) return;
+    const playerId = socket.data.playerId as string | undefined;
+    if (!playerId) return;
     const parsed = answerSchema.safeParse(payload?.answer);
     if (!parsed.success) return;
+    if (room.quizStage === 'qualifier') {
+      if (!room.quizEligiblePlayerIds.includes(playerId) || room.quizSubmissions.has(playerId)) return;
+      const submission = { answer: parsed.data, submittedAt: Date.now() };
+      room.quizSubmissions.set(playerId, submission);
+      const player = room.players.get(playerId);
+      if (player && submission.answer === room.quiz.correctIndex) {
+        player.score += QUALIFIER_CORRECT_POINTS;
+        player.quizCorrect += 1;
+      }
+      toast('Đã chốt đáp án câu hỏi nhanh.', socket);
+      if (allEligiblePlayersAnswered()) finishQualifierQuiz();
+      else broadcastState();
+      return;
+    }
+    if (room.quizStage !== 'finalist' || playerId !== room.quizFinalistId || room.quizAnswer !== undefined) return;
     room.quizAnswer = parsed.data;
     toast('Đã chốt đáp án — chờ máy chiếu mở đáp án.');
     broadcastState();
@@ -809,21 +907,21 @@ io.on('connection', (socket: ClientSocket) => {
 
   socket.on(EVENTS.revealQuiz, () => {
     if (!socket.data.isProjector) return toast('Chỉ máy chiếu mới có thể mở đáp án.', socket);
-    if (room.phase !== 'quiz' || !room.quiz) return;
+    if (room.phase !== 'quiz' || room.quizStage !== 'finalist' || !room.quiz) return;
     const decided = room.quizAnswer;
     if (decided === undefined) {
       finishRound('not_asked');
       return;
     }
-    const player = room.players.get(room.firstGuesserId ?? '');
+    const player = room.players.get(room.quizFinalistId ?? '');
     const correct = decided === room.quiz.correctIndex;
     if (player) {
       if (correct) {
-        player.score += 400;
+        player.score += FINALIST_CORRECT_POINTS;
         player.quizCorrect += 1;
-        toast(`${player.name} trả lời đúng câu hỏi củng cố!`, undefined);
+        toast(`${player.name} trả lời đúng câu hỏi quyết định!`, undefined);
       } else {
-        player.score -= 200;
+        player.score -= FINALIST_WRONG_POINTS;
         toast(`${player.name} chưa chọn đúng — kiến thức sẽ được giải thích ngay.`, undefined);
       }
     }
@@ -856,6 +954,10 @@ io.on('connection', (socket: ClientSocket) => {
     player.connected = false;
     player.socketId = undefined;
     schedulePlayerRemoval(playerId);
+    if (room.phase === 'quiz' && room.quizStage === 'qualifier' && allEligiblePlayersAnswered()) {
+      finishQualifierQuiz();
+      return;
+    }
     if (room.phase === 'drawing' && playerId === room.drawerId) {
       scheduleDrawerReplacement(playerId);
       broadcastState();

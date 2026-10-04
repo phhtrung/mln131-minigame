@@ -175,7 +175,11 @@ export function GameScreen({ state, socket, guessBanner, reactionToast, onStroke
   const canDraw = isDrawer && state.phase === 'drawing' && state.subPhase === 'drawing' && Boolean(state.privateWord);
   const canGuess = state.phase === 'drawing' && state.subPhase === 'drawing';
   const choosingWord = isDrawer && state.phase === 'drawing' && state.subPhase === 'choosing' && Boolean(state.wordChoices);
-  const answeringQuiz = state.phase === 'quiz' && Boolean(state.quiz) && state.firstGuesserId === you?.id;
+  const answeringQuiz = state.phase === 'quiz' && Boolean(state.quiz);
+  const quizCountdown = state.phase === 'quiz' && state.quizStage === 'qualifier';
+  const gameHeading = state.phase === 'quiz'
+    ? state.quizStage === 'qualifier' ? 'Câu hỏi nhanh' : 'Câu hỏi quyết định'
+    : isDrawer ? state.privateWord ?? 'Chọn một từ.' : 'Bạn nhìn thấy gì?';
   const overlay = (
     <>
       <PreDrawCountdown phase={state.phase} subPhase={state.subPhase} secondsLeft={state.secondsLeft} flashDraw={flashDraw} />
@@ -194,10 +198,10 @@ export function GameScreen({ state, socket, guessBanner, reactionToast, onStroke
             <div className="game-title">
               <p className="round-mark">VÒNG {String(state.round).padStart(2, '0')}<span> / {String(state.totalRounds).padStart(2, '0')}</span></p>
               <h1 className={isDrawer ? 'drawer-word-title' : undefined}>
-                {isDrawer ? state.privateWord ?? 'Chọn một từ.' : 'Bạn nhìn thấy gì?'}
+                {gameHeading}
               </h1>
             </div>
-            {state.phase === 'drawing' ? (
+            {state.phase === 'drawing' || quizCountdown ? (
               <div className="timer" aria-label={`${state.secondsLeft} giây`}>
                 <span className={state.secondsLeft <= 5 ? 'timer-number urgent' : 'timer-number'}>{state.secondsLeft}</span>
                 <span>GIÂY</span>
@@ -249,7 +253,7 @@ export function GameScreen({ state, socket, guessBanner, reactionToast, onStroke
           )}
           {answeringQuiz && (
             <GameModal titleId="quiz-title">
-              <QuizCard state={state} socket={socket} />
+              <QuizCard key={`${state.quizStage}-${state.quiz?.prompt}`} state={state} socket={socket} />
             </GameModal>
           )}
         </>
@@ -294,7 +298,14 @@ function ActionPanel({ state, socket, isDrawer, hasGuessed, canGuess }: { state:
       </div>
     );
   }
-  if (state.phase === 'quiz' && state.firstGuesserId === state.you?.id) return null;
+  if (state.phase === 'quiz' && state.quiz) return null;
+  if (state.phase === 'quiz') {
+    const finalist = state.players.find((player) => player.id === state.quizFinalistId);
+    const status = state.quizStage === 'qualifier'
+      ? `${state.quizAnsweredCount ?? 0}/${state.quizEligibleCount ?? 0} bạn đã chốt đáp án.`
+      : `${finalist?.name ?? 'Bạn nhanh nhất'} đang trả lời câu hỏi quyết định.`;
+    return <p className="inline-status">{state.message ?? status}</p>;
+  }
   if (canGuess && state.you && !isDrawer) {
     const waitingForQuiz = hasGuessed && state.phase === 'drawing' && state.firstGuesserId === state.you.id;
     return (
@@ -314,7 +325,7 @@ function ActionPanel({ state, socket, isDrawer, hasGuessed, canGuess }: { state:
           />
           <button className="primary-button" disabled={hasGuessed}>Gửi <span aria-hidden="true">→</span></button>
         </form>
-        {waitingForQuiz && <p className="first-guesser-note">Bạn trả lời đúng đầu tiên — chờ cả lớp đoán đúng hoặc hết giờ, rồi trả lời câu hỏi củng cố.</p>}
+        {hasGuessed && <p className="first-guesser-note">Bạn đã vào câu hỏi nhanh 15 giây sau khi vòng đoán kết thúc.</p>}
       </div>
     );
   }
@@ -324,14 +335,16 @@ function ActionPanel({ state, socket, isDrawer, hasGuessed, canGuess }: { state:
 function QuizCard({ state, socket }: { state: ClientState; socket: Socket }) {
   const [selected, setSelected] = useState<number | null>(null);
   const locked = state.quizAnswered === true;
+  const qualifier = state.quizStage === 'qualifier';
   const submit = () => {
     if (selected !== null && !locked) socket.emit(EVENTS.submitQuiz, { answer: selected });
   };
   return (
     <div className="action-card quiz-card" key={state.quiz?.prompt}>
-      <p className="eyebrow">CÂU HỎI CỦNG CỐ · VÒNG {state.round}/{state.totalRounds}</p>
+      <p className="quiz-stage-label">{qualifier ? `Câu hỏi nhanh · còn ${state.secondsLeft} giây` : 'Câu hỏi quyết định · máy chiếu sẽ mở đáp án'}</p>
       <h2 id="quiz-title">{state.quiz?.prompt}</h2>
-      <p className="score-risk">Đúng +400 · Sai −200</p>
+      {state.quiz?.context && <p className="quiz-context">“{state.quiz.context}”</p>}
+      <p className="score-risk">{qualifier ? 'Đúng +50 · Sai không trừ điểm' : 'Đúng +150 · Sai −50'}</p>
       <div className="quiz-options">
         {state.quiz?.options.map((option, index) => (
           <button className={selected === index ? 'quiz-option selected' : 'quiz-option'} key={option} disabled={locked} onClick={() => setSelected(index)}>
@@ -340,7 +353,7 @@ function QuizCard({ state, socket }: { state: ClientState; socket: Socket }) {
         ))}
       </div>
       {locked
-        ? <p className="locked-note">Đã chốt — chờ máy chiếu mở đáp án.</p>
+        ? <p className="locked-note">{qualifier ? 'Đã chốt — chờ cả lớp hoặc hết 15 giây.' : 'Đã chốt — chờ máy chiếu mở đáp án.'}</p>
         : <button className="primary-button" disabled={selected === null} onClick={submit}>Chốt đáp án <span aria-hidden="true">→</span></button>}
     </div>
   );
@@ -349,16 +362,17 @@ function QuizCard({ state, socket }: { state: ClientState; socket: Socket }) {
 function RevealCard({ state }: { state: ClientState }) {
   const quizResult = state.reveal?.quizResult;
   const resultLabel = quizResult === 'correct'
-    ? 'Trả lời đúng · +400'
+    ? 'Câu quyết định đúng · +150'
     : quizResult === 'incorrect'
-      ? 'Chưa đúng · −200'
+      ? 'Câu quyết định chưa đúng · −50'
       : quizResult === 'not_asked'
-        ? 'Chưa trả lời'
+        ? 'Không có câu quyết định'
         : 'Cùng xem lại ý chính';
   return (
     <div className="action-card reveal-card">
       <h2>{state.reveal?.word}</h2>
       <p className="result-line">{resultLabel}</p>
+      {state.reveal?.qualifierAnswer && <p className="quiz-answer-line">Câu nhanh: {state.reveal.qualifierAnswer}</p>}
       {state.reveal?.answer && (
         <p className="quiz-answer-line">
           Đáp án đúng: {state.reveal.answer}
@@ -600,7 +614,7 @@ export function ProjectorScreen({ state, socket, guessBanner, reactionToast, mut
     : state.phase === 'reveal'
       ? state.reveal?.word ?? 'Cùng xem lại'
       : state.phase === 'quiz'
-        ? 'Trả lời câu hỏi'
+        ? state.quizStage === 'qualifier' ? '15 giây — cùng trả lời' : 'Câu hỏi quyết định'
         : state.phase === 'drawing'
           ? 'Đang vẽ…'
           : 'Sẵn sàng!';
@@ -615,7 +629,7 @@ export function ProjectorScreen({ state, socket, guessBanner, reactionToast, mut
             <p className="eyebrow">{state.phase === 'finished' ? 'KẾT QUẢ CUỐI' : `VÒNG ${state.round}/${state.totalRounds}`}</p>
             <h1>{heading}</h1>
           </div>
-          {state.phase === 'drawing' && (
+          {(state.phase === 'drawing' || (state.phase === 'quiz' && state.quizStage === 'qualifier')) && (
             <div className="projector-timer">{state.secondsLeft}<span>s</span></div>
           )}
         </div>
@@ -660,6 +674,9 @@ export function ProjectorScreen({ state, socket, guessBanner, reactionToast, mut
             {state.phase === 'reveal' && state.reveal && (
               <div className="projector-reveal">
                 <p className="projector-result">{projectorResultLabel(state.reveal.quizResult)}</p>
+                {state.reveal.qualifierAnswer && (
+                  <p className="projector-answer-line">Câu nhanh: {state.reveal.qualifierAnswer}</p>
+                )}
                 {state.reveal.answer && (
                   <p className="projector-answer-line">
                     Đáp án đúng: {state.reveal.answer}
@@ -714,34 +731,40 @@ function ProjectorPlayerList({ players, maxPlayers, socket }: { players: Player[
 }
 
 function projectorResultLabel(quizResult: QuizResult | undefined) {
-  if (quizResult === 'correct') return 'Trả lời đúng · +400';
-  if (quizResult === 'incorrect') return 'Chưa đúng · −200';
-  if (quizResult === 'not_asked') return 'Chưa trả lời';
+  if (quizResult === 'correct') return 'Câu quyết định đúng · +150';
+  if (quizResult === 'incorrect') return 'Câu quyết định chưa đúng · −50';
+  if (quizResult === 'not_asked') return 'Không có câu quyết định';
   return 'Cùng xem lại ý chính';
 }
 
 function ProjectorQuiz({ state, socket }: { state: ClientState; socket: Socket }) {
-  const answerer = state.players.find((player) => player.id === state.firstGuesserId);
+  const qualifier = state.quizStage === 'qualifier';
+  const answerer = state.players.find((player) => player.id === state.quizFinalistId);
   const chosenIndex = state.quizAnswer;
   const chosenText = chosenIndex !== undefined ? state.quiz?.options[chosenIndex] : undefined;
   return (
     <section className="projector-quiz">
-      <p className="eyebrow">CÂU HỎI CỦA VÒNG {state.round}/{state.totalRounds}</p>
+      <p className="quiz-stage-label">{qualifier ? `Câu hỏi nhanh · ${state.quizAnsweredCount ?? 0}/${state.quizEligibleCount ?? 0} đã trả lời` : `${answerer?.name ?? 'Bạn nhanh nhất'} · câu hỏi quyết định`}</p>
       <h2>{state.quiz?.prompt}</h2>
+      {state.quiz?.context && <p className="quiz-context projector-quiz-context">“{state.quiz.context}”</p>}
       <div className="quiz-options projector-quiz-options">
         {state.quiz?.options.map((option, index) => (
-          <div className={chosenIndex === index ? 'quiz-option static chosen' : 'quiz-option static'} key={option}>
+          <div className={!qualifier && chosenIndex === index ? 'quiz-option static chosen' : 'quiz-option static'} key={option}>
             <span>{String.fromCharCode(65 + index)}</span>{option}
-            {chosenIndex === index && <em className="chosen-tag">Đã chọn</em>}
+            {!qualifier && chosenIndex === index && <em className="chosen-tag">Đã chọn</em>}
           </div>
         ))}
       </div>
       <p className="projector-quiz-status">
-        {state.quizAnswered
-          ? `${answerer?.name ?? 'Bạn chơi'} đã chốt${chosenText ? `: ${chosenText}` : '.'}`
-          : `${answerer?.name ?? 'Bạn chơi'} đang chọn đáp án…`}
+        {qualifier
+          ? `Đúng +50 · sai không trừ điểm · còn ${state.secondsLeft} giây`
+          : state.quizAnswered
+            ? `${answerer?.name ?? 'Bạn chơi'} đã chốt${chosenText ? `: ${chosenText}` : '.'}`
+            : `${answerer?.name ?? 'Bạn chơi'} đang chọn đáp án…`}
       </p>
-      <button className="primary-button large" onClick={() => socket.emit(EVENTS.revealQuiz)}>Mở đáp án <span aria-hidden="true">→</span></button>
+      {!qualifier && (
+        <button className="primary-button large" disabled={!state.quizAnswered} onClick={() => socket.emit(EVENTS.revealQuiz)}>Mở đáp án <span aria-hidden="true">→</span></button>
+      )}
     </section>
   );
 }

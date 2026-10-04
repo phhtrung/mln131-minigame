@@ -4,6 +4,8 @@ export type SubPhase = 'choosing' | 'countdown' | 'drawing';
 
 export type QuizResult = 'correct' | 'incorrect' | 'not_asked';
 
+export type QuizStage = 'qualifier' | 'finalist';
+
 export type Player = {
   id: string;
   name: string;
@@ -26,6 +28,7 @@ export type Stroke = {
 
 export type Quiz = {
   prompt: string;
+  context?: string;
   options: string[];
   correctIndex: number;
 };
@@ -35,6 +38,8 @@ export type Reveal = {
   explanation: string;
   takeaway: string;
   quizResult?: QuizResult;
+  qualifierAnswer?: string;
+  qualifierWinnerName?: string;
   answer?: string;
   chosenAnswer?: string;
 };
@@ -66,6 +71,10 @@ export type RoomState = {
   wordChoices?: string[];
   maskedWord?: string;
   quiz?: Quiz;
+  quizStage?: QuizStage;
+  quizFinalistId?: string;
+  quizEligibleCount?: number;
+  quizAnsweredCount?: number;
   quizAnswered?: boolean;
   quizAnswer?: number;
   reveal?: Reveal;
@@ -110,6 +119,7 @@ export type TickPayload = {
   phase: Phase;
   subPhase: SubPhase;
   secondsLeft: number;
+  quizStage?: QuizStage;
   maskedWord?: string;
 };
 
