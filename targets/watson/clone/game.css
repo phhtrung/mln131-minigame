@@ -8,6 +8,13 @@ html { scroll-behavior: smooth; background: var(--page-bg); transition: backgrou
 body { margin: 0; color: var(--ink); background: var(--page-bg); font-family: Arial, "Segoe UI", sans-serif; -webkit-font-smoothing: antialiased; transition: color .6s ease, background-color .6s ease; }
 button { font: inherit; }
 main { padding: clamp(28px, 3vw, 48px) 4.5vw 6vw; }
+.side-rail { position: fixed; z-index: 2; top: 50%; width: 1px; height: min(54vh, 480px); overflow: hidden; transform: translateY(-50%); background: color-mix(in srgb, var(--ink) 18%, transparent); pointer-events: none; }
+.side-rail-left { left: 2.25vw; }
+.side-rail-right { right: 2.25vw; }
+.side-rail span { display: block; width: 1px; height: 16%; background: var(--ink); opacity: .65; animation: rail-drift 12s ease-in-out infinite alternate; }
+.side-rail-right span { animation-direction: alternate-reverse; animation-delay: -6s; }
+html.full-motion .side-rail { clip-path: inset(50% 0 50% 0); }
+@keyframes rail-drift { from { transform: translateY(-100%); } to { transform: translateY(625%); } }
 .heading-mask, .title-mask, .word-mask { overflow: hidden; }
 .heading-mask { margin-bottom: clamp(54px, 7vw, 110px); }
 .title-mask { display: inline-block; padding: .18em .02em; margin: -.18em -.02em; }
@@ -23,14 +30,16 @@ h1 { margin: 0; font-size: clamp(17px, 1.3vw, 21px); font-weight: 500; line-heig
 .word-mask { display: inline-block; vertical-align: bottom; padding: .12em .01em .14em; margin: -.12em -.01em -.14em; }
 .answer-block { position: relative; padding: clamp(35px, 4vw, 68px) 0; }
 #answer { font-size: clamp(52px, 7vw, 124px); }
+#answer.blank { font-size: clamp(42px, 4vw, 72px); letter-spacing: .08em; }
 .actions { position: relative; display: flex; justify-content: flex-end; padding: 30px 0 0; }
-.actions button { width: clamp(125px, 12vw, 180px); height: clamp(125px, 12vw, 180px); padding: 14px; border: 0; border-radius: 50%; background: var(--button-bg); color: var(--button-ink); font-size: clamp(16px, 1.2vw, 19px); line-height: 1.25; cursor: pointer; transition: transform .35s cubic-bezier(.22,1,.36,1), background-color .6s ease, color .6s ease; }
-.actions button span { display: block; font-size: 28px; line-height: 1; margin-top: 8px; }
+.actions button { width: clamp(125px, 12vw, 180px); height: clamp(125px, 12vw, 180px); padding: 14px; border: 0; border-radius: 50%; background: var(--button-bg); color: var(--button-ink); font-family: "Playfair Game", Georgia, serif; font-size: clamp(17px, 1.3vw, 22px); letter-spacing: -.035em; line-height: 1.2; cursor: pointer; transition: transform .35s cubic-bezier(.22,1,.36,1), background-color .6s ease, color .6s ease; }
+.actions button span { display: block; font-family: Arial, "Segoe UI", sans-serif; font-size: 28px; line-height: 1; margin-top: 8px; }
 .actions button:hover { transform: scale(1.06); }
 .actions button:focus-visible { outline: 2px solid var(--ink); outline-offset: 5px; }
 .is-changing .title-line, .is-changing .round-inner, .is-changing .answer-block, .is-changing .actions { visibility: hidden; }
 [hidden] { display: none !important; }
 @media (max-width: 800px) {
+  .side-rail { display: none; }
   main { padding: 40px 5vw 75px; }
   .heading-mask { margin-bottom: 58px; }
   .round-inner { padding: 36px 0 58px; gap: 42px; }
@@ -43,4 +52,5 @@ h1 { margin: 0; font-size: clamp(17px, 1.3vw, 21px); font-weight: 500; line-heig
   html:not(.full-motion) { scroll-behavior: auto; }
   html:not(.full-motion), html:not(.full-motion) body, html:not(.full-motion) .rule { transition: none; }
   html:not(.full-motion) .actions button { transition: none; }
+  html:not(.full-motion) .side-rail span { animation: none; opacity: 0; }
 }

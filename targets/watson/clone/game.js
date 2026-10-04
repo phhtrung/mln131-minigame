@@ -11,6 +11,7 @@
   const answer = document.querySelector('#answer');
   const answerBlock = document.querySelector('#answer-block');
   const actions = document.querySelector('.actions');
+  const rails = document.querySelectorAll('.side-rail');
   const reveal = document.querySelector('#reveal');
   const next = document.querySelector('#next');
   let round = 0;
@@ -28,6 +29,8 @@
       return mask;
     }));
   };
+  const blanks = value => value.trim().split(/\s+/u).map(word =>
+    '_'.repeat([...new Intl.Segmenter('vi', { granularity: 'grapheme' }).segment(word)].length)).join(' ');
   const play = (element, frames, duration, delay = 0) => {
     const animation = element.animate(frames, {
       duration, delay, easing: 'cubic-bezier(.26,1,.48,1)', fill: 'both',
@@ -51,6 +54,10 @@
     entering ? [{ transform: 'scaleX(0)' }, { transform: 'scaleX(1)' }]
       : [{ transform: 'scaleX(1)' }, { transform: 'scaleX(0)' }],
     entering ? 950 : 550, delay);
+  const railMotion = (entering) => [...rails].map((rail, index) => play(rail,
+    entering ? [{ clipPath: 'inset(50% 0 50% 0)' }, { clipPath: 'inset(0 0 0 0)' }]
+      : [{ clipPath: 'inset(0 0 0 0)' }, { clipPath: 'inset(50% 0 50% 0)' }],
+    entering ? 950 : 650, index * 80));
   const buttonMotion = (button, entering, delay = 0) => play(button,
     entering ? [{ opacity: 0, transform: 'scale(.72)' }, { opacity: 1, transform: 'scale(1)' }]
       : [{ opacity: 1, transform: 'scale(1)' }, { opacity: 0, transform: 'scale(.72)' }],
@@ -67,24 +74,28 @@
   ];
   const enterScreen = () => {
     if (!motion) return;
+    railMotion(true);
     play(heading, [{ transform: 'translate3d(0,110%,0)' }, { transform: 'translate3d(0,0,0)' }], 1200, 50);
     lineMotion(stage.querySelector(':scope > .rule'), true, 100);
     pictureMotion(true, 150);
     textMotion(hint, true, 190);
+    lineMotion(answerBlock.querySelector('.rule'), true, 300);
+    textMotion(answer, true, 350);
     lineMotion(actions.querySelector('.rule'), true, 350);
     buttonMotion(reveal, true, 450);
   };
   const exitScreen = () => {
     if (!motion) return Promise.resolve();
     return Promise.all([
+      ...railMotion(false),
       play(heading, [{ transform: 'translate3d(0,0,0)' }, { transform: 'translate3d(0,-110%,0)' }], 650),
       lineMotion(stage.querySelector(':scope > .rule'), false, 100),
       ...pictureMotion(false),
       ...textMotion(hint, false),
       ...textMotion(answer, false),
       lineMotion(actions.querySelector('.rule'), false, 100),
-      buttonMotion(answerBlock.hidden ? reveal : next, false),
-      ...(answerBlock.hidden ? [] : [lineMotion(answerBlock.querySelector('.rule'), false)]),
+      buttonMotion(reveal.hidden ? next : reveal, false),
+      lineMotion(answerBlock.querySelector('.rule'), false),
     ]);
   };
   const render = () => {
@@ -93,8 +104,10 @@
     image.src = item.image;
     image.alt = `Hình gợi ý cho vòng ${round + 1}`;
     words(hint, item.hint);
-    answer.replaceChildren();
-    answerBlock.hidden = true;
+    words(answer, blanks(item.answer));
+    answer.classList.add('blank');
+    answer.setAttribute('aria-label', 'Đáp án chưa hiện');
+    answerBlock.hidden = false;
     reveal.hidden = false;
     reveal.disabled = false;
     next.hidden = true;
@@ -108,14 +121,15 @@
   reveal.addEventListener('click', async () => {
     reveal.disabled = true;
     document.documentElement.classList.add('revealed');
-    if (motion) await buttonMotion(reveal, false);
+    if (motion) await Promise.all([buttonMotion(reveal, false), ...railMotion(false), ...textMotion(answer, false)]);
     clearAnimations();
     words(answer, rounds[round].answer);
-    answerBlock.hidden = false;
+    answer.classList.remove('blank');
+    answer.removeAttribute('aria-label');
     reveal.hidden = true;
     next.hidden = false;
     if (motion) {
-      lineMotion(answerBlock.querySelector('.rule'), true);
+      railMotion(true);
       textMotion(answer, true, 130);
       buttonMotion(next, true, 250);
     }
